@@ -1,5 +1,5 @@
 Type: Component
-Name: {{projectName}}
+Name: devsapp/sae
 Provider:
   - 其它
 Version: 0.0.1
