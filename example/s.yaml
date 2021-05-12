@@ -1,24 +1,12 @@
 edition: 1.0.0        #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
 name: compoent-test   #  项目名称
-vars: # [全局变量，提供给各个服务使用]
-  logo: https://image.aliyun.com/xxxx.png
-  domain: xxxx.yyy.com
+vars:
+  region: cn-shenzhen
 services:
-  component-test: #  服务名称
-    component: ${path(..)}  # 这里引入的是相对路径，正式配置替换成你自己的component名称即可 
+  start-sae:
+    component: devsapp/sae
     props:
-      name: ${component-test2.props.name}
-      otherInput: ${component-test2.output.hello}
-      envshow: ${env(USER)}
       AppName: test5
-      RegionId: cn-shenzhen
-      PackageType: Image
-      ImageUrl: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
-      Replicas: 1
-      NamespaceId: cn-shenzhen
-      AutoConfig: true
-      Cpu: 500
-      Memory: 1024
-      Deploy: true
+      imageUrl: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
 
      
