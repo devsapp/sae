@@ -35,19 +35,19 @@ export default class ComponentDemo extends BaseComponent {
     return { hello: 'hanxie' };
   }
   public async create(inputs: InputProps) {
-    const { props: { AppName, RegionId, PackageType, ImageUrl, Replicas, NamespaceId, AutoConfig, Cpu, Memory, Deploy }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
+    const { props: { region, AppName, ImageUrl }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
     const createAppUriPath = "/pop/v1/sam/app/createApplication";
     const createAppAueries = {
-      RegionId,
+      RegionId: region,
       AppName,
-      PackageType,
+      PackageType: 'Image',
       ImageUrl,
-      Replicas,
-      NamespaceId,
-      AutoConfig,
-      Cpu,
-      Memory,
-      Deploy,
+      Replicas: 1,
+      NamespaceId: region,
+      AutoConfig: true,
+      Cpu: 500,
+      Memory: 1024,
+      Deploy: true,
     };
     let times = 0;
     let createTimes = 0;

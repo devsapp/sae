@@ -1,12 +1,11 @@
 edition: 1.0.0        #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
 name: compoent-test   #  项目名称
-vars:
-  region: cn-shenzhen
 services:
   start-sae:
-    component: devsapp/sae
+    component: ${path(..)}
     props:
+      region: cn-shenzhen
       AppName: test5
-      imageUrl: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
+      ImageUrl: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
 
      
