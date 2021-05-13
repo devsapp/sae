@@ -16,12 +16,12 @@ Properties:
     Required: true
     Type:
       - String
-  AppName:
+  appName:
     Description: 应用名称
     Required: true
     Type:
       - String
-  ImageUrl:
+  imageUrl:
     Description: 镜像
     Required: true
     Type:
