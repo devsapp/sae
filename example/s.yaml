@@ -1,5 +1,5 @@
 edition: 1.0.0        #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
-name: compoent-test   #  项目名称
+name: devsapp/sae   #  项目名称
 services:
   start-sae:
     component: ${path(..)}
