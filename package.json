@@ -24,8 +24,7 @@
   "autoInstall": false,
   "scripts": {
     "start": "npm run watch",
-    "watch": "tsc -w",
-    "publish": "s cli platform publish"
+    "watch": "tsc -w"
   },
   "dependencies": {
     "@alicloud/pop-core": "^1.7.10",
