@@ -1,8 +1,9 @@
-import BaseComponent from './common/base';
 import logger from './common/logger';
 import { InputProps } from './common/entity';
-import { ROAClient } from '@alicloud/pop-core';
 import { get } from "lodash"; 
+// @ts-ignore
+import { ROAClient } from '@alicloud/pop-core';
+// @ts-ignore
 import { spinner } from "@serverless-devs/core";
 const POLLINGTIME = 10;
 const request = async (params) => {
@@ -21,19 +22,7 @@ const request = async (params) => {
   const requestData = await client.request(httpMethod, uriPath, queries, body, headers, requestOption)
   return requestData
 }
-export default class ComponentDemo extends BaseComponent {
-  constructor(props) {
-    super(props)
-  }
-  /**
-   * demo 实例
-   * @param inputs
-   * @returns
-   */
-  public async test(inputs: InputProps) {
-    logger.info('deploy test');
-    return { hello: 'hanxie' };
-  }
+export default class SaeComponent {
   public async create(inputs: InputProps) {
     const { props: { region, AppName, ImageUrl }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
     const createAppUriPath = "/pop/v1/sam/app/createApplication";
