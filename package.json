@@ -21,7 +21,6 @@
     "type": "git",
     "url": "https://github.com/ServerlessTool/express-alibaba"
   },
-  "autoInstall": false,
   "scripts": {
     "start": "npm run watch",
     "watch": "tsc -w"
