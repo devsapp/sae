@@ -3,8 +3,26 @@ Name: devsapp/sae
 Provider:
   - 其它
 Version: 0.0.1
-Description: 初始化component模板
+Description: saeDemo部署
 HomePage: https://www.serverless-devs.com
 Tags: #标签详情
   - 模板
 Category: 其它
+Commands: 
+  create: 部署应用
+Properties:
+  region:
+    Description: 阿里云region
+    Required: true
+    Type:
+      - String
+  AppName:
+    Description: 应用名称
+    Required: true
+    Type:
+      - String
+  ImageUrl:
+    Description: 镜像
+    Required: true
+    Type:
+      - String
