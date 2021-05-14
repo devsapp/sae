@@ -5,7 +5,7 @@ services:
     component: ${path(..)}
     props:
       region: cn-shenzhen
-      appName: test5
+      appName: test1
       imageUrl: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
 
      

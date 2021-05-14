@@ -5,7 +5,7 @@ import { get } from "lodash";
 import { ROAClient } from '@alicloud/pop-core';
 // @ts-ignore
 import { spinner } from "@serverless-devs/core";
-const POLLINGTIME = 10;
+const POLLINGTIME = 20;
 const request = async (params) => {
   const { AccessKeyID, AccessKeySecret, httpMethod = 'POST', uriPath, queries } = params;
   const client = new ROAClient({
@@ -57,6 +57,7 @@ export default class SaeComponent {
         if(ip && port){
           vm.succeed('执行成功');
           logger.info(`${ip}:${port}`);
+          logger.info(`SAE地址：https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${AppId}&regionId=${region}&namespaceId=${region}`);
           return `${ip}:${port}`
         }else{
           getSlbStatus(AppId)
