@@ -23,7 +23,7 @@ const request = async (params) => {
   return requestData
 }
 export default class SaeComponent {
-  public async create(inputs: InputProps) {
+  async deploy(inputs: InputProps) {
     const { props: { region, appName, imageUrl }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
     const createAppUriPath = "/pop/v1/sam/app/createApplication";
     const createAppAueries = {

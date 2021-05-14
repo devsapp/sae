@@ -1,11 +1,11 @@
 edition: 1.0.0        #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
-name: devsapp/sae   #  项目名称
+region: cn-shenzhen
+access: default
 services:
   start-sae:
     component: ${path(..)}
     props:
       region: cn-shenzhen
-      appName: test1
+      appName: dankun-sae1
       imageUrl: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
 
-     
