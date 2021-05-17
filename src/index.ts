@@ -1,6 +1,6 @@
 import logger from './common/logger';
 import { InputProps } from './common/entity';
-import { get } from "lodash"; 
+import { get } from "lodash";
 // @ts-ignore
 import { ROAClient } from '@alicloud/pop-core';
 // @ts-ignore
@@ -24,25 +24,26 @@ const request = async (params) => {
 }
 export default class SaeComponent {
   async deploy(inputs: InputProps) {
-    const { props: { region, appName, imageUrl }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
+    const { props: { region, appName, imageUrl, replicas = 1, cpu = 500, memory = 1024, appDescription = 'saedemo', port = 80, targetPort = 8080 }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
     const createAppUriPath = "/pop/v1/sam/app/createApplication";
     const createAppAueries = {
       RegionId: region,
       AppName: appName,
       PackageType: 'Image',
       ImageUrl: imageUrl,
-      Replicas: 1,
+      Replicas: replicas,
       NamespaceId: region,
       AutoConfig: true,
-      Cpu: 500,
-      Memory: 1024,
+      Cpu: cpu,
+      Memory: memory,
       Deploy: true,
+      AppDescription: appDescription
     };
     let times = 0;
     let createTimes = 0;
-    const getSlbStatus = async(AppId)=>{
+    const getSlbStatus = async (AppId) => {
       times++;
-      if(times%POLLINGTIME>0){
+      if (times % POLLINGTIME > 0) {
         getSlbStatus(AppId);
         return;
       }
@@ -50,42 +51,42 @@ export default class SaeComponent {
       const SlbUriQueries = {
         AppId,
       };
-      const SlbData = await request({AccessKeyID, AccessKeySecret, httpMethod: "GET", uriPath:SlburiPath, queries:SlbUriQueries});
+      const SlbData = await request({ AccessKeyID, AccessKeySecret, httpMethod: "GET", uriPath: SlburiPath, queries: SlbUriQueries });
       const ip = get(SlbData, 'Data.InternetIp');
       const port = get(SlbData, 'Data.Internet[0].TargetPort')
-      if(times < 100000 ){
-        if(ip && port){
+      if (times < 100000) {
+        if (ip && port) {
           vm.succeed('执行成功');
           logger.info(`${ip}:${port}`);
           logger.info(`SAE地址：https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${AppId}&regionId=${region}&namespaceId=${region}`);
           return `${ip}:${port}`
-        }else{
+        } else {
           getSlbStatus(AppId)
         }
-      }else{
+      } else {
         vm.warn('执行失败');
         return SlbData
       }
     }
-    const bindSLb = async(AppId)=>{
+    const bindSLb = async (AppId) => {
       const bindSlbUriPath = '/pop/v1/sam/app/slb';
       const bindSlbUriQueries = {
         AppId,
-        "Internet": "[{\"port\":80,\"targetPort\":8080,\"protocol\":\"HTTP\"}]"
+        "Internet": `[{\"port\":${port},\"targetPort\":${targetPort},\"protocol\":\"HTTP\"}]`
       };
-      const BindSlbData = await request({AccessKeyID, AccessKeySecret, httpMethod: "POST", uriPath:bindSlbUriPath, queries:bindSlbUriQueries});
-      if(get(BindSlbData, 'Data.ChangeOrderId')){
+      const BindSlbData = await request({ AccessKeyID, AccessKeySecret, httpMethod: "POST", uriPath: bindSlbUriPath, queries: bindSlbUriQueries });
+      if (get(BindSlbData, 'Data.ChangeOrderId')) {
         logger.info(get(BindSlbData, 'Data.ChangeOrderId'));
         const slbData = await getSlbStatus(AppId);
-        return {http:slbData}
-      }else{
+        return { http: slbData }
+      } else {
         vm.warn('执行失败');
         return BindSlbData
       }
     }
-    const getChangeOrderStatus = async(AppId)=>{
+    const getChangeOrderStatus = async (AppId) => {
       createTimes++;
-      if(createTimes%POLLINGTIME>0){
+      if (createTimes % POLLINGTIME > 0) {
         getChangeOrderStatus(AppId);
         return;
       }
@@ -96,22 +97,22 @@ export default class SaeComponent {
         CoType: 'CoDeploy',
         AppId,
       };
-      const {Data: { ChangeOrderList },} = await request({AccessKeyID, AccessKeySecret, httpMethod: "GET", uriPath:SlburiPath, queries:SlbUriQueries});
+      const { Data: { ChangeOrderList }, } = await request({ AccessKeyID, AccessKeySecret, httpMethod: "GET", uriPath: SlburiPath, queries: SlbUriQueries });
       const status = get(ChangeOrderList, '[0].Status', 'null')
-      if(createTimes<100000){
-        if(status == 2){
+      if (createTimes < 100000) {
+        if (status == 2) {
           vm.text = 'SLB绑定中';
           bindSLb(AppId)
-        }else{
+        } else {
           getChangeOrderStatus(AppId)
         }
-      }else{
+      } else {
         vm.warn('执行失败');
         return ChangeOrderList;
       }
     }
     const vm = spinner('开始部署');
-    const {Message, Data: {AppId}} = await request({ AccessKeyID, AccessKeySecret, httpMethod: "POST", uriPath:createAppUriPath, queries:createAppAueries });
+    const { Message, Data: { AppId } } = await request({ AccessKeyID, AccessKeySecret, httpMethod: "POST", uriPath: createAppUriPath, queries: createAppAueries });
     if (AppId) {
       logger.info(AppId);
       vm.text = '部署应用中';
