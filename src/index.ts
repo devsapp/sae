@@ -22,15 +22,32 @@ const request = async (params) => {
   const requestData = await client.request(httpMethod, uriPath, queries, body, headers, requestOption)
   return requestData
 }
+
+interface createAppParams {
+  RegionId: string;
+  AppName: string;
+  PackageType: string;
+  ImageUrl?: string;
+  PackageUrl?: string;
+  Jdk?: string;
+  WebContainer?: string;
+  Replicas: string;
+  NamespaceId: string;
+  AutoConfig: boolean;
+  Cpu: string;
+  Memory: string;
+  Deploy: boolean;
+  AppDescription: string;
+}
+
 export default class SaeComponent {
   async deploy(inputs: InputProps) {
-    const { props: { region, appName, imageUrl, replicas = 1, cpu = 500, memory = 1024, appDescription = 'saedemo', port = 80, targetPort = 8080 }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
+    const { props: { region, appName, packageType = 'Image', imageUrl, replicas = 1, cpu = 500, memory = 1024, appDescription = 'saedemo', port = 80, targetPort = 8080 }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
     const createAppUriPath = "/pop/v1/sam/app/createApplication";
-    const createAppAueries = {
+    const createAppAueries: createAppParams = {
       RegionId: region,
       AppName: appName,
-      PackageType: 'Image',
-      ImageUrl: imageUrl,
+      PackageType: packageType,
       Replicas: replicas,
       NamespaceId: region,
       AutoConfig: true,
@@ -39,6 +56,22 @@ export default class SaeComponent {
       Deploy: true,
       AppDescription: appDescription
     };
+    switch (packageType) {
+      case 'Image':
+        createAppAueries.ImageUrl = imageUrl
+        break;
+      case 'War':
+        createAppAueries.PackageUrl = imageUrl;
+        createAppAueries.Jdk = 'Open JDK 8';
+        createAppAueries.WebContainer = 'apache-tomcat-8.5.42';
+        break;
+      case 'FatJar':
+        createAppAueries.PackageUrl = imageUrl;
+        createAppAueries.Jdk = 'Open JDK 8';
+        break;
+      default:
+        break;
+    }
     let times = 0;
     let createTimes = 0;
     const getSlbStatus = async (AppId) => {

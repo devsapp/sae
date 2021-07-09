@@ -2,7 +2,7 @@ Type: Component
 Name: devsapp/sae
 Provider:
   - 其它
-Version: 0.0.6
+Version: 0.0.7
 Description: saeDemo部署
 HomePage: https://www.serverless-devs.com
 Tags: #标签详情
@@ -22,7 +22,12 @@ Properties:
     Type:
       - String
   imageUrl:
-    Description: 镜像
+    Description: 镜像或者包地址
+    Required: true
+    Type:
+      - String
+  packageType:
+    Description: 部署类型，镜像，war包，jar吧
     Required: true
     Type:
       - String
