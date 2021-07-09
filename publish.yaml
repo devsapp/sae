@@ -2,7 +2,7 @@ Type: Component
 Name: sae
 Provider:
   - 其它
-Version: 0.0.13
+Version: 0.0.14
 Description: 阿里云SAE组件
 HomePage: https://github.com/devsapp/sae
 Tags: #标签详情
@@ -83,23 +83,23 @@ Properties:
             Type:
               - String
           Cpu:
-            Description: 每个实例所需的CPU，单位为毫核，不能为0。目前仅支持以下固定规格：，500，1000，2000，4000，8000，16000，32000
+            Description: 每个实例所需的CPU，单位为毫核，不能为0。目前仅支持以下固定规格：500，1000，2000，4000，8000，16000，32000
             Required: False
             Example: 1000
             Type:
-              - Integer
+              - Number
           Memory:
-            Description: 每个实例所需的内存，单位为MB，不能为0。与CPU为一一对应关系，目前仅支持以下固定规格：，1024：对应CPU为500毫核。，2048：对应CPU为500和1000毫核。，4096：对应CPU为1000和2000毫核。，8192：对应CPU为2000和4000毫核。，16384：对应CPU为4000和8000毫核。，32768：对应CPU为16000毫核。，65536：对应CPU为8000、16000和32000毫核。，131072：对应CPU为32000毫核。
+            Description: 每个实例所需的内存，单位为MB，不能为0。与CPU为一一对应关系，目前仅支持以下固定规格：，1024：对应CPU为500毫核。2048：对应CPU为500和1000毫核。4096：对应CPU为1000和2000毫核。8192：对应CPU为2000和4000毫核。16384：对应CPU为4000和8000毫核。32768：对应CPU为16000毫核。65536：对应CPU为8000、16000和32000毫核。131072：对应CPU为32000毫核。
             Required: False
             Example: 1024
             Type:
-              - Integer
+              - Number
           Replicas:
             Description: 初始实例数。
             Required: True
             Example: 1
             Type:
-              - Integer
+              - Number
           Command:
             Description: 镜像启动命令。该命令必须为容器内存在的可执行的对象。例如：sleep。设置该命令将导致镜像原本的启动命令失效。
             Required: False
@@ -220,8 +220,14 @@ Properties:
             Example: sg-wz969ngg2e49q5i4****
             Type:
               - String
+          TerminationGracePeriodSeconds:
+            Description: 优雅下线超时时间，默认为30，单位为秒。取值范围为1~60。
+            Required: False
+            Example: 30
+            Type:
+              - Number
           AutoConfig:
-            Description: 是否自动配置网络环境。取值说明如下：，true：创建应用时SAE自动配置网络环境。NamespaceId、VpcId、vSwitchId和SecurityGroupId的取值将被忽略。，false：创建应用时SAE手动配置网络环境。，TerminationGracePeriodSeconds	Integer	Query	否	30	，优雅下线超时时间，默认为30，单位为秒。取值范围为1~60。
+            Description: 是否自动配置网络环境。取值说明如下：，true：创建应用时SAE自动配置网络环境。NamespaceId、VpcId、vSwitchId和SecurityGroupId的取值将被忽略。，false：创建应用时SAE手动配置网络环境。，
             Required: False
             Example: true
             Type:
@@ -244,8 +250,14 @@ Properties:
             Example: k1=v1
             Type:
               - String
+          AcrAssumeRoleArn:
+            Description: 跨账号拉取镜像时所需的RAM角色的ARN。
+            Required: False
+            Example: acs:ram::123456789012****:role/adminrole
+            Type:
+              - String
           TomcatConfig:
-            Description: Tomcat文件配置，设置为""或"{}"表示删除配置：，，useDefaultConfig：是否使用自定义配置，若为true，则表示不使用自定义配置；若为false，则表示使用自定义配置。若不使用自定义配置，则下面的参数配置将不会生效。，contextInputType：选择应用的访问路径。，war：无需填写自定义路径，应用的访问路径是WAR包名称。，root：无需填写自定义路径，应用的访问路径是/。，custom：需要在下面的自定义路径中填写自定义的路径。，contextPath：自定义路径，当contextInputType类型为custom时，才需要配置此参数。，httpPort：端口范围为1024~65535，小于1024的端口需要Root权限才能操作。因为容器配置的是Admin权限，所以请填写大于1024的端口。如果不配置，则默认为8080。，maxThreads：配置连接池的连接数大小，默认大小是400。，uriEncoding：Tomcat的编码格式，包括UTF-8、ISO-8859-1、GBK和GB2312。如果不设置则默认为ISO-8859-1。，useBodyEncoding：是否使用BodyEncoding for URL。，AcrAssumeRoleArn	String	Query	否	acs:ram::123456789012****:role/adminrole	，跨账号拉取镜像时所需的RAM角色的ARN。
+            Description: Tomcat文件配置，设置为""或"{}"表示删除配置：useDefaultConfig：是否使用自定义配置，若为true，则表示不使用自定义配置；若为false，则表示使用自定义配置。若不使用自定义配置，则下面的参数配置将不会生效。contextInputType：选择应用的访问路径。war：无需填写自定义路径，应用的访问路径是WAR包名称。root：无需填写自定义路径，应用的访问路径是/。custom：需要在下面的自定义路径中填写自定义的路径。contextPath：自定义路径，当contextInputType类型为custom时，才需要配置此参数。httpPort：端口范围为1024~65535，小于1024的端口需要Root权限才能操作。因为容器配置的是Admin权限，所以请填写大于1024的端口。如果不配置，则默认为8080。，maxThreads：配置连接池的连接数大小，默认大小是400。，uriEncoding：Tomcat的编码格式，包括UTF-8、ISO-8859-1、GBK和GB2312。如果不设置则默认为ISO-8859-1。useBodyEncoding：是否使用BodyEncoding for URL。，
             Required: False
             Example: '{"useDefaultConfig":false,"contextInputType":"custom","contextPath":"hello","httpPort":8088,"maxThreads":400,"uriEncoding":"UTF-8","useBodyEncoding":true,"useAdvancedServerXml":false}'
             Type:
