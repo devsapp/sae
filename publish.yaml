@@ -2,14 +2,14 @@ Type: Component
 Name: sae
 Provider:
   - 其它
-Version: 0.0.12
+Version: 0.0.13
 Description: 阿里云SAE组件
 HomePage: https://github.com/devsapp/sae
 Tags: #标签详情
   - SAE
 Category: 其它
 Commands:
-  deploy: 部署应用
+  create: 部署应用
 Properties:
   Region:
     Description: 地区
@@ -115,13 +115,13 @@ Properties:
           Envs:
             Description: 容器环境变量参数。
             Required: False
-            Example: [{"name":"envtmp","value":"0"}]
+            Example: '[{"name":"envtmp","value":"0"}]'
             Type:
               - String
           CustomHostAlias:
             Description: 容器内自定义host映射。
             Required: False
-            Example: [{"hostName":"samplehost","ip":"127.0.0.1"}]
+            Example: '[{"hostName":"samplehost","ip":"127.0.0.1"}]'
             Type:
               - String
           JarStartOptions:
@@ -169,7 +169,7 @@ Properties:
           SlsConfigs:
             Description: 文件日志采集配置。，使用SAE自动创建的SLS资源：[{"logDir":"/root/logs/hsf.log"}]。，使用自定义的SLS资源：[{"projectName":"test-sls","logDir":"/tmp/readiness.txt","logstoreName":"logstore","logtailName":"testLogtail"}]。，projectName：配置SLS上的Project名称。，logDir：配置收集日志文件的路径。，logstoreName：配置SLS上的Logstore名称。，logtailName：配置SLS上的Logtail名称，如果不指定，则表示新建Logtail。
             Required: False
-            Example: [{"logDir":"/root/logs/hsf.log"}]
+            Example: '[{"logDir":"/root/logs/hsf.log"}]'
             Type:
               - String
           NasId:
@@ -187,19 +187,19 @@ Properties:
           MountDesc:
             Description: 挂载描述。
             Required: False
-            Example: [{MountPath: "/tmp", NasPath: "/"}]
+            Example: '[{MountPath: "/tmp", NasPath: "/"}]'
             Type:
               - String
           PreStop:
             Description: 停止前执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}
             Required: False
-            Example: {"exec":{"command":["cat","/etc/group"]}}
+            Example: '{"exec":{"command":["cat","/etc/group"]}}'
             Type:
               - String
           PostStart:
             Description: 启动后执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}
             Required: False
-            Example: {"exec":{"command":["cat","/etc/group"]}}
+            Example: '{"exec":{"command":["cat","/etc/group"]}}'
             Type:
               - String
           WarStartOptions:
