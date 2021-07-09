@@ -2,7 +2,7 @@ Type: Component
 Name: sae
 Provider:
   - 其它
-Version: 0.0.9
+Version: 0.0.10
 Description: saeDemo部署
 HomePage: https://www.serverless-devs.com
 Tags: #标签详情

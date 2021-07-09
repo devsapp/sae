@@ -267,7 +267,7 @@ export default class SaeComponent {
         result['SLB']['IntranetSlbId'] = slbConfig["Data"]['InternetIp']
       }
     }
-    vm.clear()
+    vm.stop()
     return result
   }
 }
