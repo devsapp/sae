@@ -44,6 +44,7 @@ services:
 
 | 参数名 |  必填  |  类型  |  参数描述  |
 | --- |  ---  |  ---  |  ---  |
+| Region | True | String | 地区 |
 | Namespace | True | Struct | 命名空间 |
 | Application | True | Struct | 应用配置 |
 | SLB | False | Struct | SLB配置 |
@@ -95,10 +96,10 @@ services:
 |PhpArmsConfigLocation	|String	|	否|	/usr/local/etc/php/conf.d/arms.ini	|PHP应用监控挂载路径，需要您保证PHP服务器一定会加载这个路径的配置文件。<br>您无需关注配置内容，SAE会自动渲染正确的配置文件。|
 |PhpConfigLocation	|String	|	否|	/usr/local/etc/php/php.ini	|PHP应用启动配置挂载路径，需要您保证PHP服务器会使用这个配置文件启动。|
 |PhpConfig|	String	|	否	|k1=v1	|PHP配置文件内容。|
-|TomcatConfig	|String	|	否	|{"useDefaultConfig":false,"contextInputType":"custom","contextPath":"hello","httpPort":8088,"maxThreads":400,"uriEncoding":"UTF-8","useBodyEncoding":true,"useAdvancedServerXml":false}	<br>Tomcat文件配置，设置为""或"{}"表示删除配置：<br><br>useDefaultConfig：是否使用自定义配置，若为true，则表示不使用自定义配置；若为false，则表示使用自定义配置。若不使用自定义配置，则下面的参数配置将不会生效。<br>contextInputType：选择应用的访问路径。<br>war：无需填写自定义路径，应用的访问路径是WAR包名称。<br>root：无需填写自定义路径，应用的访问路径是/。<br>custom：需要在下面的自定义路径中填写自定义的路径。<br>contextPath：自定义路径，当contextInputType类型为custom时，才需要配置此参数。<br>httpPort：端口范围为1024~65535，小于1024的端口需要Root权限才能操作。因为容器配置的是Admin权限，所以请填写大于1024的端口。如果不配置，则默认为8080。<br>maxThreads：配置连接池的连接数大小，默认大小是400。<br>uriEncoding：Tomcat的编码格式，包括UTF-8、ISO-8859-1、GBK和GB2312。如果不设置则默认为ISO-8859-1。<br>useBodyEncoding：是否使用BodyEncoding for URL。<br>AcrAssumeRoleArn	String	Query	否	acs:ram::123456789012****:role/adminrole	<br>跨账号拉取镜像时所需的RAM角色的ARN。|
+|TomcatConfig	|String	|	否	|{"useDefaultConfig":false,"contextInputType":"custom","contextPath":"hello","httpPort":8088,"maxThreads":400,"uriEncoding":"UTF-8","useBodyEncoding":true,"useAdvancedServerXml":false}|Tomcat文件配置，设置为""或"{}"表示删除配置：<br><br>useDefaultConfig：是否使用自定义配置，若为true，则表示不使用自定义配置；若为false，则表示使用自定义配置。若不使用自定义配置，则下面的参数配置将不会生效。<br>contextInputType：选择应用的访问路径。<br>war：无需填写自定义路径，应用的访问路径是WAR包名称。<br>root：无需填写自定义路径，应用的访问路径是/。<br>custom：需要在下面的自定义路径中填写自定义的路径。<br>contextPath：自定义路径，当contextInputType类型为custom时，才需要配置此参数。<br>httpPort：端口范围为1024~65535，小于1024的端口需要Root权限才能操作。因为容器配置的是Admin权限，所以请填写大于1024的端口。如果不配置，则默认为8080。<br>maxThreads：配置连接池的连接数大小，默认大小是400。<br>uriEncoding：Tomcat的编码格式，包括UTF-8、ISO-8859-1、GBK和GB2312。如果不设置则默认为ISO-8859-1。<br>useBodyEncoding：是否使用BodyEncoding for URL。<br>AcrAssumeRoleArn	String	Query	否	acs:ram::123456789012****:role/adminrole	<br>跨账号拉取镜像时所需的RAM角色的ARN。|
 |OssMountDescs	|String	|	否	|[{"bucketName": "oss-bucket", "bucketPath": "data/user.data", "mountPath": "/usr/data/user.data", "readOnly": true}]	|OSS挂载描述信息。|
 |OssAkId|	String|	否	|xxxxxx	|OSS读写的AccessKey ID。|
-|OssAkSecret|	String	|	否	|xxxxxx	|OSS读写的AccessKey Secr|
+|OssAkSecret|	String	|	否	|xxxxxx	|OSS读写的AccessKey Secret|
 
 
 ### 代码配置

@@ -60,6 +60,8 @@ export default class SaeComponent {
   }
 
   async deploy(inputs: InputProps) {
+    const todb = await core.load('devsapp/2db')
+    await todb.addHistory(inputs)
     let AppId
     let { props: {Region, Namespace, Application, SLB }} = inputs;
     let  credentials = await core.getCredential(inputs.project.access)
@@ -268,6 +270,20 @@ export default class SaeComponent {
       }
     }
     vm.stop()
+
+    inputs.props = {
+      report_content: {
+        sae: [
+          {
+            region: Region,
+            namespace: Namespace.NamespaceId,
+            appid: AppId
+          }
+        ]
+      }
+    }
+    await todb.addSource(inputs)
+
     return result
   }
 }
