@@ -1,159 +1,273 @@
-import logger from './common/logger';
+import * as core from '@serverless-devs/core';
 import { InputProps } from './common/entity';
-import { get } from "lodash";
 // @ts-ignore
 import { ROAClient } from '@alicloud/pop-core';
 // @ts-ignore
 import { spinner } from "@serverless-devs/core";
-const POLLINGTIME = 20;
+
+import oss, { IOssConfig } from './common/oss.service';
+const stringRandom = require('string-random')
+const fse = require("fs");
 const request = async (params) => {
-  const { AccessKeyID, AccessKeySecret, httpMethod = 'POST', uriPath, queries } = params;
+  const { AccessKeyID, AccessKeySecret, httpMethod = 'POST', uriPath, queries, region='cn-beijing'} = params;
   const client = new ROAClient({
     accessKeyId: AccessKeyID,
     accessKeySecret: AccessKeySecret,
-    endpoint: "https://sae.cn-beijing.aliyuncs.com",
+    endpoint: `https://sae.${region}.aliyuncs.com`,
     apiVersion: "2019-05-06",
   });
   const body = `{}`;
   const headers = {
     "Content-Type": "application/json",
   };
-  const requestOption = {};
+  const requestOption = {
+    timeout: 60000,
+  };
   const requestData = await client.request(httpMethod, uriPath, queries, body, headers, requestOption)
   return requestData
 }
 
-interface createAppParams {
-  RegionId: string;
-  AppName: string;
-  PackageType: string;
-  ImageUrl?: string;
-  PackageUrl?: string;
-  Jdk?: string;
-  WebContainer?: string;
-  Replicas: string;
-  NamespaceId: string;
-  AutoConfig: boolean;
-  Cpu: string;
-  Memory: string;
-  Deploy: boolean;
-  AppDescription: string;
-}
-
 export default class SaeComponent {
-  async deploy(inputs: InputProps) {
-    const { props: { region, appName, packageType = 'Image', imageUrl, replicas = 1, cpu = 500, memory = 1024, appDescription = 'saedemo', port = 80, targetPort = 8080 }, credentials: { AccessKeyID, AccessKeySecret } } = inputs;
-    const createAppUriPath = "/pop/v1/sam/app/createApplication";
-    const createAppAueries: createAppParams = {
-      RegionId: region,
-      AppName: appName,
-      PackageType: packageType,
-      Replicas: replicas,
-      NamespaceId: region,
-      AutoConfig: true,
-      Cpu: cpu,
-      Memory: memory,
-      Deploy: true,
-      AppDescription: appDescription
+
+  async uploadFile(credentials, bucket, region, file, object, type){
+    const ossConfig: IOssConfig = {
+      accessKeyId: credentials.AccessKeyID,
+      accessKeySecret: credentials.AccessKeySecret,
+      bucket: bucket,
+      region: region,
+      file: file,
+      object: object,
+      type: type,
     };
-    switch (packageType) {
-      case 'Image':
-        createAppAueries.ImageUrl = imageUrl
-        break;
-      case 'War':
-        createAppAueries.PackageUrl = imageUrl;
-        createAppAueries.Jdk = 'Open JDK 8';
-        createAppAueries.WebContainer = 'apache-tomcat-8.5.42';
-        break;
-      case 'FatJar':
-        createAppAueries.PackageUrl = imageUrl;
-        createAppAueries.Jdk = 'Open JDK 8';
-        break;
-      default:
-        break;
+    await oss(ossConfig);
+  }
+
+  async checkStatus(AccessKeyID, AccessKeySecret, AppId, CoType, region){
+    let status = true
+    while (status){
+      const tempResult = await request({
+            AccessKeyID,
+            AccessKeySecret,
+            httpMethod: "GET",
+            uriPath: '/pop/v1/sam/changeorder/ListChangeOrders',
+            queries: {AppId, CoType: CoType,CurrentPage: 1, PageSize: 10,},
+            region,
+          })
+      try{
+        status = tempResult['Data']['ChangeOrderList'][0].Status ==  2 ? false : true
+      }catch (e) {}
     }
-    let times = 0;
-    let createTimes = 0;
-    const getSlbStatus = async (AppId) => {
-      times++;
-      if (times % POLLINGTIME > 0) {
-        getSlbStatus(AppId);
-        return;
-      }
-      const SlburiPath = '/pop/v1/sam/app/slb';
-      const SlbUriQueries = {
-        AppId,
-      };
-      const SlbData = await request({ AccessKeyID, AccessKeySecret, httpMethod: "GET", uriPath: SlburiPath, queries: SlbUriQueries });
-      const ip = get(SlbData, 'Data.InternetIp');
-      const port = get(SlbData, 'Data.Internet[0].TargetPort')
-      if (times < 100000) {
-        if (ip && port) {
-          vm.succeed('执行成功');
-          logger.info(`${ip}:${port}`);
-          logger.info(`SAE地址：https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${AppId}&regionId=${region}&namespaceId=${region}`);
-          return `${ip}:${port}`
-        } else {
-          getSlbStatus(AppId)
-        }
-      } else {
-        vm.warn('执行失败');
-        return SlbData
-      }
-    }
-    const bindSLb = async (AppId) => {
-      const bindSlbUriPath = '/pop/v1/sam/app/slb';
-      const bindSlbUriQueries = {
-        AppId,
-        "Internet": `[{\"port\":${port},\"targetPort\":${targetPort},\"protocol\":\"HTTP\"}]`
-      };
-      const BindSlbData = await request({ AccessKeyID, AccessKeySecret, httpMethod: "POST", uriPath: bindSlbUriPath, queries: bindSlbUriQueries });
-      if (get(BindSlbData, 'Data.ChangeOrderId')) {
-        logger.info(get(BindSlbData, 'Data.ChangeOrderId'));
-        const slbData = await getSlbStatus(AppId);
-        return { http: slbData }
-      } else {
-        vm.warn('执行失败');
-        return BindSlbData
-      }
-    }
-    const getChangeOrderStatus = async (AppId) => {
-      createTimes++;
-      if (createTimes % POLLINGTIME > 0) {
-        getChangeOrderStatus(AppId);
-        return;
-      }
-      const SlburiPath = '/pop/v1/sam/changeorder/ListChangeOrders';
-      const SlbUriQueries = {
-        CurrentPage: 1,
-        PageSize: 10,
-        CoType: 'CoDeploy',
-        AppId,
-      };
-      const { Data: { ChangeOrderList }, } = await request({ AccessKeyID, AccessKeySecret, httpMethod: "GET", uriPath: SlburiPath, queries: SlbUriQueries });
-      const status = get(ChangeOrderList, '[0].Status', 'null')
-      if (createTimes < 100000) {
-        if (status == 2) {
-          vm.text = 'SLB绑定中';
-          bindSLb(AppId)
-        } else {
-          getChangeOrderStatus(AppId)
-        }
-      } else {
-        vm.warn('执行失败');
-        return ChangeOrderList;
-      }
-    }
+  }
+
+  async deploy(inputs: InputProps) {
+    let AppId
+    let { props: {Region, Namespace, Application, SLB }} = inputs;
+    let  credentials = await core.getCredential(inputs.project.access)
+    let { AccountID, AccessKeyID, AccessKeySecret } = credentials
+    // 创建/更新Namespace
     const vm = spinner('开始部署');
-    const { Message, Data: { AppId } } = await request({ AccessKeyID, AccessKeySecret, httpMethod: "POST", uriPath: createAppUriPath, queries: createAppAueries });
-    if (AppId) {
-      logger.info(AppId);
-      vm.text = '部署应用中';
-      await getChangeOrderStatus(AppId);
-    } else {
-      vm.warn('执行失败');
-      logger.error(Message)
-      return Message
+    if(Namespace) {
+      vm.text = `部署Namespace: ${Namespace.NamespaceName || Namespace.NamespaceId}`
+      const createNamespaceUriPath = "/pop/v1/paas/namespace";
+      try {
+        await request({
+          AccessKeyID,
+          AccessKeySecret,
+          httpMethod: "POST",
+          uriPath: createNamespaceUriPath,
+          queries: Namespace,
+          Region,
+        });
+      } catch (e) {
+        if (e.message.includes('The specified namespace ID already exists')) {
+          await request({
+            AccessKeyID,
+            AccessKeySecret,
+            httpMethod: "PUT",
+            uriPath: createNamespaceUriPath,
+            queries: Namespace,
+            Region,
+          });
+        } else {
+          throw e
+        }
+      }
     }
+
+    if(Application) {
+      vm.text = `部署Appliction: ${Application.AppName}`
+      // 创建/更新Application
+      const createApplicationUriPath = "/pop/v1/sam/app/createApplication";
+      const updateApplicationUriPath = "/pop/v1/sam/app/deployApplication";
+      const applictionObject = JSON.parse(JSON.stringify(Application))
+      delete applictionObject.Code
+      if (Namespace.NamespaceId) {
+        applictionObject.NamespaceId = Namespace.NamespaceId
+      }
+      // 对code进行处理
+      vm.text = `处理代码 ...`
+      const code = Application.Code ? Application.Code : {}
+      const image = code.Image
+      let codePackage = code.Package
+
+      if (image) {
+        applictionObject.PackageType = 'Image'
+        applictionObject.ImageUrl = image
+      } else if (codePackage) {
+        if (typeof codePackage == 'string') {
+          codePackage = {
+            Path: codePackage,
+            Bucket: {
+              Region: Region,
+              Name: `sae-packages-${Region}-${AccountID}`
+            }
+          }
+        } else {
+          if (!codePackage.Path) {
+            throw Error("未能找到iamge/package，请确定参数传递正确")
+          }
+          const codeBucket = codePackage.Bucket || {}
+          codeBucket.Region = codeBucket.Region || Region
+          codeBucket.Name = codeBucket.Name || `sae-packages-${Region}-${AccountID}`
+        }
+        let tempObject = stringRandom(16)
+        if (codePackage.Path.endsWith('.war')) {
+          tempObject = tempObject + '.war'
+          applictionObject.PackageType = 'War'
+          applictionObject.Jdk = 'Open JDK 8';
+          applictionObject.WebContainer = 'apache-tomcat-8.5.42';
+          if (await fse.existsSync(codePackage.Path)) {
+            vm.text = `上传代码：${codePackage.Bucket.Region} / ${codePackage.Bucket.Name} / ${tempObject}`
+            await this.uploadFile(credentials, codePackage.Bucket.Name, codePackage.Bucket.Region, codePackage.Path, tempObject, 'upload')
+            applictionObject.PackageUrl = `https://${codePackage.Bucket.Name}.oss-${codePackage.Bucket.Region}.aliyuncs.com/${tempObject}`;
+          } else if (codePackage.Path.startsWith("http://") || codePackage.Path.startsWith("https://")) {
+            applictionObject.PackageUrl = codePackage.Path;
+          } else {
+            throw Error("未能成功找到.war类型的文件，请确定package的路径正确")
+          }
+        } else if (codePackage.Path.endsWith('.jar')) {
+          tempObject = tempObject + '.jar'
+          applictionObject.PackageType = 'FatJar'
+          applictionObject.Jdk = 'Open JDK 8';
+          if (await fse.existsSync(codePackage.Path)) {
+            vm.text = `上传代码：${codePackage.Bucket.Region} / ${codePackage.Bucket.Name} / ${tempObject}`
+            await this.uploadFile(credentials, codePackage.Bucket.Name, codePackage.Bucket.Region, codePackage.Path, tempObject, 'upload')
+            applictionObject.PackageUrl = `https://${codePackage.Bucket.Name}.oss-${codePackage.Bucket.Region}.aliyuncs.com/${tempObject}`;
+          } else if (codePackage.Path.startsWith("http://") || codePackage.Path.startsWith("https://")) {
+            applictionObject.PackageUrl = codePackage.Path;
+          } else {
+            throw Error("未能成功找到.jar类型的文件，请确定package的路径正确")
+          }
+        } else {
+          throw Error("未能找到package，请确定参数传递正确")
+        }
+      } else {
+        throw Error("未能找到iamge/package，请确定参数传递正确")
+      }
+
+      try {
+        await request({
+          AccessKeyID,
+          AccessKeySecret,
+          httpMethod: "POST",
+          uriPath: createApplicationUriPath,
+          queries: applictionObject,
+          Region,
+        })
+        const listApplicationResult = await request({
+          AccessKeyID,
+          AccessKeySecret,
+          httpMethod: "GET",
+          uriPath: "/pop/v1/sam/app/listApplications",
+          queries: {FieldType: 'appName', FieldValue: Application.AppName},
+          Region,
+        });
+        AppId = listApplicationResult['Data']['Applications'][0]['AppId']
+      } catch (e) {
+        if (e.message.includes('AppName is exsited')) {
+          const listApplicationResult = await request({
+            AccessKeyID,
+            AccessKeySecret,
+            httpMethod: "GET",
+            uriPath: "/pop/v1/sam/app/listApplications",
+            queries: {FieldType: 'appName', FieldValue: Application.AppName},
+            Region,
+          });
+          applictionObject.AppId = listApplicationResult['Data']['Applications'][0]['AppId']
+          AppId = applictionObject.AppId
+          await request({
+            AccessKeyID,
+            AccessKeySecret,
+            httpMethod: "POST",
+            uriPath: updateApplicationUriPath,
+            queries: applictionObject,
+            Region,
+          });
+        } else {
+          throw e
+        }
+      }
+      // 检查应用部署状态
+      vm.text = `检查部署状态 ...`
+      await this.checkStatus(AccessKeyID, AccessKeySecret, AppId, 'CoDeploy', Region,)
+    }
+
+    const result = {
+      "Namespace": Namespace,
+      "Application": {
+        AppId: AppId,
+        AppName: Application.AppName
+      },
+      "Console": `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${AppId}&regionId=${Region}&namespaceId=${Namespace.NamespaceId}`
+    }
+
+    // 绑定SLB
+    if(SLB) {
+      vm.text = `部署SLB ... `
+      const bindSLBUriPath = "/pop/v1/sam/app/slb";
+      if (SLB.Internet && typeof SLB.Internet == 'object') {
+        SLB.Internet = JSON.stringify(SLB.Internet)
+      }
+      if (SLB.Intranet && typeof SLB.Intranet == 'object') {
+        SLB.Intranet = JSON.stringify(SLB.Intranet)
+      }
+      if(AppId){
+        SLB.AppId = AppId
+      }
+      await request({
+        AccessKeyID,
+        AccessKeySecret,
+        httpMethod: "POST",
+        uriPath: bindSLBUriPath,
+        queries: SLB,
+        Region,
+      });
+
+      // 检查应用部署状态
+      vm.text = `检查SLB绑定状态 ...`
+      await this.checkStatus(AccessKeyID, AccessKeySecret, AppId, 'CoBindSlb', Region,)
+
+      // 获取SLB信息
+      vm.text = `获取SLB信息 ... `
+      const slbConfig = await request({
+        AccessKeyID,
+        AccessKeySecret,
+        httpMethod: "GET",
+        uriPath: '/pop/v1/sam/app/slb',
+        queries: {AppId},
+        Region,
+      });
+      if(slbConfig["Data"]['InternetIp']) {
+        result['SLB'] = {
+          InternetIp: slbConfig["Data"]['InternetIp']
+        }
+      }
+      if(slbConfig["Data"]['IntranetSlbId']) {
+        result['SLB'] = result['SLB'] ? result['SLB'] : {}
+        result['SLB']['IntranetSlbId'] = slbConfig["Data"]['InternetIp']
+      }
+    }
+    vm.clear()
+    return result
   }
 }

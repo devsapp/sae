@@ -2,13 +2,13 @@ Type: Component
 Name: devsapp/sae
 Provider:
   - 其它
-Version: 0.0.7
+Version: 0.0.8
 Description: saeDemo部署
 HomePage: https://www.serverless-devs.com
 Tags: #标签详情
   - 模板
 Category: 其它
-Commands: 
+Commands:
   create: 部署应用
 Properties:
   region:

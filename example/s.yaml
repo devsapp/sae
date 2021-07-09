@@ -1,11 +1,30 @@
-edition: 1.0.0        #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
-region: cn-shenzhen
-access: default
+edition: 1.0.0          #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
+name: sae-app           #  项目名称
+access: default         #  秘钥别名
+
 services:
-  start-sae:
-    component: ${path(..)}
+  sae-test: #  服务名称
+    component:  devsapp/sae
     props:
-      region: cn-shenzhen
-      appName: dankun-sae-jar-1
-      packageType: FatJar
-      imageUrl: https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar
+      Region: cn-beijing
+      Namespace:
+        NamespaceId: cn-beijing:test
+        NamespaceName: name
+        NamespaceDescription: namespace desc
+      Application:
+        AppName: test
+        AppDescription: This is a test description.
+        Code:
+#          Image: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
+          Package: https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar
+#          Package:
+#            Path: 路径
+#            Bucket:
+#              Region: 上传的oss地区
+#              Name: 上传的oss名字
+        Cpu: 500
+        Memory: 1024
+        Replicas: 1
+        AutoConfig: true
+      SLB:
+        Internet: [{"port":80,"targetPort":8080,"protocol":"TCP"}]
