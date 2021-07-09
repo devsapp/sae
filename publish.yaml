@@ -9,7 +9,7 @@ Tags: #标签详情
   - SAE
 Category: 其它
 Commands:
-  create: 部署应用
+  deploy: 部署应用
 Properties:
   Region:
     Description: 地区
