@@ -45,15 +45,15 @@ export default class SaeComponent {
   async checkStatus(AccessKeyID, AccessKeySecret, AppId, CoType, region){
     let status = true
     while (status){
-      const tempResult = await request({
-            AccessKeyID,
-            AccessKeySecret,
-            httpMethod: "GET",
-            uriPath: '/pop/v1/sam/changeorder/ListChangeOrders',
-            queries: {AppId, CoType: CoType,CurrentPage: 1, PageSize: 10,},
-            region,
-          })
       try{
+        const tempResult = await request({
+              AccessKeyID,
+              AccessKeySecret,
+              httpMethod: "GET",
+              uriPath: '/pop/v1/sam/changeorder/ListChangeOrders',
+              queries: {AppId, CoType: CoType,CurrentPage: 1, PageSize: 10,},
+              region,
+            })
         status = tempResult['Data']['ChangeOrderList'][0].Status ==  2 ? false : true
       }catch (e) {}
     }

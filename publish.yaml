@@ -1,8 +1,8 @@
 Type: Component
-Name: devsapp/sae
+Name: sae
 Provider:
   - 其它
-Version: 0.0.8
+Version: 0.0.9
 Description: saeDemo部署
 HomePage: https://www.serverless-devs.com
 Tags: #标签详情
