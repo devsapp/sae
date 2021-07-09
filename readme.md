@@ -89,7 +89,7 @@ services:
 |PreStop|	String	|	否	|{"exec":{"command":["cat","/etc/group"]}}	|停止前执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}|
 |PostStart	|String	|	否	|{"exec":{"command":["cat","/etc/group"]}}	|启动后执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}|
 |WarStartOptions	|String	|	否	|custom-option	|WAR包启动应用选项。应用默认启动命令：java $JAVA_OPTS $CATALINA_OPTS [-Options] org.apache.catalina.startup.Bootstrap "$@" start|
-|ConfigMapMountDesc|	String	|否	[{"configMapId":16,"key":"test","mountPath":"/tmp"}]	|ConfigMap挂载描述。|
+|ConfigMapMountDesc|	String	|否	|[{"configMapId":16,"key":"test","mountPath":"/tmp"}]	|ConfigMap挂载描述。|
 |SecurityGroupId|	String	|	否	|sg-wz969ngg2e49q5i4****	|安全组ID。|
 |AutoConfig|	Boolean	|	否|	true	|是否自动配置网络环境。取值说明如下：<br>true：创建应用时SAE自动配置网络环境。NamespaceId、VpcId、vSwitchId和SecurityGroupId的取值将被忽略。<br>false：创建应用时SAE手动配置网络环境。<br>TerminationGracePeriodSeconds	Integer	Query	否	30	<br>优雅下线超时时间，默认为30，单位为秒。取值范围为1~60。|
 |PhpArmsConfigLocation	|String	|	否|	/usr/local/etc/php/conf.d/arms.ini	|PHP应用监控挂载路径，需要您保证PHP服务器一定会加载这个路径的配置文件。<br>您无需关注配置内容，SAE会自动渲染正确的配置文件。|
