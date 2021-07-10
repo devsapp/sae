@@ -168,6 +168,7 @@ export default class SaeComponent {
       }
 
       try {
+        vm.text = `尝试创建应用 ...`
         await request({
           AccessKeyID,
           AccessKeySecret,
@@ -187,28 +188,32 @@ export default class SaeComponent {
         AppId = listApplicationResult['Data']['Applications'][0]['AppId']
       } catch (e) {
         if (e.message.includes('AppName is exsited')) {
-          const listApplicationResult = await request({
-            AccessKeyID,
-            AccessKeySecret,
-            httpMethod: "GET",
-            uriPath: "/pop/v1/sam/app/listApplications",
-            queries: {FieldType: 'appName', FieldValue: Application.AppName},
-            Region,
-          });
-          applictionObject.AppId = listApplicationResult['Data']['Applications'][0]['AppId']
-          AppId = applictionObject.AppId
-          await request({
-            AccessKeyID,
-            AccessKeySecret,
-            httpMethod: "POST",
-            uriPath: updateApplicationUriPath,
-            queries: applictionObject,
-            Region,
-          });
+          vm.text = `应用已存在，即将进行更新 ...`
         } else {
           throw e
         }
       }
+
+      vm.text = `应用部署中 ...`
+      const listApplicationResult = await request({
+        AccessKeyID,
+        AccessKeySecret,
+        httpMethod: "GET",
+        uriPath: "/pop/v1/sam/app/listApplications",
+        queries: {FieldType: 'appName', FieldValue: Application.AppName},
+        Region,
+      });
+      applictionObject.AppId = listApplicationResult['Data']['Applications'][0]['AppId']
+      AppId = applictionObject.AppId
+      await request({
+        AccessKeyID,
+        AccessKeySecret,
+        httpMethod: "POST",
+        uriPath: updateApplicationUriPath,
+        queries: applictionObject,
+        Region,
+      });
+
       // 检查应用部署状态
       vm.text = `检查部署状态 ...`
       await this.checkStatus(AccessKeyID, AccessKeySecret, AppId, 'CoDeploy', Region,)
