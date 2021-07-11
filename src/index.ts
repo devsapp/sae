@@ -23,6 +23,7 @@ const request = async (params) => {
   const requestOption = {
     timeout: 60000,
   };
+  // console.log(queries)
   const requestData = await client.request(httpMethod, uriPath, queries, body, headers, requestOption)
   return requestData
 }
@@ -54,8 +55,25 @@ export default class SaeComponent {
               queries: {AppId, CoType: CoType,CurrentPage: 1, PageSize: 10,},
               region,
             })
-        status = tempResult['Data']['ChangeOrderList'][0].Status ==  2 ? false : true
-      }catch (e) {}
+        const tempStatus = tempResult['Data']['ChangeOrderList'][0].Status
+        if(tempStatus == 2){
+          status = false
+        }else if(tempStatus == 0){
+          status = true
+        } else if(tempStatus == 1){
+          status = true
+        }else if(tempStatus == 3){
+          throw Error('应用状态为：执行失败')
+        }else if(tempStatus == 6){
+          throw Error('应用状态为：终止')
+        }else if(tempStatus == 10){
+          throw Error('应用状态为：系统异常执行失败')
+        }
+      }catch (e) {
+        if(e.message.includes('应用状态为')){
+          throw e
+        }
+      }
     }
   }
 
@@ -96,6 +114,8 @@ export default class SaeComponent {
       }
     }
 
+    let privateStatus = false
+    let tempObject = stringRandom(16)
     if(Application) {
       vm.text = `部署Appliction: ${Application.AppName}`
       // 创建/更新Application
@@ -134,7 +154,6 @@ export default class SaeComponent {
           codePackage.Bucket = codeBucket
         }
 
-        let tempObject = stringRandom(16)
         if (codePackage.Path.endsWith('.war')) {
           tempObject = tempObject + '.war'
           applictionObject.PackageType = 'War'
@@ -143,6 +162,7 @@ export default class SaeComponent {
           if (await fse.existsSync(codePackage.Path)) {
             vm.text = `上传代码：${codePackage.Bucket.Region} / ${codePackage.Bucket.Name} / ${tempObject}`
             await this.uploadFile(credentials, codePackage.Bucket.Name, codePackage.Bucket.Region, codePackage.Path, tempObject, 'upload')
+            privateStatus = true
             applictionObject.PackageUrl = `https://${codePackage.Bucket.Name}.oss-${codePackage.Bucket.Region}.aliyuncs.com/${tempObject}`;
           } else if (codePackage.Path.startsWith("http://") || codePackage.Path.startsWith("https://")) {
             applictionObject.PackageUrl = codePackage.Path;
@@ -156,6 +176,7 @@ export default class SaeComponent {
           if (await fse.existsSync(codePackage.Path)) {
             vm.text = `上传代码：${codePackage.Bucket.Region} / ${codePackage.Bucket.Name} / ${tempObject}`
             await this.uploadFile(credentials, codePackage.Bucket.Name, codePackage.Bucket.Region, codePackage.Path, tempObject, 'upload')
+            privateStatus = true
             applictionObject.PackageUrl = `https://${codePackage.Bucket.Name}.oss-${codePackage.Bucket.Region}.aliyuncs.com/${tempObject}`;
           } else if (codePackage.Path.startsWith("http://") || codePackage.Path.startsWith("https://")) {
             applictionObject.PackageUrl = codePackage.Path;
@@ -168,6 +189,8 @@ export default class SaeComponent {
       } else {
         throw Error("未能找到iamge/package，请确定参数传递正确")
       }
+
+      // console.log(applictionObject)
 
       try {
         vm.text = `尝试创建应用 ...`
@@ -215,6 +238,10 @@ export default class SaeComponent {
         queries: applictionObject,
         Region,
       });
+      // 部署完成，更新应用的对象存储状态
+      if(privateStatus){
+        await this.uploadFile(credentials, codePackage.Bucket.Name, codePackage.Bucket.Region, codePackage.Path, tempObject, 'upload')
+      }
 
       // 检查应用部署状态
       vm.text = `检查部署状态 ...`
