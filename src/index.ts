@@ -131,7 +131,9 @@ export default class SaeComponent {
           const codeBucket = codePackage.Bucket || {}
           codeBucket.Region = codeBucket.Region || Region
           codeBucket.Name = codeBucket.Name || `sae-packages-${Region}-${AccountID}`
+          codePackage.Bucket = codeBucket
         }
+
         let tempObject = stringRandom(16)
         if (codePackage.Path.endsWith('.war')) {
           tempObject = tempObject + '.war'

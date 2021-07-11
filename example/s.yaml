@@ -4,7 +4,7 @@ access: default         #  秘钥别名
 
 services:
   sae-test: #  服务名称
-    component:  devsapp/sae
+    component:  ../lib
     props:
       Region: cn-beijing
       Namespace:
