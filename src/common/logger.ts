@@ -1,36 +1,7 @@
-// @ts-ignore
 import { Logger } from '@serverless-devs/core';
 
-export default class ComponentLogger {
-    static CONTENT = '';
-    static setContent(content) {
-        ComponentLogger.CONTENT = content;
-    }
-    static log(m) {
-        Logger.log(m);
-    }
-    static info(m) {
-        Logger.info(ComponentLogger.CONTENT, m);
-    }
+export const CONTEXT = 'sae';
 
-    static debug(m) {
-        Logger.debug(ComponentLogger.CONTENT, m);
-    }
+const logger = new Logger(CONTEXT);
 
-    static error(m) {
-        Logger.error(ComponentLogger.CONTENT, m);
-    }
-
-    static warning(m) {
-        Logger.warn(ComponentLogger.CONTENT, m);
-    }
-
-
-    static success(m) {
-        Logger.log(m, 'green');
-    }
-
-}
-
-
-
+export default logger;

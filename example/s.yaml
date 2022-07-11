@@ -4,7 +4,7 @@ access: default         #  秘钥别名
 
 services:
   sae-test: #  服务名称
-    component:  ../lib
+    component: ${path(..)}
     props:
       Region: cn-beijing
       Namespace:
@@ -17,11 +17,6 @@ services:
         Code:
 #          Image: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
           Package: https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar
-#          Package:
-#            Path: 路径
-#            Bucket:
-#              Region: 上传的oss地区
-#              Name: 上传的oss名字
         Cpu: 500
         Memory: 1024
         Replicas: 1
