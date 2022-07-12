@@ -63,35 +63,40 @@ export default class SaeComponent {
   }
 
   async deploy(inputs: InputProps) {
-    // console.log(inputs)
     let AppId: any
-    let { props: { Region, Namespace, Application, SLB } } = inputs;
+    let { props: { Region, Namespace, VPCConfig, Application, SLB } } = inputs;
     let credentials = await core.getCredential(inputs.project.access)
     let { AccessKeyID, AccessKeySecret } = credentials
 
 
     await Client.setSaeClient(Region, AccessKeyID, AccessKeySecret);
 
-    // 创建/更新Namespace
-    const vm = spinner('开始部署');
+    // 创建Namespace
+    const vm = spinner('创建Namespace...');
     const env = await this.handleEnv(inputs);
     Namespace = env.Namespace;
+    Application.AutoConfig = env.AutoConfig;
+    if(!Application.AutoConfig){
+      if (Namespace.NamespaceId) {
+        Application.NamespaceId = Namespace.NamespaceId;
+      }
+      if(VPCConfig){
+        Application.VpcId = VPCConfig.VpcId;
+        Application.VSwitchId = VPCConfig.VSwitchId;
+      }
+  }
 
     vm.text = `部署Appliction: ${Application.AppName}`
-    // console.log("====Application====");
-    // console.log(Application);
 
-    const codeData = await handleCode(Application, inputs, credentials);
-
+    const codeData = await handleCode(Region, Application, credentials);
     const applictionObject = codeData.applictionObject;
-    applictionObject.AutoConfig = env.AutoConfig;
 
     const codePackage = codeData.codePackage;
     const tempObject = codeData.tempObject;
     vm.text = `上传代码：${codePackage.Bucket.Region} / ${codePackage.Bucket.Name} / ${tempObject}`
 
     try {
-      vm.text = `尝试创建应用 ...`
+      vm.text = `创建应用 ...`
       let obj = await Client.saeClient.createApplication(applictionObject);
       AppId = obj['Data']['AppId'];
       applictionObject.AppId = AppId;
@@ -100,7 +105,7 @@ export default class SaeComponent {
     }
 
     // 检查应用部署状态
-    vm.text = `检查部署状态 ...`
+    vm.text = `部署应用 ...`
     await this.checkStatus(AppId, 'CoDeploy')
 
     const result = {
@@ -144,8 +149,6 @@ export default class SaeComponent {
       }
     }
     vm.stop();
-    console.log("-------res------------");
-    console.log(result);
     return result
   }
 }

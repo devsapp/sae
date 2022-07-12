@@ -22,7 +22,7 @@ export default class Client {
         };
         const ListChangeOrdersUri = '/pop/v1/sam/changeorder/ListChangeOrders';
         const NamespaceUri = '/pop/v1/paas/namespace';
-        const DescribeNamespacesUri = '/pop/v1/paas/namespaces';
+        const DescribeNamespacesUri = '/pop/v1/sam/namespace/describeNamespaceList';
         const UpdateNamespaceVpc = '/pop/v1/sam/namespace/updateNamespaceVpc';
         const CreateApplicationUri = '/pop/v1/sam/app/createApplication';
         const ListApplicationsUri = '/pop/v1/sam/app/listApplications';
@@ -65,12 +65,9 @@ export default class Client {
         }
 
         saeClient.getNamespace = async function () {
-            let queries = {
-                "CurrentPage": 1,
-                "PageSize": 10
-              };
+            let queries = {};
             let obj = await saeClient.request("GET", DescribeNamespacesUri, queries, body, headers, requestOption);
-            let data = obj['Data']['Namespaces'][0];
+            let data = obj['Data'][0];
             return data;
         }
 

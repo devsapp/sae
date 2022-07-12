@@ -19,25 +19,17 @@ export async function uploadFile(credentials, codePackage, object, type) {
 }
 
 
-export async function handleCode(Application: any, inputs: any, credentials:any) {
-    let { props: { Region, Namespace, VPCConfig } } = inputs;
+export async function handleCode(Region: any, Application: any, credentials:any) {
     let { AccountID } = credentials;
 
     let tempObject = stringRandom(16);
     const applictionObject = JSON.parse(JSON.stringify(Application));
     delete applictionObject.Code;
-    if (Namespace.NamespaceId) {
-        applictionObject.NamespaceId = Namespace.NamespaceId;
-    }
-    if(VPCConfig){
-        applictionObject.VpcId = VPCConfig.VpcId;
-        applictionObject.VSwitchId = VPCConfig.VSwitchId;
-    }
+
     // 对code进行处理
     const code = Application.Code ? Application.Code : {};
     const image = code.Image;
     let codePackage = code.Package;
-
     if (image) {
         applictionObject.PackageType = 'Image';
         applictionObject.ImageUrl = image;
