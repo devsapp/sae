@@ -92,22 +92,16 @@ export default class SaeComponent {
 
     try {
       vm.text = `尝试创建应用 ...`
-      // console.log("=====applictionObject========")
-      // console.log(applictionObject);
       let obj = await Client.saeClient.createApplication(applictionObject);
       AppId = obj['Data']['AppId'];
-      applictionObject.AppId = applictionObject;
+      applictionObject.AppId = AppId;
     } catch (e) {
         throw e
     }
 
-    vm.text = `应用部署中 ...`
-    await Client.saeClient.deployApplication(applictionObject);
-
     // 检查应用部署状态
     vm.text = `检查部署状态 ...`
     await this.checkStatus(AppId, 'CoDeploy')
-
 
     const result = {
       "Namespace": Namespace,
