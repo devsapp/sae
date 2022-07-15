@@ -22,8 +22,8 @@ export default class Client {
         };
         const ListChangeOrdersUri = '/pop/v1/sam/changeorder/ListChangeOrders';
         const NamespaceUri = '/pop/v1/paas/namespace';
-        const DescribeNamespacesUri = '/pop/v1/sam/namespace/describeNamespaceList';
-        const UpdateNamespaceVpc = '/pop/v1/sam/namespace/updateNamespaceVpc';
+        const DescribeNamespaceListUri = '/pop/v1/sam/namespace/describeNamespaceList';
+        const UpdateNamespaceVpcUri = '/pop/v1/sam/namespace/updateNamespaceVpc';
         const CreateApplicationUri = '/pop/v1/sam/app/createApplication';
         const ListApplicationsUri = '/pop/v1/sam/app/listApplications';
         const DeployApplicationUri = '/pop/v1/sam/app/deployApplication';
@@ -50,30 +50,40 @@ export default class Client {
          * @returns 命名空间信息
          */
         saeClient.createNamespace = async function (namespace: any) {
-            let data = await saeClient.request("POST", NamespaceUri, namespace, body, headers, requestOption);
+            let queries = {
+                NamespaceId: namespace.id,
+                NamespaceName: namespace.name,
+                NamespaceDescription: namespace.description,
+            };
+            let data = await saeClient.request("POST", NamespaceUri, queries, body, headers, requestOption);
             return data;
         }
 
         /**
          * 更新命名空间
-         * @param Namespace 命名空间
+         * @param namespace 命名空间
          * @returns 命名空间信息
          */
         saeClient.updateNamespace = async function (namespace: any) {
-            let data = await saeClient.request("PUT", NamespaceUri, namespace, body, headers, requestOption);
+            let queries = {
+                NamespaceId: namespace.id,
+                NamespaceName: namespace.name,
+                NamespaceDescription: namespace.description,
+            };
+            let data = await saeClient.request("PUT", NamespaceUri, queries, body, headers, requestOption);
             return data;
         }
 
         saeClient.getNamespace = async function () {
             let queries = {};
-            let obj = await saeClient.request("GET", DescribeNamespacesUri, queries, body, headers, requestOption);
+            let obj = await saeClient.request("GET", DescribeNamespaceListUri, queries, body, headers, requestOption);
             let data = obj['Data'][0];
             return data;
         }
 
-        saeClient.UpdateNamespaceVpc = async function (NamespaceId: string, VpcId: string) {
-            let queries = {NamespaceId,VpcId};
-            let data = await saeClient.request("POST", UpdateNamespaceVpc, queries, body, headers, requestOption);
+        saeClient.updateNamespaceVpc = async function (namespaceId: string, vpcId: string) {
+            let queries = { NamespaceId: namespaceId, VpcId: vpcId };
+            let data = await saeClient.request("POST", UpdateNamespaceVpcUri, queries, body, headers, requestOption);
             return data
         }
         /*
@@ -114,8 +124,17 @@ export default class Client {
          * @param SLB SLB信息
          * @returns 绑定结果
          */
-        saeClient.bindSLB = async function (SLB: any) {
-            let data = await saeClient.request("POST", BindSLBUri, SLB, body, headers, requestOption);
+        saeClient.bindSLB = async function (slb: any, appId: any) {
+            if (slb.Internet && typeof slb.Internet == 'object') {
+                slb.Internet = JSON.stringify(slb.Internet)
+              }
+              if (slb.Intranet && typeof slb.Intranet == 'object') {
+                slb.Intranet = JSON.stringify(slb.Intranet)
+              }
+              if (appId) {
+                slb.AppId = appId;
+              }
+            let data = await saeClient.request("POST", BindSLBUri, slb, body, headers, requestOption);
             return data;
         }
 

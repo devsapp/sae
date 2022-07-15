@@ -3,152 +3,77 @@ import { InputProps } from './common/entity';
 // @ts-ignore
 import { spinner } from "@serverless-devs/core";
 
-import Client from './client';
-import { handleCode} from './utils';
+import Client from './common/client';
+import { checkStatus, handleEnv, handleCode, setDefault } from './common/utils';
 
 
 export default class SaeComponent {
 
-  async handleEnv(inputs: InputProps) {
-    let { props: { Namespace, VPCConfig } } = inputs;
-    let AutoConfig = false;
-    if (!Namespace&&!VPCConfig) {
-      // 自动配置
-      AutoConfig = true;
-    }else if(!Namespace&&VPCConfig){
-      // 使用默认命名空间
-      Namespace = await Client.saeClient.getNamespace();
-    }else if(Namespace&&!VPCConfig){
-      throw new Error("The specified parameter 'VPCConfig' is invalid.")
-    } else {
-      try {
-        await Client.saeClient.createNamespace(Namespace);
-      } catch (e) {
-        if(e.message.includes('The specified namespace ID already exists')){
-          // The specified namespace ID already exists
-          await Client.saeClient.updateNamespace(Namespace);
-        }else{
-          throw e
-        }
-      }
-    }
-    return { Namespace, VPCConfig, AutoConfig }
-  }
-
-  async checkStatus(appId, coType) {
-    let status = true
-    while (status) {
-      try {
-        const tempResult = await Client.saeClient.listChangeOrders(appId, coType);
-        const tempStatus = tempResult['Data']['ChangeOrderList'][0].Status
-        if (tempStatus === 2) {
-          status = false
-        } else if (tempStatus === 0) {
-          status = true
-        } else if (tempStatus === 1) {
-          status = true
-        } else if (tempStatus === 3) {
-          throw new Error('应用状态为：执行失败')
-        } else if (tempStatus === 6) {
-          throw new Error('应用状态为：终止')
-        } else if (tempStatus === 10) {
-          throw new Error('应用状态为：系统异常执行失败')
-        }
-      } catch (e) {
-        throw e
-      }
-      // 等待1s
-      await new Promise(f => setTimeout(f, 1000));
-    }
-  }
-
   async deploy(inputs: InputProps) {
-    let AppId: any
-    let { props: { Region, Namespace, VPCConfig, Application, SLB } } = inputs;
+    let appId: any
+    let { props: { region, namespace, application, slb } } = inputs;
     let credentials = await core.getCredential(inputs.project.access)
     let { AccessKeyID, AccessKeySecret } = credentials
 
 
-    await Client.setSaeClient(Region, AccessKeyID, AccessKeySecret);
+    await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
 
     // 创建Namespace
     const vm = spinner('创建Namespace...');
-    const env = await this.handleEnv(inputs);
-    Namespace = env.Namespace;
-    Application.AutoConfig = env.AutoConfig;
-    if(!Application.AutoConfig){
-      if (Namespace.NamespaceId) {
-        Application.NamespaceId = Namespace.NamespaceId;
-      }
-      if(VPCConfig){
-        Application.VpcId = VPCConfig.VpcId;
-        Application.VSwitchId = VPCConfig.VSwitchId;
-      }
-  }
+    const env = await handleEnv(inputs, application);
+    namespace = env.namespace;
 
-    vm.text = `部署Appliction: ${Application.AppName}`
-
-    const codeData = await handleCode(Region, Application, credentials);
-    const applictionObject = codeData.applictionObject;
-
-    const codePackage = codeData.codePackage;
-    const tempObject = codeData.tempObject;
-    vm.text = `上传代码：${codePackage.Bucket.Region} / ${codePackage.Bucket.Name} / ${tempObject}`
+    vm.text = `上传代码...`;
+    const applictionObject = await handleCode(region, application, credentials);
+    await setDefault(applictionObject);
 
     try {
       vm.text = `创建应用 ...`
       let obj = await Client.saeClient.createApplication(applictionObject);
-      AppId = obj['Data']['AppId'];
-      applictionObject.AppId = AppId;
+      appId = obj['Data']['AppId'];
+      applictionObject.AppId = appId;
     } catch (e) {
-        throw e
+      throw e
     }
 
     // 检查应用部署状态
     vm.text = `部署应用 ...`
-    await this.checkStatus(AppId, 'CoDeploy')
+    await checkStatus(appId, 'CoDeploy')
 
     const result = {
-      "Namespace": Namespace,
-      "Application": {
-        AppId: AppId,
-        AppName: Application.AppName
+      "namespace": namespace,
+      "application": {
+        appId: appId,
+        name: application.name
       },
-      "Console": `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${AppId}&regionId=${Region}&namespaceId=${Namespace.NamespaceId}`
+      "Console": `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${region}&namespaceId=${namespace.id}`
     }
 
     // 绑定SLB
-    if (SLB) {
-      vm.text = `部署SLB ... `;
-      if (SLB.Internet && typeof SLB.Internet == 'object') {
-        SLB.Internet = JSON.stringify(SLB.Internet)
-      }
-      if (SLB.Intranet && typeof SLB.Intranet == 'object') {
-        SLB.Intranet = JSON.stringify(SLB.Intranet)
-      }
-      if (AppId) {
-        SLB.AppId = AppId
-      }
-      await Client.saeClient.bindSLB(SLB);
+    if (slb) {
+      vm.text = `部署 slb ... `;
+      await Client.saeClient.bindSLB(slb, appId);
 
       // 检查应用部署状态
-      vm.text = `检查SLB绑定状态 ...`
-      await this.checkStatus(AppId, 'CoBindSlb');
+      vm.text = `检查SLB绑定状态 ...`;
+      await checkStatus(appId, 'CoBindSlb');
 
       // 获取SLB信息
       vm.text = `获取SLB信息 ... `
-      const slbConfig = await Client.saeClient.getSLB(AppId);
+      const slbConfig = await Client.saeClient.getSLB(appId);
+
+      
       if (slbConfig["Data"]['InternetIp']) {
-        result['SLB'] = {
+        result['slb'] = {
           InternetIp: slbConfig["Data"]['InternetIp']
         };
       }
       if (slbConfig["Data"]['IntranetSlbId']) {
-        result['SLB'] = result['SLB'] ? result['SLB'] : {};
-        result['SLB']['IntranetSlbId'] = slbConfig["Data"]['InternetIp'];
+        result['slb'] = result['slb'] ? result['slb'] : {};
+        result['slb']['IntranetSlbId'] = slbConfig["Data"]['InternetIp'];
       }
     }
     vm.stop();
-    return result
+    return result;
   }
 }
