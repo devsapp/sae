@@ -12,9 +12,9 @@ services:
         name: test-name
         description: namespace desc
       vpcConfig: # 选填
-        vpcId: vpc-bp14o0juad2lnhcc7pobl
-        vSwitchId: vsw-bp17mndu8y2hyrmpfg9zr
-        securityGroupId: sg-bp1acacj3rlfhbpzx4db
+        vpcId: vpc-bxxxxc7pobl
+        vSwitchId: vsw-bp17xxxxpfg9zr
+        securityGroupId: sg-bp1xxxxxpzx4db
       application:
         name: test
         description: This is a test description.
