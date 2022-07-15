@@ -1,6 +1,34 @@
 // @ts-ignore
-import { ROAClient } from '@alicloud/pop-core';
+import Core, { ROAClient } from '@alicloud/pop-core';
 
+export async function vpcAvailable(vpcId, region, accessKeyID, accessKeySecret){
+
+    var client = new Core({
+        accessKeyId: accessKeyID,
+        accessKeySecret: accessKeySecret,
+        endpoint: 'https://vpc.aliyuncs.com',
+        apiVersion: '2016-04-28'
+      });
+      
+      var params = {
+        "RegionId": region,
+        "VpcId": vpcId
+      }
+      
+      var requestOption = {
+        method: 'POST',
+        formatParams: false,
+      
+      };
+      let data = await client.request('DescribeVpcs', params, requestOption);
+      if(data['TotalCount']!=1){
+        return false;
+      }
+      if(data['Vpcs']['Vpc'][0]['Status']!='Available'){
+        return false;
+      }
+      return true;
+}
 
 export default class Client {
     static saeClient: any;

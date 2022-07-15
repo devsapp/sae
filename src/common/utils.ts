@@ -4,6 +4,8 @@ import fse from "fs";
 import stringRandom from 'string-random';
 import Client from './client';
 import { InputProps } from './entity';
+import { vpcAvailable } from './client';
+
 export async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
     const ossConfig: IOssConfig = {
         accessKeyId: credentials.AccessKeyID,
@@ -43,9 +45,15 @@ export async function checkStatus(appId, coType) {
         await new Promise(f => setTimeout(f, 1000));
     }
 }
-export async function handleEnv(inputs: InputProps, application:any) {
-    let { props: { namespace, vpcConfig } } = inputs;
+export async function handleEnv(inputs: InputProps, application:any, credentials: any) {
+    let { props: {region, namespace, vpcConfig } } = inputs;
     let autoConfig = false;
+    if(vpcConfig){
+        const vpcAvail = await vpcAvailable(vpcConfig.vpcId, region, credentials.AccessKeyID, credentials.AccessKeySecret);
+        if(!vpcAvail){
+            throw new core.CatchableError('vpc配置不可用');
+        }
+    }
     if (!namespace && !vpcConfig) {
         // 自动配置
         autoConfig = true;
