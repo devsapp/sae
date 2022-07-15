@@ -1,6 +1,6 @@
 # 前言
 
-通过该组件，快速通过 SAE 部署demo应用
+通过该组件，快速通过 SAE 部署demo应用。
 
 # 测试
 
@@ -29,48 +29,11 @@ services:
         name: test
         decription: This is a test description.
         code:
-#          image: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
-#          package:
-#            path: 路径
-#            bucket:
-#              region: 上传的oss地区
-#              name: 上传的oss名字
-        cpu: 500 #  选填
-        memory: 1024 #  选填
-        replicas: 1 #  选填
-      slb:
-        Internet: [{"port":80,"targetPort":8080,"protocol":"TCP"}]
-```
-## 样例2
-s.yaml
-
-```yaml
-edition: 1.0.0          #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
-name: sae-app           #  项目名称
-access: default         #  秘钥别名
-
-services:
-  sae-test: #  服务名称
-    component:  devsapp/sae
-    props:
-      region: cn-beijing
-      namespace: #  选填
-        id: cn-beijing:test
-        name: test-name
-        description: namespace desc
-      vpcConfig: # 选填
-        vpcId: vpc-bpxxxxxxpobl
-        vSwitchId: vsw-bpxxxxxxfg9zr
-        securityGroupId: sg-bp1xxxxx4db
-      application:
-        name: test
-        decription: This is a test description.
-        code:
          package:
-           path: test.war
+           path: test.war # 文件路径
            bucket:
-             region: cn-hangzhou
-             name: bucket4sae
+             region: cn-hangzhou # 上传的oss地区
+             name: bucket4sae # 上传的oss名字
         cpu: 500 #  选填
         memory: 1024 #  选填
         replicas: 1 #  选填
@@ -78,17 +41,17 @@ services:
         Internet: [{"port":80,"targetPort":8080,"protocol":"HTTP"}]
 ```
 
-## 样例3
+## 样例2
 s.yaml
 
 ```yaml
-edition: 1.0.0          #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
-name: sae-app           #  项目名称
-access: default         #  秘钥别名
+edition: 1.0.0
+name: sae-app
+access: default
 
 services:
   sae-test:
-    component:  ../../lib
+    component:  ../lib
     props:
       region: cn-hangzhou
       application:
@@ -156,9 +119,6 @@ services:
 |WarStartOptions	|String	|	否	|custom-option	|WAR包启动应用选项。应用默认启动命令：java $JAVA_OPTS $CATALINA_OPTS [-Options] org.apache.catalina.startup.Bootstrap "$@" start|
 |ConfigMapMountDesc|	String	|否	|[{"configMapId":16,"key":"test","mountPath":"/tmp"}]	|ConfigMap挂载描述。|
 |TerminationGracePeriodSeconds	|Integer	|	否|	30	|优雅下线超时时间，默认为30，单位为秒。取值范围为1~60。|
-|PhpArmsConfigLocation	|String	|	否|	/usr/local/etc/php/conf.d/arms.ini	|PHP应用监控挂载路径，需要您保证PHP服务器一定会加载这个路径的配置文件。<br>您无需关注配置内容，SAE会自动渲染正确的配置文件。|
-|PhpConfigLocation	|String	|	否|	/usr/local/etc/php/php.ini	|PHP应用启动配置挂载路径，需要您保证PHP服务器会使用这个配置文件启动。|
-|PhpConfig|	String	|	否	|k1=v1	|PHP配置文件内容。|
 |TomcatConfig	|String	|	否	|{"useDefaultConfig":false,"contextInputType":"custom","contextPath":"hello","httpPort":8088,"maxThreads":400,"uriEncoding":"UTF-8","useBodyEncoding":true,"useAdvancedServerXml":false}|Tomcat文件配置，设置为""或"{}"表示删除配置：<br><br>useDefaultConfig：是否使用自定义配置，若为true，则表示不使用自定义配置；若为false，则表示使用自定义配置。若不使用自定义配置，则下面的参数配置将不会生效。<br>contextInputType：选择应用的访问路径。<br>war：无需填写自定义路径，应用的访问路径是WAR包名称。<br>root：无需填写自定义路径，应用的访问路径是/。<br>custom：需要在下面的自定义路径中填写自定义的路径。<br>contextPath：自定义路径，当contextInputType类型为custom时，才需要配置此参数。<br>httpPort：端口范围为1024~65535，小于1024的端口需要Root权限才能操作。因为容器配置的是Admin权限，所以请填写大于1024的端口。如果不配置，则默认为8080。<br>maxThreads：配置连接池的连接数大小，默认大小是400。<br>uriEncoding：Tomcat的编码格式，包括UTF-8、ISO-8859-1、GBK和GB2312。如果不设置则默认为ISO-8859-1。<br>useBodyEncoding：是否使用BodyEncoding for URL。|
 |AcrAssumeRoleArn	|String	|	否	|acs:ram::123456789012****:role/adminrole|	跨账号拉取镜像时所需的RAM角色的ARN。|
 |OssMountDescs	|String	|	否	|[{"bucketName": "oss-bucket", "bucketPath": "data/user.data", "mountPath": "/usr/data/user.data", "readOnly": true}]	|OSS挂载描述信息。|
@@ -167,25 +127,58 @@ services:
 
 
 ### application的code配置
+code是应用的代码配置，选用Java部署时，支持FatJar、War和Image三种部署方式。
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |
-| image | String  |  否  |  registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0  |   镜像地址  |
-| package |  String/Struct  |  否  |  https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar  |   代码包，本地文件或部署包地址。  |
+| image | String  |  否  |  registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0  |   镜像地址，使用镜像方式部署时必填。  |
+| package |  String/Struct  |  否  |  https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar  |   本地文件或部署包地址，使用FatJar或War方式部署时必填。  |
 
-当package为Struct时：
+当package为String时，若使用了本地jar/war包，组件会自动上传该文件。当package为Struct时：
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |
 | path | String  |  是  |  ./abc.jar  |   路径  |
 | bucket | Struct  |  否  |  -  |   对象存储配置  |
 
-bucket如果被指定时：
+bucket属性：
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |
-| region | String  |  是  |  cn-hangzhou  |   上传的oss地区  |
-| name | Struct  |  是  |  test  |   上传的oss名字  |
+| region | String  |  是  |  cn-hangzhou  |   上传的oss地区，默认与SAE的region相同。  |
+| name | Struct  |  是  |  test  |   上传的oss名字，默认值为`sae-packages-${region}-${AccountID}`，不存在此bucket则自动创建。  |
+
+#### code示例
+使用镜像方式部署：
+```yaml
+code:
+  image: registry.cn-hangzhou.aliyuncs.com/namespace4sae/repo4sae:v1
+```
+
+使用远程jar包地址：
+```yaml
+code:
+  package: https://bucket4sae.oss-cn-hangzhou.aliyuncs.com/demo.jar
+```
+
+使用本地jar包部署：
+```yaml
+code:
+  package: demo.jar
+```
+
+使用本地war包部署并指定上传地址：
+```yaml
+code:
+  package:
+    path: test.war
+    bucket:
+      region: cn-hangzhou
+      name: bucket4sae
+```
+
+
+
 
 
 ## slb
