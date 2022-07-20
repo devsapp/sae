@@ -37,8 +37,7 @@ services:
         cpu: 500 #  选填
         memory: 1024 #  选填
         replicas: 1 #  选填
-      slb:
-        Internet: [{"port":80,"targetPort":8080,"protocol":"HTTP"}]
+        port: 8080
 ```
 
 ## 样例2
@@ -58,8 +57,7 @@ services:
         name: test
         code:
           package: demo.jar
-      slb:
-        Internet: [{"port":80,"targetPort":8088,"protocol":"TCP"}]
+        port: 8088
 ```
 
 # 参数详情
@@ -96,34 +94,44 @@ services:
 |name|	String	|	是|	test	| 应用名称。允许数字、字母以及短划线（-）组合。必须以字母开始，不超过36个字符。|
 |decription	|String	|	否	|This is a test description.	|应用描述信息。不超过1024个字符。|
 |code|Struct|是|-|代码|
+|port|String|否|8080|容器端口。|
 |cpu|	Integer	|	否	|1000	| 每个实例所需的CPU，单位为毫核，不能为0。目前仅支持以下固定规格：<br>500<br>1000<br>2000<br>4000<br>8000<br>16000<br>32000|
 |memory|	Integer	|	否	|1024	|每个实例所需的内存，单位为MB，不能为0。与CPU为一一对应关系，目前仅支持以下固定规格：<br>1024：对应CPU为500毫核。<br>2048：对应CPU为500和1000毫核。<br>4096：对应CPU为1000和2000毫核。<br>8192：对应CPU为2000和4000毫核。<br>16384：对应CPU为4000和8000毫核。<br>32768：对应CPU为16000毫核。<br>65536：对应CPU为8000、16000和32000毫核。<br>131072：对应CPU为32000毫核。|
 |replicas|	Integer	|	否	|1	|初始实例数，默认为1。|
-|Command|	String		|否|	sleep	|镜像启动命令。该命令必须为容器内存在的可执行的对象。例如：sleep。设置该命令将导致镜像原本的启动命令失效。|
-|CommandArgs	|String	|	否|	1d	|镜像启动命令参数。上述启动命令所需参数。例如：1d|
-|Envs|	String	|	否	|[{"name":"envtmp","value":"0"}]	|容器环境变量参数。|
-|CustomHostAlias	|String	|	否	|[{"hostName":"samplehost","ip":"127.0.0.1"}]	|容器内自定义host映射。|
-|JarStartOptions	|String	|	否	|-Xms4G -Xmx4G	|JAR包启动应用选项。应用默认启动命令：$JAVA_HOME/bin/java $JarStartOptions -jar $CATALINA_OPTS "$package_path" $JarStartArgs|
-|JarStartArgs	|String	|	否	|custom-args	|JAR包启动应用参数。应用默认启动命令：$JAVA_HOME/bin/java $JarStartOptions -jar $CATALINA_OPTS "$package_path" $JarStartArgs|
-|Liveness|	String	|	否	|{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}	|容器健康检查，健康检查失败的容器将被关闭并恢复。目前仅支持容器内下发命令的方式。例如：{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}<br>command：设置健康检查命令。<br>initialDelaySeconds：设置健康检查延迟检测时间，单位为秒。<br>periodSeconds：设置健康检查周期，单位为秒。<br>timeoutSeconds：设置健康检查超时等待时间，单位为秒。|
-|Readiness	|String|		否|	{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}	|应用启动状态检查，多次健康检查失败的容器将被关闭并重启。不通过健康检查的容器将不会有SLB流量进入。例如：{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}<br>command：设置健康检查命令。<br>initialDelaySeconds：设置健康检查延迟检测时间，单位为秒。<br>periodSeconds：设置健康检查周期，单位为秒。<br>timeoutSeconds：设置健康检查超时等待时间，单位为秒。|
-|Deploy|	Boolean	|	否	|true|	是否立即部署。取值说明如下：<br>true：立即部署。<br>false：默认值，稍后部署。|
-|EdasContainerVersion	|String	|	否|	3.5.3	|Pandora应用使用的运行环境。|
-|Timezone|	String	|	否|	Asia/Shanghai	|时区默认为Asia/Shanghai。|
-|SlsConfigs|	String|		否	|[{\"logDir\":\"/root/logs/hsf.log\"}]	|文件日志采集配置。<br>使用SAE自动创建的SLS资源：[{\"logDir\":\"/root/logs/hsf.log\"}]。<br>使用自定义的SLS资源：[{\"projectName\":\"test-sls\",\"logDir\":\"/tmp/readiness.txt\",\"logstoreName\":\"logstore\","logtailName":"testLogtail"}]。<br>projectName：配置SLS上的Project名称。<br>logDir：配置收集日志文件的路径。<br>logstoreName：配置SLS上的Logstore名称。<br>logtailName：配置SLS上的Logtail名称，如果不指定，则表示新建Logtail。|
-|NasId|String	|	否|	KSAK****	|挂载的NAS的ID，必须与集群处在同一个地域。它必须有可用的挂载点创建额度，或者其挂载点已经在VPC内的交换机上。如果不填，且存在mountDescs字段，则默认将自动购买一个NAS并挂载至VPC内的交换机上。|
-|MountHost|	String	|	否|	example.com	|NAS在应用VPC内的挂载点。|
-|MountDesc	|String	|	否|	[{MountPath: "/tmp", NasPath: "/"}]	|挂载描述。|
-|PreStop|	String	|	否	|{"exec":{"command":["cat","/etc/group"]}}	|停止前执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}|
-|PostStart	|String	|	否	|{"exec":{"command":["cat","/etc/group"]}}	|启动后执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}|
-|WarStartOptions	|String	|	否	|custom-option	|WAR包启动应用选项。应用默认启动命令：java $JAVA_OPTS $CATALINA_OPTS [-Options] org.apache.catalina.startup.Bootstrap "$@" start|
-|ConfigMapMountDesc|	String	|否	|[{"configMapId":16,"key":"test","mountPath":"/tmp"}]	|ConfigMap挂载描述。|
-|TerminationGracePeriodSeconds	|Integer	|	否|	30	|优雅下线超时时间，默认为30，单位为秒。取值范围为1~60。|
-|TomcatConfig	|String	|	否	|{"useDefaultConfig":false,"contextInputType":"custom","contextPath":"hello","httpPort":8088,"maxThreads":400,"uriEncoding":"UTF-8","useBodyEncoding":true,"useAdvancedServerXml":false}|Tomcat文件配置，设置为""或"{}"表示删除配置：<br><br>useDefaultConfig：是否使用自定义配置，若为true，则表示不使用自定义配置；若为false，则表示使用自定义配置。若不使用自定义配置，则下面的参数配置将不会生效。<br>contextInputType：选择应用的访问路径。<br>war：无需填写自定义路径，应用的访问路径是WAR包名称。<br>root：无需填写自定义路径，应用的访问路径是/。<br>custom：需要在下面的自定义路径中填写自定义的路径。<br>contextPath：自定义路径，当contextInputType类型为custom时，才需要配置此参数。<br>httpPort：端口范围为1024~65535，小于1024的端口需要Root权限才能操作。因为容器配置的是Admin权限，所以请填写大于1024的端口。如果不配置，则默认为8080。<br>maxThreads：配置连接池的连接数大小，默认大小是400。<br>uriEncoding：Tomcat的编码格式，包括UTF-8、ISO-8859-1、GBK和GB2312。如果不设置则默认为ISO-8859-1。<br>useBodyEncoding：是否使用BodyEncoding for URL。|
-|AcrAssumeRoleArn	|String	|	否	|acs:ram::123456789012****:role/adminrole|	跨账号拉取镜像时所需的RAM角色的ARN。|
-|OssMountDescs	|String	|	否	|[{"bucketName": "oss-bucket", "bucketPath": "data/user.data", "mountPath": "/usr/data/user.data", "readOnly": true}]	|OSS挂载描述信息。|
-|OssAkId|	String|	否	|xxxxxx	|OSS读写的AccessKey ID。|
-|OssAkSecret|	String	|	否	|xxxxxx	|OSS读写的AccessKey Secret|
+|command|	String		|否|	sleep	|镜像启动命令。该命令必须为容器内存在的可执行的对象。例如：sleep。设置该命令将导致镜像原本的启动命令失效。|
+|commandArgs	|String	|	否|	1d	|镜像启动命令参数。上述启动命令所需参数。例如：1d|
+|envs|	String	|	否	|[{"name":"envtmp","value":"0"}]	|容器环境变量参数。|
+|customHostAlias	|String	|	否	|[{"hostName":"samplehost","ip":"127.0.0.1"}]	|容器内自定义host映射。|
+|jarStartOptions	|String	|	否	|-Xms4G -Xmx4G	|JAR包启动应用选项。应用默认启动命令：$JAVA_HOME/bin/java $JarStartOptions -jar $CATALINA_OPTS "$package_path" $JarStartArgs|
+|jarStartArgs	|String	|	否	|custom-args	|JAR包启动应用参数。应用默认启动命令：$JAVA_HOME/bin/java $JarStartOptions -jar $CATALINA_OPTS "$package_path" $JarStartArgs|
+|liveness|	String	|	否	|{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}	|容器健康检查，健康检查失败的容器将被关闭并恢复。目前仅支持容器内下发命令的方式。例如：{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}<br>command：设置健康检查命令。<br>initialDelaySeconds：设置健康检查延迟检测时间，单位为秒。<br>periodSeconds：设置健康检查周期，单位为秒。<br>timeoutSeconds：设置健康检查超时等待时间，单位为秒。|
+|readiness	|String|		否|	{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}	|应用启动状态检查，多次健康检查失败的容器将被关闭并重启。不通过健康检查的容器将不会有SLB流量进入。例如：{"exec":{"command":["sh","-c","cat /home/admin/start.sh"]},"initialDelaySeconds":30,"periodSeconds":30,"timeoutSeconds":2}<br>command：设置健康检查命令。<br>initialDelaySeconds：设置健康检查延迟检测时间，单位为秒。<br>periodSeconds：设置健康检查周期，单位为秒。<br>timeoutSeconds：设置健康检查超时等待时间，单位为秒。|
+|deploy|	Boolean	|	否	|true|	是否立即部署。取值说明如下：<br>true：立即部署。<br>false：默认值，稍后部署。|
+|edasContainerVersion	|String	|	否|	3.5.3	|Pandora应用使用的运行环境。|
+|timezone|	String	|	否|	Asia/Shanghai	|时区默认为Asia/Shanghai。|
+|slsConfigs|	String|		否	|[{\"logDir\":\"/root/logs/hsf.log\"}]	|文件日志采集配置。<br>使用SAE自动创建的SLS资源：[{\"logDir\":\"/root/logs/hsf.log\"}]。<br>使用自定义的SLS资源：[{\"projectName\":\"test-sls\",\"logDir\":\"/tmp/readiness.txt\",\"logstoreName\":\"logstore\","logtailName":"testLogtail"}]。<br>projectName：配置SLS上的Project名称。<br>logDir：配置收集日志文件的路径。<br>logstoreName：配置SLS上的Logstore名称。<br>logtailName：配置SLS上的Logtail名称，如果不指定，则表示新建Logtail。|
+|nasId|String	|	否|	KSAK****	|挂载的NAS的ID，必须与集群处在同一个地域。它必须有可用的挂载点创建额度，或者其挂载点已经在VPC内的交换机上。如果不填，且存在mountDescs字段，则默认将自动购买一个NAS并挂载至VPC内的交换机上。|
+|mountHost|	String	|	否|	example.com	|NAS在应用VPC内的挂载点。|
+|mountDesc	|String	|	否|	[{MountPath: "/tmp", NasPath: "/"}]	|挂载描述。|
+|preStop|	String	|	否	|{"exec":{"command":["cat","/etc/group"]}}	|停止前执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}|
+|postStart	|String	|	否	|{"exec":{"command":["cat","/etc/group"]}}	|启动后执行脚本，格式如：{"exec":{"command":["cat","/etc/group"]}}|
+|warStartOptions	|String	|	否	|custom-option	|WAR包启动应用选项。应用默认启动命令：java $JAVA_OPTS $CATALINA_OPTS [-Options] org.apache.catalina.startup.Bootstrap "$@" start|
+|configMapMountDesc|	String	|否	|[{"configMapId":16,"key":"test","mountPath":"/tmp"}]	|ConfigMap挂载描述。|
+|autoConfig|	Boolean	|否	| true |是否自动配置网络环境。取值说明：true：创建应用时SAE自动配置网络环境。NamespaceId、VpcId、vSwitchId和SecurityGroupId的取值将被忽略。false：创建应用时SAE手动配置网络环境。|
+|terminationGracePeriodSeconds	|Integer	|	否|	30	|优雅下线超时时间，默认为30，单位为秒。取值范围为1~60。|
+|phpConfigLocation	| String	|	否|	/usr/local/etc/php/php.ini	|PHP应用启动配置挂载路径，需要您保证PHP服务器会使用这个配置文件启动。|
+|phpConfig	| String	|	否|	k1=v1	|PHP配置文件内容。|
+|tomcatConfig	|String	|	否	|{"useDefaultConfig":false,"contextInputType":"custom","contextPath":"hello","httpPort":8088,"maxThreads":400,"uriEncoding":"UTF-8","useBodyEncoding":true,"useAdvancedServerXml":false}|Tomcat文件配置，设置为""或"{}"表示删除配置：<br><br>useDefaultConfig：是否使用自定义配置，若为true，则表示不使用自定义配置；若为false，则表示使用自定义配置。若不使用自定义配置，则下面的参数配置将不会生效。<br>contextInputType：选择应用的访问路径。<br>war：无需填写自定义路径，应用的访问路径是WAR包名称。<br>root：无需填写自定义路径，应用的访问路径是/。<br>custom：需要在下面的自定义路径中填写自定义的路径。<br>contextPath：自定义路径，当contextInputType类型为custom时，才需要配置此参数。<br>httpPort：端口范围为1024~65535，小于1024的端口需要Root权限才能操作。因为容器配置的是Admin权限，所以请填写大于1024的端口。如果不配置，则默认为8080。<br>maxThreads：配置连接池的连接数大小，默认大小是400。<br>uriEncoding：Tomcat的编码格式，包括UTF-8、ISO-8859-1、GBK和GB2312。如果不设置则默认为ISO-8859-1。<br>useBodyEncoding：是否使用BodyEncoding for URL。|
+|ossMountDescs	|String	|	否	|[{"bucketName": "oss-bucket", "bucketPath": "data/user.data", "mountPath": "/usr/data/user.data", "readOnly": true}]	|OSS挂载描述信息。|
+|ossAkId|	String|	否	|xxxxxx	|OSS读写的AccessKey ID。|
+|ossAkSecret|	String	|	否	|xxxxxx	|OSS读写的AccessKey Secret。|
+|AcrInstanceId|	String	|	否	|cri-xxxxxx	|容器镜像服务ACR企业版实例ID。当ImageUrl为容器镜像服务企业版时必填。|
+|acrAssumeRoleArn	|String	|	否	|acs:ram::123456789012****:role/adminrole|	跨账号拉取镜像时所需的RAM角色的ARN。|
+|AssociateEip|	Boolean	|	否	|true	|是否绑定EIP。true：绑定。false：不绑定。|
+|OpenCollectToKafka|	Boolean	|	否	|true	|是否开通日志采集到Kafka。true：开通。false：不开通。如果选择不开通，您需要在请求中将KafkaEndpoint、KafkaInstanceId和KafkaLogfileConfig字段的值设为空字符串（即请求中字段的值为""）。|
+|KafkaEndpoint|	String	|	否	|10.0.X.XXX:XXXX,10.0.X.XXX:XXXX,10.0.X.XXX:XXXX	|Kafka API的服务接入地址。|
+|KafkaLogfileConfig|	String	|	否	|[{"logType":"file_log","logDir":"/tmp/a.log","kafkaTopic":"test2"},{"logType":"stdout","logDir":"","kafkaTopic":"test"}]	|日志采集到Kafka的配置。参数说明如下：<br>logType：日志类型。取值如下：<br>- file_log：文件日志（容器内日志路径）。<br>- stdout：容器标准输出日志。仅可设置1条。<br>logDir：收集日志的路径。<br>kafkaTopic：消息的主题，用于分类消息。|
+|KafkaInstanceId|	String	|	否	|alikafka_pre-cn-7pp2l8kr****	|Kafka实例ID。|
 
 
 ### application的code配置

@@ -45,12 +45,12 @@ export async function checkStatus(appId, coType) {
         await new Promise(f => setTimeout(f, 1000));
     }
 }
-export async function handleEnv(inputs: InputProps, application:any, credentials: any) {
-    let { props: {region, namespace, vpcConfig } } = inputs;
+export async function handleEnv(inputs: InputProps, application: any, credentials: any) {
+    let { props: { region, namespace, vpcConfig, slb } } = inputs;
     let autoConfig = false;
-    if(vpcConfig){
+    if (vpcConfig) {
         const vpcAvail = await vpcAvailable(vpcConfig.vpcId, region, credentials.AccessKeyID, credentials.AccessKeySecret);
-        if(!vpcAvail){
+        if (!vpcAvail) {
             throw new core.CatchableError('vpc配置不可用');
         }
     }
@@ -86,19 +86,25 @@ export async function handleEnv(inputs: InputProps, application:any, credentials
     }
     application.AutoConfig = autoConfig;
     if (!application.AutoConfig) {
-      if (namespace.id) {
-        application.NamespaceId = namespace.id;
-      }
-      if (vpcConfig) {
-        application.VpcId = vpcConfig.vpcId;
-        application.VSwitchId = vpcConfig.vSwitchId;
-        application.SecurityGroupId = vpcConfig.securityGroupId;
-      }
+        if (namespace.id) {
+            application.NamespaceId = namespace.id;
+        }
+        if (vpcConfig) {
+            application.VpcId = vpcConfig.vpcId;
+            application.VSwitchId = vpcConfig.vSwitchId;
+            application.SecurityGroupId = vpcConfig.securityGroupId;
+        }
     }
     application.AppName = application.name;
     application.AppDescription = application.decription;
 
-    return { namespace};
+    // slb
+    if (application.port) {
+        slb = {
+            Internet: [{ "port": 80, "targetPort": application.port, "protocol": "HTTP" }]
+        };
+    }
+    return { namespace, slb };
 }
 
 export async function handleCode(region: any, application: any, credentials: any) {
@@ -168,4 +174,11 @@ export async function setDefault(applictionObject: any) {
     applictionObject.Cpu = applictionObject.cpu ? applictionObject.cpu : 500;
     applictionObject.Memory = applictionObject.memory ? applictionObject.memory : 1024;
     applictionObject.Replicas = applictionObject.Replicas ? applictionObject.replicas : 1;
+    // 参数命名方式修改
+    for(var key in applictionObject){
+        if(/^[a-z].*$/.test(key)){
+            let Key = key.replace(key[0],key[0].toUpperCase());
+            applictionObject[Key] = applictionObject[key];
+        }
+    }
 }

@@ -22,6 +22,7 @@ export default class SaeComponent {
     const vm = spinner('创建Namespace...');
     const env = await handleEnv(inputs, application, credentials);
     namespace = env.namespace;
+    slb = env.slb;
 
     vm.text = `上传代码...`;
     const applictionObject = await handleCode(region, application, credentials);

@@ -29,5 +29,4 @@ services:
         cpu: 500
         memory: 1024
         replicas: 1
-      slb:
-        Internet: [{"port":80,"targetPort":8088,"protocol":"TCP"}]
+        port: 8088
