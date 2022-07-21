@@ -139,6 +139,7 @@ code是应用的代码配置，选用Java部署时，支持FatJar、War和Image�
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |
+| type | String  |  否  |  php  |   代码类型，当使用php时必填。  |
 | image | String  |  否  |  registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0  |   镜像地址，使用镜像方式部署时必填。  |
 | package |  String/Struct  |  否  |  https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar  |   本地文件或部署包地址，使用FatJar或War方式部署时必填。  |
 

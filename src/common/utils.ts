@@ -107,6 +107,27 @@ export async function handleEnv(inputs: InputProps, application: any, credential
     return { namespace, slb };
 }
 
+async function getPackageStruct(codePackage: any, region: any, AccountID: any) {
+    if (typeof codePackage == 'string') {
+        codePackage = {
+            path: codePackage,
+            bucket: {
+                region: region,
+                name: `sae-packages-${region}-${AccountID}`
+            }
+        }
+    } else {
+        if (!codePackage.path) {
+            throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确")
+        }
+        const codeBucket = codePackage.bucket || {}
+        codeBucket.region = codeBucket.region || region
+        codeBucket.name = codeBucket.name || `sae-packages-${region}-${AccountID}`
+        codePackage.bucket = codeBucket
+    }
+    return codePackage;
+}
+
 export async function handleCode(region: any, application: any, credentials: any) {
     let { AccountID } = credentials;
 
@@ -122,37 +143,32 @@ export async function handleCode(region: any, application: any, credentials: any
     const image = code.image;
     let codePackage = code.package;
     if (image) {
-        applictionObject.PackageType = 'Image';
+        if (code.type === 'php') {
+            applictionObject.PackageType = 'IMAGE_PHP_7_3';
+        } else {
+            applictionObject.PackageType = 'Image';
+        }
         applictionObject.ImageUrl = image;
     } else if (codePackage) {
-        if (typeof codePackage == 'string') {
-            codePackage = {
-                path: codePackage,
-                bucket: {
-                    region: region,
-                    name: `sae-packages-${region}-${AccountID}`
-                }
-            }
-        } else {
-            if (!codePackage.path) {
-                throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确")
-            }
-            const codeBucket = codePackage.bucket || {}
-            codeBucket.region = codeBucket.region || region
-            codeBucket.name = codeBucket.name || `sae-packages-${region}-${AccountID}`
-            codePackage.bucket = codeBucket
-        }
-        if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar')) {
+        codePackage = await getPackageStruct(codePackage, region, AccountID);
+        if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar') || codePackage.path.endsWith('.zip')) {
             if (codePackage.path.endsWith('.war')) {
                 tempObject = tempObject + '.war';
                 applictionObject.PackageType = 'War';
                 applictionObject.WebContainer = 'apache-tomcat-8.5.42';
+                applictionObject.Jdk = 'Open JDK 8';
+                applictionObject.PackageVersion = '	1.0.0';
             } else if (codePackage.path.endsWith('.jar')) {
                 tempObject = tempObject + '.jar';
                 applictionObject.PackageType = 'FatJar';
+                applictionObject.Jdk = 'Open JDK 8';
+                applictionObject.PackageVersion = '	1.0.0';
+            } else if (codePackage.path.endsWith('.zip')) {
+                tempObject = tempObject + '.zip';
+                applictionObject.PackageType = 'PhpZip';
+                applictionObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
+                applictionObject.Php = 'PHP-FPM 7.3';
             }
-            applictionObject.Jdk = 'Open JDK 8';
-            applictionObject.PackageVersion = '	1.0.0';
             if (await fse.existsSync(codePackage.path)) {
                 await uploadFile(credentials, codePackage, tempObject, 'upload')
                 applictionObject.PackageUrl = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${tempObject}`;
@@ -162,7 +178,7 @@ export async function handleCode(region: any, application: any, credentials: any
                 throw new core.CatchableError("未能成功找到文件，请确定package的路径正确");
             }
         } else {
-            throw new core.CatchableError("未能找到war/jar文件，请确定参数传递正确");
+            throw new core.CatchableError("未能找到代码文件，请确定参数传递正确");
         }
     } else {
         throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确");
@@ -175,9 +191,9 @@ export async function setDefault(applictionObject: any) {
     applictionObject.Memory = applictionObject.memory ? applictionObject.memory : 1024;
     applictionObject.Replicas = applictionObject.Replicas ? applictionObject.replicas : 1;
     // 参数命名方式修改
-    for(var key in applictionObject){
-        if(/^[a-z].*$/.test(key)){
-            let Key = key.replace(key[0],key[0].toUpperCase());
+    for (var key in applictionObject) {
+        if (/^[a-z].*$/.test(key)) {
+            let Key = key.replace(key[0], key[0].toUpperCase());
             applictionObject[Key] = applictionObject[key];
         }
     }
