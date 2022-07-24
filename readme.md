@@ -1,12 +1,24 @@
-# 前言
+<h1 align="center">阿里云 SAE 应用部署组件</h1>
+<p align="center" class="flex justify-center">
+  <a href="https://nodejs.org/en/" class="ml-1">
+    <img src="https://img.shields.io/badge/node-%3E%3D%2010.8.0-brightgreen" alt="node.js version">
+  </a>
+  <a href="https://github.com/devsapp/api-gateway/blob/master/LICENSE" class="ml-1">
+    <img src="https://img.shields.io/badge/License-MIT-green" alt="license">
+  </a>
+  <a href="https://github.com/devsapp/api-gateway/issues" class="ml-1">
+    <img src="https://img.shields.io/github/issues/devsapp/api-gateway" alt="issues">
+  </a>
+  </a>
+</p>
 
-通过该组件，快速通过 SAE 部署demo应用。
+# 组件简介
 
-# 测试
+`SAE` 组件帮助用户快速上手阿里云提供的 Serverless应用引擎 SAE，通过配置 s.yaml，快速完成应用部署部署。
 
-## 样例1
-s.yaml
-
+# 快速开始
+1. 配置 s.yaml，[参数详情](#参数详情)
+  - s.yaml 样例1
 ```yaml
 edition: 1.0.0          #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
 name: sae-app           #  项目名称
@@ -39,10 +51,7 @@ services:
         replicas: 1 #  选填
         port: 8080
 ```
-
-## 样例2
-s.yaml
-
+  - s.yaml 样例2
 ```yaml
 edition: 1.0.0
 name: sae-app
@@ -59,16 +68,18 @@ services:
           package: demo.jar
         port: 8088
 ```
+2. 执行 `s deploy`，自动部署应用并绑定公网SLB，让您的应用可以被公网访问。
+- [快速应用实例](https://github.com/devsapp/start-sae)
 
 # 参数详情
 
-| 参数名 |  必填  |  类型  |  参数描述  |
+| 参数名 |  是否必选  |  类型  |  参数描述  |
 | --- |  ---  |  ---  |  ---  |
-| region | True | String | 地区 |
-| namespace | False | Struct | 命名空间 |
-| vpcConfig | False | Struct | VPC配置 |
-| application | True | Struct | 应用配置 |
-| slb | False | Struct | SLB配置 |
+| region | 是 | String | 地区 |
+| namespace | 否 | Struct | 命名空间 |
+| vpcConfig | 否 | Struct | VPC配置 |
+| application | 是 | Struct | 应用配置 |
+| slb | 否 | Struct | SLB配置 |
 
 
 ## namespace
@@ -186,10 +197,6 @@ code:
       name: bucket4sae
 ```
 
-
-
-
-
 ## slb
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
@@ -198,3 +205,20 @@ code:
 |Intranet|	String	|	否|	[{"port":80,"targetPort":8080,"protocol":"TCP"}]	|绑定私网SLB。例如：[{"port":80,"targetPort":8080,"protocol":"TCP"}]，表示将容器的8080端口通过SLB的80端口暴露服务，协议为TCP。|
 |InternetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的公网SLB，目前只支持非共享型实例。|
 |IntranetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的私网SLB，目前只支持非共享型实例。|
+
+# 组件指令
+## deploy
+通过 `s deploy` 指令自动将demo.jar部署到Serverless应用引擎SAE，并绑定公网SLB，让您的应用可以被公网访问。执行结果示例如下：
+```yaml
+function-test: # 执行结果
+  namespace: # 命名空间
+    id:   cn-hangzhou
+    name: China East 1 (Hangzhou)
+  application: # 应用信息
+    appId: 47e7c9xxxxxx7fd8a3bd2d
+    name:  start-sae-java-image
+  Console:     https://sae.console.aliyun.com/#/AppList/AppDetail?appId=47e7c9xxxxxxxd8a3bd2d&regionId=cn-hangzhou&namespaceId=cn-hangzhou # 控制台链接
+  slb: # 负载均衡
+    InternetIp: 120.55.242.194 # 公网访问地址
+```
+通过`slb.InternetIp`的值即可访问应用。
