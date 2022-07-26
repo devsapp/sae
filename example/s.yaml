@@ -3,28 +3,30 @@ name: sae-app           #  项目名称
 access: default         #  秘钥别名
 
 services:
-  sae-test: #  服务名称
+  sae-test:
     component:  ../lib
     props:
-      Region: cn-beijing
-      Namespace:
-        NamespaceId: cn-beijing:test
-        NamespaceName: name
-        NamespaceDescription: namespace desc
-      Application:
-        AppName: test
-        AppDescription: This is a test description.
-        Code:
-#          Image: registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0
-          Package: https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar
-#          Package:
-#            Path: 路径
-#            Bucket:
-#              Region: 上传的oss地区
-#              Name: 上传的oss名字
-        Cpu: 500
-        Memory: 1024
-        Replicas: 1
-        AutoConfig: true
-      SLB:
-        Internet: [{"port":80,"targetPort":8080,"protocol":"TCP"}]
+      region: cn-hangzhou
+      namespace: # 选填
+        id: cn-hangzhou:test
+        name: test-name
+        description: namespace desc
+      vpcConfig: # 选填
+        vpcId: vpc-bxxxxc7pobl
+        vSwitchId: vsw-bp17xxxxpfg9zr
+        securityGroupId: sg-bp1xxxxxpzx4db
+      application:
+        name: test
+        description: This is a test description.
+        code:
+#          image: registry.cn-hangzhou.aliyuncs.com/namespace4sae/repo4sae:v1
+          package: https://bucket4sae.oss-cn-hangzhou.aliyuncs.com/demo.jar
+#          package:
+#            path: 路径
+#            bucket:
+#              region: 上传的oss地区
+#              name: 上传的oss名字
+        cpu: 500
+        memory: 1024
+        replicas: 1
+        port: 8088
