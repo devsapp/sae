@@ -1,9 +1,8 @@
 import * as core from '@serverless-devs/core';
 import oss, { IOssConfig } from './oss.service';
 import fse from "fs";
-import stringRandom from 'string-random';
 import Client from './client';
-import { InputProps } from './entity';
+import { InputProps, OutputProps } from './entity';
 import { vpcAvailable } from './client';
 
 export async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
@@ -45,6 +44,45 @@ export async function checkStatus(appId, coType) {
         await new Promise(f => setTimeout(f, 1000));
     }
 }
+
+export async function output(applictionObject: any, slbConfig: any){
+    const result: OutputProps = {
+        namespace: {
+            id: applictionObject.NamespaceId,
+            name: applictionObject.NamespaceName,
+        },
+        vpcConfig: {
+            vpcId: applictionObject.VpcId,
+            vSwitchId: applictionObject.VSwitchId,
+            securityGroupId: applictionObject.SecurityGroupId,
+          },
+          application: {
+            id: applictionObject.AppId,
+            name: applictionObject.name,
+            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applictionObject.NamespaceId}&regionId=${applictionObject.region}&namespaceId=${applictionObject.NamespaceId}`,
+            packageType: applictionObject.PackageType,
+            cpu: applictionObject,
+            memory: applictionObject,
+            replicas: applictionObject,
+          },
+          slb: {
+          }
+      };
+      if(applictionObject.ImageUrl){
+        result.application.imageUrl = applictionObject.ImageUrl;
+      }
+      if(applictionObject.PackageUrl){
+        result.application.packageUrl = applictionObject.PackageUrl;
+      }
+      if(slbConfig["Data"]['InternetIp']){
+        result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
+      }
+      if(slbConfig["Data"]['IntranetSlbId']){
+        result.slb.IntranetSlbId = slbConfig["Data"]['IntranetSlbId'];
+      }
+      return result;
+}
+
 export async function handleEnv(inputs: InputProps, application: any, credentials: any) {
     let { props: { region, namespace, vpcConfig, slb } } = inputs;
     let autoConfig = false;
@@ -97,6 +135,8 @@ export async function handleEnv(inputs: InputProps, application: any, credential
     }
     application.AppName = application.name;
     application.AppDescription = application.decription;
+    application.NamespaceName = namespace.name;
+    application.region = region;
 
     // slb
     if (application.port) {
@@ -131,7 +171,7 @@ async function getPackageStruct(codePackage: any, region: any, AccountID: any) {
 export async function handleCode(region: any, application: any, credentials: any) {
     let { AccountID } = credentials;
 
-    let tempObject = stringRandom(16);
+    let tempObject = "sae-"+application.name;
     const applictionObject = JSON.parse(JSON.stringify(application));
     delete applictionObject.code;
 

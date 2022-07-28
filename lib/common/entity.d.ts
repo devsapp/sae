@@ -26,3 +26,28 @@ export interface InputProps {
         configPath: string;
     };
 }
+export interface OutputProps {
+    namespace: {
+        id: string;
+        name: string;
+    };
+    vpcConfig: {
+        vpcId: string;
+        vSwitchId: string;
+        securityGroupId: string;
+    };
+    application: {
+        id: string;
+        name: string;
+        packageType: string;
+        imageUrl?: string;
+        PackageUrl?: string;
+        cpu: number;
+        memory: number;
+        replicas: number;
+    };
+    slb: {
+        InternetIp: string;
+        IntranetSlbId: string;
+    };
+}

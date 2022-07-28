@@ -4,10 +4,14 @@ import { InputProps } from './common/entity';
 import { spinner } from "@serverless-devs/core";
 
 import Client from './common/client';
-import { checkStatus, handleEnv, handleCode, setDefault } from './common/utils';
+import { checkStatus, handleEnv, handleCode, setDefault, output } from './common/utils';
 
+import logger from './common/logger';
 
 export default class SaeComponent {
+  async info(inputs: InputProps){
+
+  }
 
   async deploy(inputs: InputProps) {
     let appId: any
@@ -41,15 +45,8 @@ export default class SaeComponent {
     vm.text = `部署应用 ...`
     await checkStatus(appId, 'CoDeploy')
 
-    const result = {
-      "namespace": namespace,
-      "application": {
-        appId: appId,
-        name: application.name
-      },
-      "Console": `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${region}&namespaceId=${namespace.id}`
-    }
-
+    let slbConfig = null;
+    let addr = null;
     // 绑定SLB
     if (slb) {
       vm.text = `部署 slb ... `;
@@ -61,20 +58,12 @@ export default class SaeComponent {
 
       // 获取SLB信息
       vm.text = `获取SLB信息 ... `
-      const slbConfig = await Client.saeClient.getSLB(appId);
-
-      
-      if (slbConfig["Data"]['InternetIp']) {
-        result['slb'] = {
-          InternetIp: slbConfig["Data"]['InternetIp']
-        };
-      }
-      if (slbConfig["Data"]['IntranetSlbId']) {
-        result['slb'] = result['slb'] ? result['slb'] : {};
-        result['slb']['IntranetSlbId'] = slbConfig["Data"]['InternetIp'];
-      }
+      slbConfig = await Client.saeClient.getSLB(appId);
+      addr = slbConfig["Data"]['InternetIp']?slbConfig["Data"]['InternetIp']:slbConfig["Data"]['IntranetSlbId'];
     }
     vm.stop();
+    logger.success(`部署成功，请通过以下地址访问您的应用：${addr}`);
+    const result = output(applictionObject, slbConfig);
     return result;
   }
 }

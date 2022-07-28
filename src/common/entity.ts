@@ -27,3 +27,30 @@ export interface ICredentials {
       configPath: string // 配置路径
     }
   }
+
+  export interface OutputProps{
+    namespace: {
+      id: string,
+      name: string,
+    },
+    vpcConfig: {
+      vpcId: string,
+      vSwitchId: string,
+      securityGroupId: string,
+    },
+    application: {
+      id: string,
+      name: string,
+      console: string,
+      packageType: string,
+      imageUrl?: string,
+      packageUrl?: string,
+      cpu: number,
+      memory: number,
+      replicas: number,
+    },
+    slb: {
+      InternetIp?: string,
+      IntranetSlbId?: string,
+    }
+  }

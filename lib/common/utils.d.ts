@@ -10,6 +10,14 @@ export declare function uploadFile(credentials: {
     path: any;
 }, object: string, type: string): Promise<void>;
 export declare function checkStatus(appId: any, coType: any): Promise<void>;
+export declare function output(application: any, slbConfig: any): Promise<{
+    namespace: any;
+    application: {
+        appId: any;
+        name: any;
+    };
+    Console: string;
+}>;
 export declare function handleEnv(inputs: InputProps, application: any, credentials: any): Promise<{
     namespace: any;
     slb: any;
