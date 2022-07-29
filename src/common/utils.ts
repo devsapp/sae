@@ -196,11 +196,11 @@ export async function handleCode(region: any, application: any, credentials: any
                 applicationObject.PackageType = 'War';
                 applicationObject.WebContainer = 'apache-tomcat-8.5.42';
                 applicationObject.Jdk = 'Open JDK 8';
-                applicationObject.PackageVersion = '	1.0.0';
+                // applicationObject.PackageVersion = '1.0.0';
             } else if (codePackage.path.endsWith('.jar')) {
                 applicationObject.PackageType = 'FatJar';
                 applicationObject.Jdk = 'Open JDK 8';
-                applicationObject.PackageVersion = '	1.0.0';
+                // applicationObject.PackageVersion = '1.0.0';
             } else if (codePackage.path.endsWith('.zip')) {
                 applicationObject.PackageType = 'PhpZip';
                 applicationObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';

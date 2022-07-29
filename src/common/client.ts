@@ -181,7 +181,14 @@ export default class Client {
          * @param applicationObject 
          */
         saeClient.updateApplication = async function (applicationObject: any) {
-            
+            let queries = {
+                FieldType: 'appName', FieldValue: applicationObject.AppName
+            };
+            let data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
+            let appId = data['Data']['Applications'][0]['AppId'];
+            applicationObject.AppId = appId;
+            await saeClient.request("POST", DeployApplicationUri, applicationObject, body, headers, requestOption);
+            return appId;
         }
 
         this.saeClient = saeClient;

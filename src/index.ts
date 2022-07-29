@@ -39,9 +39,7 @@ export default class SaeComponent {
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
         vm.text = `应用已存在，进行更新 ...`
-        let obj = await Client.saeClient.updateApplication(applicationObject);
-        appId = obj['Data']['AppId'];
-        applicationObject.AppId = appId;
+        appId = await Client.saeClient.updateApplication(applicationObject);
       } else {
         throw e
       }
