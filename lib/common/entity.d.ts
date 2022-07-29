@@ -39,15 +39,16 @@ export interface OutputProps {
     application: {
         id: string;
         name: string;
+        console: string;
         packageType: string;
         imageUrl?: string;
-        PackageUrl?: string;
+        packageUrl?: string;
         cpu: number;
         memory: number;
         replicas: number;
     };
     slb: {
-        InternetIp: string;
-        IntranetSlbId: string;
+        InternetIp?: string;
+        IntranetSlbId?: string;
     };
 }

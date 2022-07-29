@@ -63,6 +63,7 @@ export default class SaeComponent {
     }
     vm.stop();
     logger.success(`部署成功，请通过以下地址访问您的应用：${addr}`);
+    logger.success('应用详细信息如下：');
     const result = output(applictionObject, slbConfig);
     return result;
   }

@@ -61,9 +61,9 @@ export async function output(applictionObject: any, slbConfig: any){
             name: applictionObject.name,
             console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applictionObject.NamespaceId}&regionId=${applictionObject.region}&namespaceId=${applictionObject.NamespaceId}`,
             packageType: applictionObject.PackageType,
-            cpu: applictionObject,
-            memory: applictionObject,
-            replicas: applictionObject,
+            cpu: applictionObject.Cpu,
+            memory: applictionObject.Memory,
+            replicas: applictionObject.Replicas,
           },
           slb: {
           }
@@ -171,7 +171,6 @@ async function getPackageStruct(codePackage: any, region: any, AccountID: any) {
 export async function handleCode(region: any, application: any, credentials: any) {
     let { AccountID } = credentials;
 
-    let tempObject = "sae-"+application.name;
     const applictionObject = JSON.parse(JSON.stringify(application));
     delete applictionObject.code;
 
@@ -192,19 +191,17 @@ export async function handleCode(region: any, application: any, credentials: any
     } else if (codePackage) {
         codePackage = await getPackageStruct(codePackage, region, AccountID);
         if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar') || codePackage.path.endsWith('.zip')) {
+            let tempObject = "sae-"+application.name+"-"+codePackage.path;
             if (codePackage.path.endsWith('.war')) {
-                tempObject = tempObject + '.war';
                 applictionObject.PackageType = 'War';
                 applictionObject.WebContainer = 'apache-tomcat-8.5.42';
                 applictionObject.Jdk = 'Open JDK 8';
                 applictionObject.PackageVersion = '	1.0.0';
             } else if (codePackage.path.endsWith('.jar')) {
-                tempObject = tempObject + '.jar';
                 applictionObject.PackageType = 'FatJar';
                 applictionObject.Jdk = 'Open JDK 8';
                 applictionObject.PackageVersion = '	1.0.0';
             } else if (codePackage.path.endsWith('.zip')) {
-                tempObject = tempObject + '.zip';
                 applictionObject.PackageType = 'PhpZip';
                 applictionObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
                 applictionObject.Php = 'PHP-FPM 7.3';
