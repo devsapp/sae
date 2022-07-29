@@ -116,11 +116,11 @@ export default class Client {
         }
         /*
          * 创建一个应用
-         * @param applictionObject 应用信息
+         * @param applicationObject 应用信息
          * @returns 创建结果
          */
-        saeClient.createApplication = async function (applictionObject: any) {
-            let data = await saeClient.request("POST", CreateApplicationUri, applictionObject, body, headers, requestOption);
+        saeClient.createApplication = async function (applicationObject: any) {
+            let data = await saeClient.request("POST", CreateApplicationUri, applicationObject, body, headers, requestOption);
             return data;
         }
 
@@ -139,11 +139,11 @@ export default class Client {
 
         /**
          * 部署应用
-         * @param applictionObject 应用信息
+         * @param applicationObject 应用信息
          * @returns 部署结果
          */
-        saeClient.deployApplication = async function (applictionObject: any) {
-            let data = await saeClient.request("POST", DeployApplicationUri, applictionObject, body, headers, requestOption);
+        saeClient.deployApplication = async function (applicationObject: any) {
+            let data = await saeClient.request("POST", DeployApplicationUri, applicationObject, body, headers, requestOption);
             return data;
         }
 
@@ -171,10 +171,19 @@ export default class Client {
          * @param appId 
          * @returns 
          */
-        saeClient.getSLB = async function name(appId: any) {
+        saeClient.getSLB = async function (appId: any) {
             let data = await saeClient.request("GET", GETSLBUri, { AppId: appId }, body, headers, requestOption);
             return data;
         }
+
+        /**
+         * 更新已存在的应用
+         * @param applicationObject 
+         */
+        saeClient.updateApplication = async function (applicationObject: any) {
+            
+        }
+
         this.saeClient = saeClient;
         return saeClient;
     }

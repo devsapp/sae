@@ -45,34 +45,34 @@ export async function checkStatus(appId, coType) {
     }
 }
 
-export async function output(applictionObject: any, slbConfig: any){
+export async function output(applicationObject: any, slbConfig: any){
     const result: OutputProps = {
         namespace: {
-            id: applictionObject.NamespaceId,
-            name: applictionObject.NamespaceName,
+            id: applicationObject.NamespaceId,
+            name: applicationObject.NamespaceName,
         },
         vpcConfig: {
-            vpcId: applictionObject.VpcId,
-            vSwitchId: applictionObject.VSwitchId,
-            securityGroupId: applictionObject.SecurityGroupId,
+            vpcId: applicationObject.VpcId,
+            vSwitchId: applicationObject.VSwitchId,
+            securityGroupId: applicationObject.SecurityGroupId,
           },
           application: {
-            id: applictionObject.AppId,
-            name: applictionObject.name,
-            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applictionObject.NamespaceId}&regionId=${applictionObject.region}&namespaceId=${applictionObject.NamespaceId}`,
-            packageType: applictionObject.PackageType,
-            cpu: applictionObject.Cpu,
-            memory: applictionObject.Memory,
-            replicas: applictionObject.Replicas,
+            id: applicationObject.AppId,
+            name: applicationObject.name,
+            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.NamespaceId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
+            packageType: applicationObject.PackageType,
+            cpu: applicationObject.Cpu,
+            memory: applicationObject.Memory,
+            replicas: applicationObject.Replicas,
           },
           slb: {
           }
       };
-      if(applictionObject.ImageUrl){
-        result.application.imageUrl = applictionObject.ImageUrl;
+      if(applicationObject.ImageUrl){
+        result.application.imageUrl = applicationObject.ImageUrl;
       }
-      if(applictionObject.PackageUrl){
-        result.application.packageUrl = applictionObject.PackageUrl;
+      if(applicationObject.PackageUrl){
+        result.application.packageUrl = applicationObject.PackageUrl;
       }
       if(slbConfig["Data"]['InternetIp']){
         result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
@@ -171,8 +171,8 @@ async function getPackageStruct(codePackage: any, region: any, AccountID: any) {
 export async function handleCode(region: any, application: any, credentials: any) {
     let { AccountID } = credentials;
 
-    const applictionObject = JSON.parse(JSON.stringify(application));
-    delete applictionObject.code;
+    const applicationObject = JSON.parse(JSON.stringify(application));
+    delete applicationObject.code;
 
     // 对code进行处理
     if (!application.code) {
@@ -183,34 +183,34 @@ export async function handleCode(region: any, application: any, credentials: any
     let codePackage = code.package;
     if (image) {
         if (code.type === 'php') {
-            applictionObject.PackageType = 'IMAGE_PHP_7_3';
+            applicationObject.PackageType = 'IMAGE_PHP_7_3';
         } else {
-            applictionObject.PackageType = 'Image';
+            applicationObject.PackageType = 'Image';
         }
-        applictionObject.ImageUrl = image;
+        applicationObject.ImageUrl = image;
     } else if (codePackage) {
         codePackage = await getPackageStruct(codePackage, region, AccountID);
         if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar') || codePackage.path.endsWith('.zip')) {
             let tempObject = "sae-"+application.name+"-"+codePackage.path;
             if (codePackage.path.endsWith('.war')) {
-                applictionObject.PackageType = 'War';
-                applictionObject.WebContainer = 'apache-tomcat-8.5.42';
-                applictionObject.Jdk = 'Open JDK 8';
-                applictionObject.PackageVersion = '	1.0.0';
+                applicationObject.PackageType = 'War';
+                applicationObject.WebContainer = 'apache-tomcat-8.5.42';
+                applicationObject.Jdk = 'Open JDK 8';
+                applicationObject.PackageVersion = '	1.0.0';
             } else if (codePackage.path.endsWith('.jar')) {
-                applictionObject.PackageType = 'FatJar';
-                applictionObject.Jdk = 'Open JDK 8';
-                applictionObject.PackageVersion = '	1.0.0';
+                applicationObject.PackageType = 'FatJar';
+                applicationObject.Jdk = 'Open JDK 8';
+                applicationObject.PackageVersion = '	1.0.0';
             } else if (codePackage.path.endsWith('.zip')) {
-                applictionObject.PackageType = 'PhpZip';
-                applictionObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
-                applictionObject.Php = 'PHP-FPM 7.3';
+                applicationObject.PackageType = 'PhpZip';
+                applicationObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
+                applicationObject.Php = 'PHP-FPM 7.3';
             }
             if (await fse.existsSync(codePackage.path)) {
                 await uploadFile(credentials, codePackage, tempObject, 'upload')
-                applictionObject.PackageUrl = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${tempObject}`;
+                applicationObject.PackageUrl = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${tempObject}`;
             } else if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
-                applictionObject.PackageUrl = codePackage.path;
+                applicationObject.PackageUrl = codePackage.path;
             } else {
                 throw new core.CatchableError("未能成功找到文件，请确定package的路径正确");
             }
@@ -220,18 +220,18 @@ export async function handleCode(region: any, application: any, credentials: any
     } else {
         throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确");
     }
-    return applictionObject;
+    return applicationObject;
 }
 
-export async function setDefault(applictionObject: any) {
-    applictionObject.Cpu = applictionObject.cpu ? applictionObject.cpu : 500;
-    applictionObject.Memory = applictionObject.memory ? applictionObject.memory : 1024;
-    applictionObject.Replicas = applictionObject.Replicas ? applictionObject.replicas : 1;
+export async function setDefault(applicationObject: any) {
+    applicationObject.Cpu = applicationObject.cpu ? applicationObject.cpu : 500;
+    applicationObject.Memory = applicationObject.memory ? applicationObject.memory : 1024;
+    applicationObject.Replicas = applicationObject.Replicas ? applicationObject.replicas : 1;
     // 参数命名方式修改
-    for (var key in applictionObject) {
+    for (var key in applicationObject) {
         if (/^[a-z].*$/.test(key)) {
             let Key = key.replace(key[0], key[0].toUpperCase());
-            applictionObject[Key] = applictionObject[key];
+            applicationObject[Key] = applicationObject[key];
         }
     }
 }

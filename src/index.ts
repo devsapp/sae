@@ -28,16 +28,23 @@ export default class SaeComponent {
     slb = env.slb;
 
     vm.text = `上传代码...`;
-    const applictionObject = await handleCode(region, application, credentials);
-    await setDefault(applictionObject);
+    const applicationObject = await handleCode(region, application, credentials);
+    await setDefault(applicationObject);
 
     try {
       vm.text = `创建应用 ...`
-      let obj = await Client.saeClient.createApplication(applictionObject);
+      let obj = await Client.saeClient.createApplication(applicationObject);
       appId = obj['Data']['AppId'];
-      applictionObject.AppId = appId;
+      applicationObject.AppId = appId;
     } catch (e) {
-      throw e
+      if (e.message.includes('AppName is exsited')) {
+        vm.text = `应用已存在，进行更新 ...`
+        let obj = await Client.saeClient.updateApplication(applicationObject);
+        appId = obj['Data']['AppId'];
+        applicationObject.AppId = appId;
+      } else {
+        throw e
+      }
     }
 
     // 检查应用部署状态
@@ -63,7 +70,7 @@ export default class SaeComponent {
     vm.stop();
     logger.success(`部署成功，请通过以下地址访问您的应用：${addr}`);
     logger.success('应用详细信息如下：');
-    const result = output(applictionObject, slbConfig);
+    const result = output(applicationObject, slbConfig);
     return result;
   }
 }
