@@ -15,7 +15,7 @@ export default class SaeComponent {
 
   async deploy(inputs: InputProps) {
     let appId: any
-    let { props: { region, namespace, application, slb } } = inputs;
+    let { props: { region, application, slb } } = inputs;
     let credentials = await core.getCredential(inputs.project.access)
     let { AccessKeyID, AccessKeySecret } = credentials
 
@@ -25,7 +25,6 @@ export default class SaeComponent {
     // 创建Namespace
     const vm = spinner('创建Namespace...');
     const env = await handleEnv(inputs, application, credentials);
-    namespace = env.namespace;
     slb = env.slb;
 
     vm.text = `上传代码...`;
