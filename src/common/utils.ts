@@ -45,7 +45,52 @@ export async function checkStatus(appId, coType) {
     }
 }
 
-export async function output(applicationObject: any, slbConfig: any){
+export async function infoRes(application: any) {
+    const result: OutputProps = {
+        namespace: {
+            id: application.NamespaceId,
+            name: application.NamespaceName,
+        },
+        vpcConfig: {
+            vpcId: application.VpcId,
+            vSwitchId: application.VSwitchId,
+            securityGroupId: application.SecurityGroupId,
+        },
+        application: {
+            name: application.name,
+            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${application.NamespaceId}&regionId=${application.region}&namespaceId=${application.NamespaceId}`,
+        },
+        slb: {
+        }
+    };
+    if (application.code.image) {
+        if (application.code.type === 'php') {
+            result.application.packageType = 'IMAGE_PHP_7_3';
+        } else {
+            result.application.packageType = 'Image';
+        }
+        result.application.imageUrl = application.code.image;
+    }
+    else if (application.code.package) {
+        let codePackage = application.code.package;
+        codePackage = await getPackageStruct(codePackage, application.region, null);
+        if (codePackage.path.endsWith('.war')) {
+            result.application.packageType = 'War';
+        } else if (codePackage.path.endsWith('.jar')) {
+            result.application.packageType = 'FatJar';
+        } else if (codePackage.path.endsWith('.zip')) {
+            result.application.packageType = 'PhpZip';
+        }
+        result.application.packageUrl = codePackage.path;
+    }
+    result.application.cpu = application.Cpu;
+    result.application.memory = application.Memory;
+    result.application.replicas = application.Replicas;
+    result.slb = application.slb;
+    return result;
+}
+
+export async function output(applicationObject: any, slbConfig: any) {
     const result: OutputProps = {
         namespace: {
             id: applicationObject.NamespaceId,
@@ -55,32 +100,33 @@ export async function output(applicationObject: any, slbConfig: any){
             vpcId: applicationObject.VpcId,
             vSwitchId: applicationObject.VSwitchId,
             securityGroupId: applicationObject.SecurityGroupId,
-          },
-          application: {
+        },
+        application: {
             id: applicationObject.AppId,
             name: applicationObject.name,
             console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.NamespaceId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
             packageType: applicationObject.PackageType,
-            cpu: applicationObject.Cpu,
-            memory: applicationObject.Memory,
-            replicas: applicationObject.Replicas,
-          },
-          slb: {
-          }
-      };
-      if(applicationObject.ImageUrl){
+        },
+        slb: {
+        }
+    };
+    if (applicationObject.ImageUrl) {
         result.application.imageUrl = applicationObject.ImageUrl;
-      }
-      if(applicationObject.PackageUrl){
+    }
+    if (applicationObject.PackageUrl) {
         result.application.packageUrl = applicationObject.PackageUrl;
-      }
-      if(slbConfig["Data"]['InternetIp']){
+    }
+    result.application.cpu = applicationObject.Cpu;
+    result.application.memory = applicationObject.Memory;
+    result.application.replicas = applicationObject.Replicas;
+
+    if (slbConfig["Data"]['InternetIp']) {
         result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
-      }
-      if(slbConfig["Data"]['IntranetSlbId']){
+    }
+    if (slbConfig["Data"]['IntranetSlbId']) {
         result.slb.IntranetSlbId = slbConfig["Data"]['IntranetSlbId'];
-      }
-      return result;
+    }
+    return result;
 }
 
 export async function handleEnv(inputs: InputProps, application: any, credentials: any) {
@@ -191,7 +237,7 @@ export async function handleCode(region: any, application: any, credentials: any
     } else if (codePackage) {
         codePackage = await getPackageStruct(codePackage, region, AccountID);
         if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar') || codePackage.path.endsWith('.zip')) {
-            let tempObject = "sae-"+application.name+"-"+codePackage.path;
+            let tempObject = "sae-" + application.name + "-" + codePackage.path;
             if (codePackage.path.endsWith('.war')) {
                 applicationObject.PackageType = 'War';
                 applicationObject.WebContainer = 'apache-tomcat-8.5.42';

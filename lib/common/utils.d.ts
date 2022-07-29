@@ -10,6 +10,7 @@ export declare function uploadFile(credentials: {
     path: any;
 }, object: string, type: string): Promise<void>;
 export declare function checkStatus(appId: any, coType: any): Promise<void>;
+export declare function infoRes(application: any): Promise<OutputProps>;
 export declare function output(applicationObject: any, slbConfig: any): Promise<OutputProps>;
 export declare function handleEnv(inputs: InputProps, application: any, credentials: any): Promise<{
     namespace: any;

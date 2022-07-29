@@ -37,15 +37,15 @@ export interface OutputProps {
         securityGroupId: string;
     };
     application: {
-        id: string;
+        id?: string;
         name: string;
         console: string;
-        packageType: string;
+        packageType?: string;
         imageUrl?: string;
         packageUrl?: string;
-        cpu: number;
-        memory: number;
-        replicas: number;
+        cpu?: number;
+        memory?: number;
+        replicas?: number;
     };
     slb: {
         InternetIp?: string;
