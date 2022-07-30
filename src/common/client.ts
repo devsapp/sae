@@ -1,33 +1,33 @@
 // @ts-ignore
 import Core, { ROAClient } from '@alicloud/pop-core';
 
-export async function vpcAvailable(vpcId, region, accessKeyID, accessKeySecret){
+export async function vpcAvailable(vpcId, region, accessKeyID, accessKeySecret) {
 
     var client = new Core({
         accessKeyId: accessKeyID,
         accessKeySecret: accessKeySecret,
         endpoint: 'https://vpc.aliyuncs.com',
         apiVersion: '2016-04-28'
-      });
-      
-      var params = {
+    });
+
+    var params = {
         "RegionId": region,
         "VpcId": vpcId
-      }
-      
-      var requestOption = {
+    }
+
+    var requestOption = {
         method: 'POST',
         formatParams: false,
-      
-      };
-      let data = await client.request('DescribeVpcs', params, requestOption);
-      if(data['TotalCount']!=1){
+
+    };
+    let data = await client.request('DescribeVpcs', params, requestOption);
+    if (data['TotalCount'] != 1) {
         return false;
-      }
-      if(data['Vpcs']['Vpc'][0]['Status']!='Available'){
+    }
+    if (data['Vpcs']['Vpc'][0]['Status'] != 'Available') {
         return false;
-      }
-      return true;
+    }
+    return true;
 }
 
 export default class Client {
@@ -55,8 +55,10 @@ export default class Client {
         const CreateApplicationUri = '/pop/v1/sam/app/createApplication';
         const ListApplicationsUri = '/pop/v1/sam/app/listApplications';
         const DeployApplicationUri = '/pop/v1/sam/app/deployApplication';
+        const DeleteApplicationUri = '/pop/v1/sam/app/deleteApplication';
         const BindSLBUri = "/pop/v1/sam/app/slb";
         const GETSLBUri = '/pop/v1/sam/app/slb';
+        const DescribeChangeOrderUri = '/pop/v1/sam/changeorder/DescribeChangeOrder';
 
         /**
          * 获取变更单列表
@@ -72,6 +74,18 @@ export default class Client {
             return data;
         }
 
+        /**
+         * 查询变更单信息
+         * @param orderId id
+         * @returns 
+         */
+        saeClient.describeChangeOrder = async function (orderId:any) {
+            let queries = {
+                ChangeOrderId: orderId,
+            };
+            let data = await saeClient.request("GET", DescribeChangeOrderUri, queries, body, headers, requestOption);
+            return data;
+        }
         /**
          * 创建命名空间
          * @param Namespace 命名空间
@@ -148,6 +162,18 @@ export default class Client {
         }
 
         /**
+         * 根据id删除应用
+         * @param appId id
+         */
+        saeClient.deleteApplication = async function (appId: any) {
+            let queries = {
+                "AppId": appId
+            };
+            const data = await saeClient.request("DELETE", DeleteApplicationUri, queries, body, headers, requestOption);
+            return data['Data'].ChangeOrderId;
+        }
+
+        /**
          * 绑定SLB
          * @param SLB SLB信息
          * @returns 绑定结果
@@ -155,15 +181,15 @@ export default class Client {
         saeClient.bindSLB = async function (slb: any, appId: any) {
             if (slb.Internet && typeof slb.Internet == 'object') {
                 slb.Internet = JSON.stringify(slb.Internet)
-              }
-              if (slb.Intranet && typeof slb.Intranet == 'object') {
+            }
+            if (slb.Intranet && typeof slb.Intranet == 'object') {
                 slb.Intranet = JSON.stringify(slb.Intranet)
-              }
-              if (appId) {
+            }
+            if (appId) {
                 slb.AppId = appId;
-              }
-            let data = await saeClient.request("POST", BindSLBUri, slb, body, headers, requestOption);
-            return data;
+            }
+            const data = await saeClient.request("POST", BindSLBUri, slb, body, headers, requestOption);
+            return data['Data']['ChangeOrderId'];
         }
 
         /**

@@ -5,29 +5,39 @@ import { spinner } from "@serverless-devs/core";
 
 import Client from './common/client';
 import * as utils from './common/utils';
-
+import * as HELP from './lib/help';
 import logger from './common/logger';
 
 export default class SaeComponent {
+  isHelp(args: string, argsObj?: any) {
+    // @ts-ignore
+    const comParse: any = core.commandParse({ args, argsObj }, this.MINIMIST_HELP_OPT);
+    return comParse?.data?.help;
+  }
+
   async info(inputs: InputProps) {
-    let { props: { region, application } } = inputs;
+    let { args, props: { region, application } } = inputs;
+    if (this.isHelp(args)) {
+      core.help(HELP.INFO);
+      return;
+    }
     let credentials = await core.getCredential(inputs.project.access);
     let { AccessKeyID, AccessKeySecret } = credentials
     await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
     let data = await Client.saeClient.listApplications(application.name);
-    if(data['Data']['Applications'].length==0){
+    if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
-    }else{
+    } else {
       let res = data['Data']['Applications'][0];
       return res;
     }
   }
 
   async deploy(inputs: InputProps) {
-    let appId: any
+    let appId: any;
     let { props: { region, application, slb } } = inputs;
-    let credentials = await core.getCredential(inputs.project.access)
-    let { AccessKeyID, AccessKeySecret } = credentials
+    const credentials = await core.getCredential(inputs.project.access);
+    const { AccessKeyID, AccessKeySecret } = credentials;
     await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
 
     // 创建Namespace
@@ -65,11 +75,11 @@ export default class SaeComponent {
       await Client.saeClient.bindSLB(slb, appId);
 
       // 检查应用部署状态
-      vm.text = `检查SLB绑定状态 ...`;
+      vm.text = `检查 slb 绑定状态 ...`;
       await utils.checkStatus(appId, 'CoBindSlb');
 
       // 获取SLB信息
-      vm.text = `获取SLB信息 ... `
+      vm.text = `获取 slb 信息 ... `;
       slbConfig = await Client.saeClient.getSLB(appId);
       addr = slbConfig["Data"]['InternetIp'] ? slbConfig["Data"]['InternetIp'] : slbConfig["Data"]['IntranetSlbId'];
     }
@@ -78,5 +88,27 @@ export default class SaeComponent {
     logger.success('应用详细信息如下：');
     const result = utils.output(applicationObject, slbConfig);
     return result;
+  }
+
+  async remove(inputs: InputProps) {
+    const { props: { region, application } } = inputs;
+    const credentials = await core.getCredential(inputs.project.access);
+    const { AccessKeyID, AccessKeySecret } = credentials;
+    await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
+    let data = await Client.saeClient.listApplications(application.name);
+    if (data['Data']['Applications'].length == 0) {
+      logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
+      return;
+    }
+    const appId = data['Data']['Applications'][0]['AppId'];
+    const vm = spinner(`删除应用${application.name}...`);
+    const orderId = await Client.saeClient.deleteApplication(appId);
+    await utils.getStatusByOrderId(orderId);
+    if (application.code.package) {
+      vm.text = `删除 oss 文件 ... `;
+      await utils.deleteOssFile(region, application, credentials);
+    }
+    vm.stop();
+    logger.success('删除成功');
   }
 }

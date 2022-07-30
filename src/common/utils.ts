@@ -1,11 +1,12 @@
 import * as core from '@serverless-devs/core';
 import oss, { IOssConfig } from './oss.service';
+const OSS = require('ali-oss')
 import fse from "fs";
 import Client from './client';
 import { InputProps, OutputProps } from './entity';
 import { vpcAvailable } from './client';
 
-export async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
+async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
     const ossConfig: IOssConfig = {
         accessKeyId: credentials.AccessKeyID,
         accessKeySecret: credentials.AccessKeySecret,
@@ -18,12 +19,37 @@ export async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecre
     await oss(ossConfig);
 }
 
+async function deleteFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, name: string, region: string, fileName: string) {
+    const client = new OSS({
+        region: `oss-${region}`,
+        accessKeyId: credentials.AccessKeyID,
+        accessKeySecret: credentials.AccessKeySecret,
+        bucket: name,
+    });
+    try {
+        await client.delete(fileName);
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export async function deleteOssFile(region: any, application: any, credentials: any) {
+    let codePackage = application.code.package;
+    const { AccountID } = credentials;
+    codePackage = await getPackageStruct(codePackage, region, AccountID);
+    if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
+        return 0;
+    }
+    const fileName = "sae-" + application.name + "-" + codePackage.path;
+    await deleteFile(credentials, codePackage.bucket.name, codePackage.bucket.region, fileName);
+}
+
 export async function checkStatus(appId, coType) {
     let status = true
     while (status) {
         try {
             const tempResult = await Client.saeClient.listChangeOrders(appId, coType);
-            const tempStatus = tempResult['Data']['ChangeOrderList'][0].Status
+            const tempStatus = tempResult['Data']['ChangeOrderList'][0].Status;
             if (tempStatus === 2) {
                 status = false
             } else if (tempStatus === 0) {
@@ -43,6 +69,34 @@ export async function checkStatus(appId, coType) {
         // 等待1s
         await new Promise(f => setTimeout(f, 1000));
     }
+}
+
+export async function getStatusByOrderId(orderId: any) {
+    let status = true
+    while (status) {
+        try {
+            const tempResult = await Client.saeClient.describeChangeOrder(orderId);
+            const tempStatus = tempResult['Data'].Status;
+            if (tempStatus === 2) {
+                status = false
+            } else if (tempStatus === 0) {
+                status = true
+            } else if (tempStatus === 1) {
+                status = true
+            } else if (tempStatus === 3) {
+                throw new core.CatchableError('应用状态为：执行失败')
+            } else if (tempStatus === 6) {
+                throw new core.CatchableError('应用状态为：终止')
+            } else if (tempStatus === 10) {
+                throw new core.CatchableError('应用状态为：系统异常执行失败')
+            }
+        } catch (e) {
+            throw e
+        }
+        // 等待1s
+        await new Promise(f => setTimeout(f, 1000));
+    }
+
 }
 
 export async function infoRes(application: any) {
@@ -237,6 +291,7 @@ export async function handleCode(region: any, application: any, credentials: any
     } else if (codePackage) {
         codePackage = await getPackageStruct(codePackage, region, AccountID);
         if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar') || codePackage.path.endsWith('.zip')) {
+            //文件命名规范：1.使用 UTF-8 编码 2.区分大小写 3.长度必须在 1~1023 字节之间 4. 不能以 / 或者 \ 字符开头
             let tempObject = "sae-" + application.name + "-" + codePackage.path;
             if (codePackage.path.endsWith('.war')) {
                 applicationObject.PackageType = 'War';

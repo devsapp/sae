@@ -1,15 +1,7 @@
 import { InputProps, OutputProps } from './entity';
-export declare function uploadFile(credentials: {
-    AccessKeyID: any;
-    AccessKeySecret: any;
-}, codePackage: {
-    bucket: {
-        name: any;
-        region: any;
-    };
-    path: any;
-}, object: string, type: string): Promise<void>;
+export declare function deleteOssFile(region: any, application: any, credentials: any): Promise<number>;
 export declare function checkStatus(appId: any, coType: any): Promise<void>;
+export declare function getStatusByOrderId(orderId: any): Promise<void>;
 export declare function infoRes(application: any): Promise<OutputProps>;
 export declare function output(applicationObject: any, slbConfig: any): Promise<OutputProps>;
 export declare function handleEnv(inputs: InputProps, application: any, credentials: any): Promise<{
