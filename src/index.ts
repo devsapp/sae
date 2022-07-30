@@ -12,7 +12,7 @@ export default class SaeComponent {
   isHelp(args: string, argsObj?: any) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args, argsObj }, this.MINIMIST_HELP_OPT);
-    return comParse?.data?.help;
+    return comParse?.data?.h;
   }
 
   async info(inputs: InputProps) {
