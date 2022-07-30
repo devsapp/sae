@@ -249,4 +249,4 @@ sae-test:
   AppName:           test
 ```
 ## remove
-通过 `s remove` 指令根据 application.name 的值删除应用。执行结果示例如下：
+通过 `s remove` 指令根据 application.name 的值删除应用。
