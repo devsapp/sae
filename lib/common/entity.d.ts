@@ -29,12 +29,12 @@ export interface InputProps {
 export interface OutputProps {
     namespace: {
         id: string;
-        name: string;
+        name?: string;
     };
     vpcConfig: {
-        vpcId: string;
-        vSwitchId: string;
-        securityGroupId: string;
+        vpcId?: string;
+        vSwitchId?: string;
+        securityGroupId?: string;
     };
     application: {
         id?: string;
@@ -46,6 +46,11 @@ export interface OutputProps {
         cpu?: number;
         memory?: number;
         replicas?: number;
+        scaleRuleEnabled?: any;
+        instances?: number;
+        appDescription?: string;
+        runningInstances?: number;
+        appDeletingStatus?: any;
     };
     slb: {
         InternetIp?: string;

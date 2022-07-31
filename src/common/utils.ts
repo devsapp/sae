@@ -100,47 +100,43 @@ export async function getStatusByOrderId(orderId: any) {
 }
 
 export async function infoRes(application: any) {
+    const appId = application.AppId;
+    const slbConfig = await Client.saeClient.getSLB(appId);
+    const data = await Client.saeClient.describeApplicationConfig(appId);
+    const appConfig = data['Data'];
     const result: OutputProps = {
         namespace: {
-            id: application.NamespaceId,
-            name: application.NamespaceName,
+            id: appConfig.NamespaceId,
         },
         vpcConfig: {
-            vpcId: application.VpcId,
-            vSwitchId: application.VSwitchId,
-            securityGroupId: application.SecurityGroupId,
+            vpcId: appConfig.VpcId,
+            vSwitchId: appConfig.VSwitchId,
+            securityGroupId: appConfig.SecurityGroupId,
         },
         application: {
-            name: application.name,
-            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${application.NamespaceId}&regionId=${application.region}&namespaceId=${application.NamespaceId}`,
+            name: application.AppName,
+            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
+            packageType: application.PackageType,
+            imageUrl: application.ImageUrl,
+            packageUrl: application.PackageUrl,
+            cpu: application.Cpu,
+            memory: application.Memory,
+            replicas: application.Replicas,
+            scaleRuleEnabled: application.ScaleRuleEnabled,
+            instances: application.Instances,
+            appDescription: application.AppDescription,
+            runningInstances: application.RunningInstances,
+            appDeletingStatus: application.AppDeletingStatus,
         },
         slb: {
         }
     };
-    if (application.code.image) {
-        if (application.code.type === 'php') {
-            result.application.packageType = 'IMAGE_PHP_7_3';
-        } else {
-            result.application.packageType = 'Image';
-        }
-        result.application.imageUrl = application.code.image;
+    if (slbConfig["Data"]['InternetIp']) {
+        result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
     }
-    else if (application.code.package) {
-        let codePackage = application.code.package;
-        codePackage = await getPackageStruct(codePackage, application.region, null);
-        if (codePackage.path.endsWith('.war')) {
-            result.application.packageType = 'War';
-        } else if (codePackage.path.endsWith('.jar')) {
-            result.application.packageType = 'FatJar';
-        } else if (codePackage.path.endsWith('.zip')) {
-            result.application.packageType = 'PhpZip';
-        }
-        result.application.packageUrl = codePackage.path;
+    if (slbConfig["Data"]['IntranetSlbId']) {
+        result.slb.IntranetSlbId = slbConfig["Data"]['IntranetSlbId'];
     }
-    result.application.cpu = application.Cpu;
-    result.application.memory = application.Memory;
-    result.application.replicas = application.Replicas;
-    result.slb = application.slb;
     return result;
 }
 

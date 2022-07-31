@@ -237,16 +237,22 @@ sae-test:
 ## info
 通过 `s info` 指令，根据 application.name 的值查询已部署的应用。执行结果示例如下：
 ```
-sae-test: 
-  ScaleRuleEnabled:  false
-  Instances:         1
-  AppDescription:    
-  AppId:             9e1c5e93-xxxxx-98d3581b261
-  RunningInstances:  1
-  NamespaceId:       cn-hangzhou:test
-  RegionId:          cn-hangzhou
-  AppDeletingStatus: false
-  AppName:           test
+  namespace: 
+    id: cn-hangzhou
+  vpcConfig: 
+    vpcId:           vpc-bp14o0juad2lnhcc7pobl
+    vSwitchId:       vsw-bp17mndu8y2hyrmpfg9zr
+    securityGroupId: sg-bp1arin5aob5kmbwb6v2
+  application: 
+    name:              test2
+    console:           https://sae.console.aliyun.com/#/AppList/AppDetail?appId=17cfd88b-91b0-407d-b284-17247a522e6c&regionId=cn-hangzhou&namespaceId=undefined
+    scaleRuleEnabled:  false
+    instances:         1
+    appDescription:    
+    runningInstances:  1
+    appDeletingStatus: false
+  slb: 
+    InternetIp: 121.196.162.18
 ```
 ## remove
 通过 `s remove` 指令根据 application.name 的值删除应用。

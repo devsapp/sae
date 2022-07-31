@@ -59,7 +59,20 @@ export default class Client {
         const BindSLBUri = "/pop/v1/sam/app/slb";
         const GETSLBUri = '/pop/v1/sam/app/slb';
         const DescribeChangeOrderUri = '/pop/v1/sam/changeorder/DescribeChangeOrder';
-
+        const DescribeApplicationConfigUri = '/pop/v1/sam/app/describeApplicationConfig';
+        
+        /**
+         * 获取应用配置信息
+         * @param appId id
+         */
+        saeClient.describeApplicationConfig = async function (appId: any) {
+            let queries = {
+                AppId: appId
+            };
+            let data = await saeClient.request("GET", DescribeApplicationConfigUri, queries, body, headers, requestOption);
+            return data;
+        }
+        
         /**
          * 获取变更单列表
          * @param appId 应用ID

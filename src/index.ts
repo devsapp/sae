@@ -17,19 +17,20 @@ export default class SaeComponent {
   }
 
   async info(inputs: InputProps) {
-    let { args, props: { region, application } } = inputs;
+    const { args, props: { region, application } } = inputs;
     if (this.isHelp(args)) {
       core.help(HELP.INFO);
       return;
     }
-    let credentials = await core.getCredential(inputs.project.access);
-    let { AccessKeyID, AccessKeySecret } = credentials
+    const credentials = await core.getCredential(inputs.project.access);
+    const { AccessKeyID, AccessKeySecret } = credentials;
     await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
-    let data = await Client.saeClient.listApplications(application.name);
+    const data = await Client.saeClient.listApplications(application.name);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
     } else {
-      let res = data['Data']['Applications'][0];
+      const app = data['Data']['Applications'][0];
+      const res = await utils.infoRes(app);
       return res;
     }
   }
