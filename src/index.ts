@@ -49,17 +49,20 @@ export default class SaeComponent {
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(region, application, credentials);
     await utils.setDefault(applicationObject);
-
+    let changeOrderId :any;
     try {
       vm.text = `创建应用 ...`
       let obj = await Client.saeClient.createApplication(applicationObject);
       appId = obj['Data']['AppId'];
+      changeOrderId = obj['Data']['ChangeOrderId'];
       applicationObject.AppId = appId;
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
         vm.text = `应用已存在，进行更新 ...`;
         try {
-          appId = await Client.saeClient.updateApplication(applicationObject);
+          let res = await Client.saeClient.updateApplication(applicationObject);
+          appId = res['Data']['AppId'];
+          changeOrderId = res['Data']['ChangeOrderId'];
         } catch (error) {
           vm.stop();
           logger.error(`${error.result.Message}`);
@@ -73,18 +76,20 @@ export default class SaeComponent {
     }
 
     // 检查应用部署状态
-    vm.text = `部署应用 ...`
-    await utils.checkStatus(appId, 'CoDeploy')
+    vm.text = `应用有变更流程正在执行, 处于执行中状态。查看详情：
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
+    await utils.getStatusByOrderId(changeOrderId);
 
     let slbConfig = null;
     let addr = null;
     // 绑定SLB
     if (slb) {
       vm.text = `部署 slb ... `;
-      await Client.saeClient.bindSLB(slb, appId);
+      changeOrderId = await Client.saeClient.bindSLB(slb, appId);
 
       // 检查应用部署状态
-      vm.text = `检查 slb 绑定状态 ...`;
+      vm.text = `应用有变更流程正在执行, 处于执行中状态。查看详情：
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
       await utils.checkStatus(appId, 'CoBindSlb');
 
       // 获取SLB信息

@@ -213,8 +213,8 @@ export default class Client {
             let data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
             let appId = data['Data']['Applications'][0]['AppId'];
             applicationObject.AppId = appId;
-            await saeClient.request("POST", DeployApplicationUri, applicationObject, body, headers, requestOption);
-            return appId;
+            const res = await saeClient.request("POST", DeployApplicationUri, applicationObject, body, headers, requestOption);
+            return res;
         }
 
         this.saeClient = saeClient;
