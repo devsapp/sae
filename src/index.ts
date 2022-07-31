@@ -57,10 +57,18 @@ export default class SaeComponent {
       applicationObject.AppId = appId;
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
-        vm.text = `应用已存在，进行更新 ...`
-        appId = await Client.saeClient.updateApplication(applicationObject);
+        vm.text = `应用已存在，进行更新 ...`;
+        try {
+          appId = await Client.saeClient.updateApplication(applicationObject);
+        } catch (error) {
+          vm.stop();
+          logger.error(`${error.result.Message}`);
+          return;
+        }
       } else {
-        throw e
+        vm.stop();
+        logger.error(`${e.result.Message}`);
+        return;
       }
     }
 
@@ -103,7 +111,14 @@ export default class SaeComponent {
     }
     const appId = data['Data']['Applications'][0]['AppId'];
     const vm = spinner(`删除应用${application.name}...`);
-    const orderId = await Client.saeClient.deleteApplication(appId);
+    let orderId: any;
+    try {
+      orderId = await Client.saeClient.deleteApplication(appId);
+    } catch (error) {
+      vm.stop();
+      logger.error(`${error.result.Message}`);
+      return;
+    }
     await utils.getStatusByOrderId(orderId);
     if (application.code.package) {
       vm.text = `删除 oss 文件 ... `;
