@@ -154,7 +154,7 @@ export async function output(applicationObject: any, slbConfig: any) {
         application: {
             id: applicationObject.AppId,
             name: applicationObject.name,
-            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.NamespaceId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
+            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
             packageType: applicationObject.PackageType,
         },
         slb: {
@@ -231,6 +231,7 @@ export async function handleEnv(inputs: InputProps, application: any, credential
     }
     application.AppName = application.name;
     application.AppDescription = application.decription;
+    application.NamespaceId = namespace.id;
     application.NamespaceName = namespace.name;
     application.region = region;
 
