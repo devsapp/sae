@@ -1,12 +1,12 @@
 import * as core from '@serverless-devs/core';
 import oss, { IOssConfig } from './oss.service';
+const OSS = require('ali-oss')
 import fse from "fs";
-import stringRandom from 'string-random';
 import Client from './client';
-import { InputProps } from './entity';
+import { InputProps, OutputProps } from './entity';
 import { vpcAvailable } from './client';
 
-export async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
+async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
     const ossConfig: IOssConfig = {
         accessKeyId: credentials.AccessKeyID,
         accessKeySecret: credentials.AccessKeySecret,
@@ -19,12 +19,37 @@ export async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecre
     await oss(ossConfig);
 }
 
+async function deleteFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, name: string, region: string, fileName: string) {
+    const client = new OSS({
+        region: `oss-${region}`,
+        accessKeyId: credentials.AccessKeyID,
+        accessKeySecret: credentials.AccessKeySecret,
+        bucket: name,
+    });
+    try {
+        await client.delete(fileName);
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export async function deleteOssFile(region: any, application: any, credentials: any) {
+    let codePackage = application.code.package;
+    const { AccountID } = credentials;
+    codePackage = await getPackageStruct(codePackage, region, AccountID);
+    if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
+        return 0;
+    }
+    const fileName = "sae-" + application.name + "-" + codePackage.path;
+    await deleteFile(credentials, codePackage.bucket.name, codePackage.bucket.region, fileName);
+}
+
 export async function checkStatus(appId, coType) {
     let status = true
     while (status) {
         try {
             const tempResult = await Client.saeClient.listChangeOrders(appId, coType);
-            const tempStatus = tempResult['Data']['ChangeOrderList'][0].Status
+            const tempStatus = tempResult['Data']['ChangeOrderList'][0].Status;
             if (tempStatus === 2) {
                 status = false
             } else if (tempStatus === 0) {
@@ -45,6 +70,115 @@ export async function checkStatus(appId, coType) {
         await new Promise(f => setTimeout(f, 1000));
     }
 }
+
+export async function getStatusByOrderId(orderId: any) {
+    let status = true
+    while (status) {
+        try {
+            const tempResult = await Client.saeClient.describeChangeOrder(orderId);
+            const tempStatus = tempResult['Data'].Status;
+            if (tempStatus === 2) {
+                status = false
+            } else if (tempStatus === 0) {
+                status = true
+            } else if (tempStatus === 1) {
+                status = true
+            } else if (tempStatus === 3) {
+                throw new core.CatchableError('应用状态为：执行失败')
+            } else if (tempStatus === 6) {
+                throw new core.CatchableError('应用状态为：终止')
+            } else if (tempStatus === 10) {
+                throw new core.CatchableError('应用状态为：系统异常执行失败')
+            }
+        } catch (e) {
+            throw e
+        }
+        // 等待1s
+        await new Promise(f => setTimeout(f, 1000));
+    }
+
+}
+
+export async function infoRes(application: any) {
+    const appId = application.AppId;
+    const slbConfig = await Client.saeClient.getSLB(appId);
+    const data = await Client.saeClient.describeApplicationConfig(appId);
+    const appConfig = data['Data'];
+    const result: OutputProps = {
+        namespace: {
+            id: appConfig.NamespaceId,
+        },
+        vpcConfig: {
+            vpcId: appConfig.VpcId,
+            vSwitchId: appConfig.VSwitchId,
+            securityGroupId: appConfig.SecurityGroupId,
+        },
+        application: {
+            name: application.AppName,
+            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
+            packageType: application.PackageType,
+            imageUrl: application.ImageUrl,
+            packageUrl: application.PackageUrl,
+            cpu: application.Cpu,
+            memory: application.Memory,
+            replicas: application.Replicas,
+            scaleRuleEnabled: application.ScaleRuleEnabled,
+            instances: application.Instances,
+            appDescription: application.AppDescription,
+            runningInstances: application.RunningInstances,
+            appDeletingStatus: application.AppDeletingStatus,
+        },
+        slb: {
+        }
+    };
+    if (slbConfig["Data"]['InternetIp']) {
+        result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
+    }
+    if (slbConfig["Data"]['IntranetSlbId']) {
+        result.slb.IntranetSlbId = slbConfig["Data"]['IntranetSlbId'];
+    }
+    return result;
+}
+
+export async function output(applicationObject: any, slbConfig: any) {
+    const result: OutputProps = {
+        namespace: {
+            id: applicationObject.NamespaceId,
+            name: applicationObject.NamespaceName,
+        },
+        vpcConfig: {
+            vpcId: applicationObject.VpcId,
+            vSwitchId: applicationObject.VSwitchId,
+            securityGroupId: applicationObject.SecurityGroupId,
+        },
+        application: {
+            id: applicationObject.AppId,
+            name: applicationObject.name,
+            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
+            packageType: applicationObject.PackageType,
+        },
+        slb: {
+        }
+    };
+    if (applicationObject.ImageUrl) {
+        result.application.imageUrl = applicationObject.ImageUrl;
+    }
+    if (applicationObject.PackageUrl) {
+        result.application.packageUrl = applicationObject.PackageUrl;
+    }
+    result.application.cpu = applicationObject.Cpu;
+    result.application.memory = applicationObject.Memory;
+    result.application.replicas = applicationObject.Replicas;
+
+    if (slbConfig["Data"]['InternetIp']) {
+        result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
+    }
+    if (slbConfig["Data"]['IntranetSlbId']) {
+        result.slb.IntranetSlbId = slbConfig["Data"]['IntranetSlbId'];
+    }
+    return result;
+}
+
 export async function handleEnv(inputs: InputProps, application: any, credentials: any) {
     let { props: { region, namespace, vpcConfig, slb } } = inputs;
     let autoConfig = false;
@@ -97,6 +231,9 @@ export async function handleEnv(inputs: InputProps, application: any, credential
     }
     application.AppName = application.name;
     application.AppDescription = application.decription;
+    application.NamespaceId = namespace.id;
+    application.NamespaceName = namespace.name;
+    application.region = region;
 
     // slb
     if (application.port) {
@@ -131,9 +268,8 @@ async function getPackageStruct(codePackage: any, region: any, AccountID: any) {
 export async function handleCode(region: any, application: any, credentials: any) {
     let { AccountID } = credentials;
 
-    let tempObject = stringRandom(16);
-    const applictionObject = JSON.parse(JSON.stringify(application));
-    delete applictionObject.code;
+    const applicationObject = JSON.parse(JSON.stringify(application));
+    delete applicationObject.code;
 
     // 对code进行处理
     if (!application.code) {
@@ -144,36 +280,35 @@ export async function handleCode(region: any, application: any, credentials: any
     let codePackage = code.package;
     if (image) {
         if (code.type === 'php') {
-            applictionObject.PackageType = 'IMAGE_PHP_7_3';
+            applicationObject.PackageType = 'IMAGE_PHP_7_3';
         } else {
-            applictionObject.PackageType = 'Image';
+            applicationObject.PackageType = 'Image';
         }
-        applictionObject.ImageUrl = image;
+        applicationObject.ImageUrl = image;
     } else if (codePackage) {
         codePackage = await getPackageStruct(codePackage, region, AccountID);
         if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar') || codePackage.path.endsWith('.zip')) {
+            //文件命名规范：1.使用 UTF-8 编码 2.区分大小写 3.长度必须在 1~1023 字节之间 4. 不能以 / 或者 \ 字符开头
+            let tempObject = "sae-" + application.name + "-" + codePackage.path;
             if (codePackage.path.endsWith('.war')) {
-                tempObject = tempObject + '.war';
-                applictionObject.PackageType = 'War';
-                applictionObject.WebContainer = 'apache-tomcat-8.5.42';
-                applictionObject.Jdk = 'Open JDK 8';
-                applictionObject.PackageVersion = '	1.0.0';
+                applicationObject.PackageType = 'War';
+                applicationObject.WebContainer = 'apache-tomcat-8.5.42';
+                applicationObject.Jdk = 'Open JDK 8';
+                // applicationObject.PackageVersion = '1.0.0';
             } else if (codePackage.path.endsWith('.jar')) {
-                tempObject = tempObject + '.jar';
-                applictionObject.PackageType = 'FatJar';
-                applictionObject.Jdk = 'Open JDK 8';
-                applictionObject.PackageVersion = '	1.0.0';
+                applicationObject.PackageType = 'FatJar';
+                applicationObject.Jdk = 'Open JDK 8';
+                // applicationObject.PackageVersion = '1.0.0';
             } else if (codePackage.path.endsWith('.zip')) {
-                tempObject = tempObject + '.zip';
-                applictionObject.PackageType = 'PhpZip';
-                applictionObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
-                applictionObject.Php = 'PHP-FPM 7.3';
+                applicationObject.PackageType = 'PhpZip';
+                applicationObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
+                applicationObject.Php = 'PHP-FPM 7.3';
             }
             if (await fse.existsSync(codePackage.path)) {
                 await uploadFile(credentials, codePackage, tempObject, 'upload')
-                applictionObject.PackageUrl = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${tempObject}`;
+                applicationObject.PackageUrl = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${tempObject}`;
             } else if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
-                applictionObject.PackageUrl = codePackage.path;
+                applicationObject.PackageUrl = codePackage.path;
             } else {
                 throw new core.CatchableError("未能成功找到文件，请确定package的路径正确");
             }
@@ -183,18 +318,18 @@ export async function handleCode(region: any, application: any, credentials: any
     } else {
         throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确");
     }
-    return applictionObject;
+    return applicationObject;
 }
 
-export async function setDefault(applictionObject: any) {
-    applictionObject.Cpu = applictionObject.cpu ? applictionObject.cpu : 500;
-    applictionObject.Memory = applictionObject.memory ? applictionObject.memory : 1024;
-    applictionObject.Replicas = applictionObject.Replicas ? applictionObject.replicas : 1;
+export async function setDefault(applicationObject: any) {
+    applicationObject.Cpu = applicationObject.cpu ? applicationObject.cpu : 500;
+    applicationObject.Memory = applicationObject.memory ? applicationObject.memory : 1024;
+    applicationObject.Replicas = applicationObject.Replicas ? applicationObject.replicas : 1;
     // 参数命名方式修改
-    for (var key in applictionObject) {
+    for (var key in applicationObject) {
         if (/^[a-z].*$/.test(key)) {
             let Key = key.replace(key[0], key[0].toUpperCase());
-            applictionObject[Key] = applictionObject[key];
+            applicationObject[Key] = applicationObject[key];
         }
     }
 }

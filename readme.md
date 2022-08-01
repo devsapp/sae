@@ -209,16 +209,50 @@ code:
 # 组件指令
 ## deploy
 通过 `s deploy` 指令自动将demo.jar部署到Serverless应用引擎SAE，并绑定公网SLB，让您的应用可以被公网访问。执行结果示例如下：
-```yaml
-function-test: # 执行结果
-  namespace: # 命名空间
-    id:   cn-hangzhou
-    name: China East 1 (Hangzhou)
-  application: # 应用信息
-    appId: 47e7c9xxxxxx7fd8a3bd2d
-    name:  start-sae-java-image
-  Console:     https://sae.console.aliyun.com/#/AppList/AppDetail?appId=47e7c9xxxxxxxd8a3bd2d&regionId=cn-hangzhou&namespaceId=cn-hangzhou # 控制台链接
-  slb: # 负载均衡
-    InternetIp: 120.55.242.194 # 公网访问地址
+```
+部署成功，请通过以下地址访问您的应用：114.55.2.240
+应用详细信息如下：
+sae-test: 
+  namespace: 
+    id:   cn-hangzhou:test
+    name: test-name
+  vpcConfig: 
+    vpcId:           vpc-bxxxxxhcc7pobl
+    vSwitchId:       vsw-bxxxxxpfg9zr
+    securityGroupId: sg-bp1xxxxxbpzx4db
+  application: 
+    id:          9e1c5e93-xxxxx-198d3581b261
+    name:        test
+    console:     https://sae.console.aliyun.com/#/AppList/AppDetail?appId=cn-hangzhou:test&regionId=cn-hangzhou&namespaceId=cn-hangzhou:test
+    packageType: FatJar
+    packageUrl:  https://sae-packages-cn-hangzhou-1976xxxx5242.oss-cn-hangzhou.aliyuncs.com/kEAF6sUck0vLhR8x.jar
+    cpu:         500
+    memory:      1024
+    replicas:    1
+  slb: 
+    InternetIp: 114.55.2.240
 ```
 通过`slb.InternetIp`的值即可访问应用。
+
+## info
+通过 `s info` 指令，根据 application.name 的值查询已部署的应用。执行结果示例如下：
+```
+  namespace: 
+    id: cn-hangzhou
+  vpcConfig: 
+    vpcId:           vpc-bp14o0juad2lnhcc7pobl
+    vSwitchId:       vsw-bp17mndu8y2hyrmpfg9zr
+    securityGroupId: sg-bp1arin5aob5kmbwb6v2
+  application: 
+    name:              test2
+    console:           https://sae.console.aliyun.com/#/AppList/AppDetail?appId=17cfd88b-91b0-407d-b284-17247a522e6c&regionId=cn-hangzhou&namespaceId=undefined
+    scaleRuleEnabled:  false
+    instances:         1
+    appDescription:    
+    runningInstances:  1
+    appDeletingStatus: false
+  slb: 
+    InternetIp: 121.196.162.18
+```
+## remove
+通过 `s remove` 指令根据 application.name 的值删除应用。
