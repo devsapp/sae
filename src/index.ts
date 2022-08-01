@@ -77,7 +77,7 @@ export default class SaeComponent {
     }
 
     // 检查应用部署状态
-    vm.text = `应用有变更流程正在执行, 处于执行中状态。查看详情：
+    vm.text = `应用正在部署... 查看详情：
     https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
     await utils.getStatusByOrderId(changeOrderId);
 
@@ -89,7 +89,7 @@ export default class SaeComponent {
       changeOrderId = await Client.saeClient.bindSLB(slb, appId);
 
       // 检查应用部署状态
-      vm.text = `应用有变更流程正在执行, 处于执行中状态。查看详情：
+      vm.text = `正在绑定slb... 查看详情：
     https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
       await utils.checkStatus(appId, 'CoBindSlb');
 
@@ -99,7 +99,7 @@ export default class SaeComponent {
       addr = slbConfig["Data"]['InternetIp'] ? slbConfig["Data"]['InternetIp'] : slbConfig["Data"]['IntranetSlbId'];
     }
     vm.stop();
-    logger.success(`部署成功，请通过以下地址访问您的应用：${addr}`);
+    logger.success(`部署成功，请通过以下地址访问您的应用：http://${addr}`);
     logger.success('应用详细信息如下：');
     const result = utils.output(applicationObject, slbConfig);
     return result;

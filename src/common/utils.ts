@@ -105,6 +105,7 @@ export async function infoRes(application: any) {
     const data = await Client.saeClient.describeApplicationConfig(appId);
     const appConfig = data['Data'];
     const result: OutputProps = {
+        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
         namespace: {
             id: appConfig.NamespaceId,
         },
@@ -115,7 +116,6 @@ export async function infoRes(application: any) {
         },
         application: {
             name: application.AppName,
-            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
             packageType: application.PackageType,
             imageUrl: application.ImageUrl,
             packageUrl: application.PackageUrl,
@@ -142,6 +142,7 @@ export async function infoRes(application: any) {
 
 export async function output(applicationObject: any, slbConfig: any) {
     const result: OutputProps = {
+        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
         namespace: {
             id: applicationObject.NamespaceId,
             name: applicationObject.NamespaceName,
@@ -154,7 +155,6 @@ export async function output(applicationObject: any, slbConfig: any) {
         application: {
             id: applicationObject.AppId,
             name: applicationObject.name,
-            console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
             packageType: applicationObject.PackageType,
         },
         slb: {
@@ -196,6 +196,11 @@ export async function handleEnv(inputs: InputProps, application: any, credential
             id: defaultNamespace.NamespaceId,
             name: defaultNamespace.NamespaceName,
         }
+        vpcConfig = {
+            vpcId: defaultNamespace.VpcId,
+            vSwitchId: defaultNamespace.VSwitchId,
+            securityGroupId: defaultNamespace.SecurityGroupId,
+        }
     } else if (!namespace && vpcConfig) {
         // 使用默认命名空间
         const defaultNamespace = await Client.saeClient.getNamespace();
@@ -219,20 +224,13 @@ export async function handleEnv(inputs: InputProps, application: any, credential
         }
     }
     application.AutoConfig = autoConfig;
-    if (!application.AutoConfig) {
-        if (namespace.id) {
-            application.NamespaceId = namespace.id;
-        }
-        if (vpcConfig) {
-            application.VpcId = vpcConfig.vpcId;
-            application.VSwitchId = vpcConfig.vSwitchId;
-            application.SecurityGroupId = vpcConfig.securityGroupId;
-        }
-    }
     application.AppName = application.name;
     application.AppDescription = application.decription;
     application.NamespaceId = namespace.id;
     application.NamespaceName = namespace.name;
+    application.VpcId = vpcConfig.vpcId;
+    application.VSwitchId = vpcConfig.vSwitchId;
+    application.SecurityGroupId = vpcConfig.securityGroupId;
     application.region = region;
 
     // slb

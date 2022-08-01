@@ -27,6 +27,7 @@ export interface InputProps {
     };
 }
 export interface OutputProps {
+    console: string;
     namespace: {
         id: string;
         name?: string;
@@ -39,7 +40,6 @@ export interface OutputProps {
     application: {
         id?: string;
         name: string;
-        console: string;
         packageType?: string;
         imageUrl?: string;
         packageUrl?: string;

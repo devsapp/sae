@@ -29,6 +29,7 @@ export interface ICredentials {
   }
 
   export interface OutputProps{
+    console: string,
     namespace: {
       id: string,
       name?: string,
@@ -41,7 +42,6 @@ export interface ICredentials {
     application: {
       id?: string,
       name: string,
-      console: string,
       packageType?: string,
       imageUrl?: string,
       packageUrl?: string,
