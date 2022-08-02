@@ -1,38 +1,38 @@
-import { globalParams, globalDescribe, applicationNameDescribe } from './constant';
+import { globalParams, globalDescribe } from './constant';
 
 const useLocal = {
     name: 'use-local',
     description: '[Optional] Deploy resource using local config',
     defaultOption: false,
     type: Boolean,
-  };
-  const useRemote = {
+};
+const useRemote = {
     name: 'use-remote',
     description: '[Optional] Deploy resource using remote config',
     defaultOption: false,
     type: Boolean,
-  };
+};
 
 export const DEPLOY = [
     {
         header: 'Deploy',
         content: 'Deploy local application online',
-      },
-      {
+    },
+    {
         header: 'Document',
         content: 'https://github.com/devsapp/sae/blob/main/docs/command/deploy.md',
-      },
-      {
+    },
+    {
         header: 'Usage',
         content: ['$ s deploy <options>'],
-      },
-      {
+    },
+    {
         header: 'Options',
         optionList: [
-          useLocal,
-          useRemote,
+            useLocal,
+            useRemote,
         ],
-      },
-      { ...globalParams },
-      { ...globalDescribe }
+    },
+    { ...globalParams },
+    { ...globalDescribe }
 ]
