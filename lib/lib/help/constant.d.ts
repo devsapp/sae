@@ -1,3 +1,11 @@
+export declare const configInquire: {
+    type: string;
+    name: string;
+    message: string;
+    choices: {
+        name: string;
+    }[];
+}[];
 export declare const cpuLimit: number[];
 export declare const memoryLimit: Map<number, number[]>;
 export declare const globalParams: {

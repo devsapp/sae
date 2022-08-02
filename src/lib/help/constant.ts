@@ -1,3 +1,15 @@
+export const configInquire = [
+  {
+      type: 'list',
+      name: 'option',
+      message: 'Choose whether to use local configuration or remote configuration',
+      choices: [
+          {name:'use local'},
+          {name:'use remote'}
+      ]
+  }
+]
+
 export const cpuLimit = [500, 1000, 2000, 4000, 8000, 12000, 16000, 32000];
 
 export const memoryLimit = new Map([

@@ -10,3 +10,12 @@ export declare function handleEnv(inputs: InputProps, application: any, credenti
 }>;
 export declare function handleCode(region: any, application: any, credentials: any): Promise<any>;
 export declare function setDefault(applicationObject: any): Promise<void>;
+export declare function parseCommand(args: string): {
+    isHelp?: undefined;
+    useLocal?: undefined;
+    useRemote?: undefined;
+} | {
+    isHelp: any;
+    useLocal: any;
+    useRemote: any;
+};

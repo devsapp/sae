@@ -1,24 +1,21 @@
 import * as core from '@serverless-devs/core';
 import { InputProps } from './common/entity';
 // @ts-ignore
-import { spinner } from "@serverless-devs/core";
+import { spinner, inquirer } from "@serverless-devs/core";
 
 import Client from './common/client';
 import * as utils from './common/utils';
 import * as HELP from './lib/help';
 import logger from './common/logger';
+import { configInquire } from './lib/help/constant';
+
 
 export default class SaeComponent {
-  isHelp(args: string, argsObj?: any) {
-    // @ts-ignore
-    const comParse: any = core.commandParse({ args, argsObj }, this.MINIMIST_HELP_OPT);
-    const data = comParse?.data
-    return data?.h || data?.help;
-  }
 
   async info(inputs: InputProps) {
     const { args, props: { region, application } } = inputs;
-    if (this.isHelp(args)) {
+    const {isHelp} = await utils.parseCommand(args);
+    if (isHelp) {
       core.help(HELP.INFO);
       return;
     }
@@ -26,7 +23,7 @@ export default class SaeComponent {
     const { AccessKeyID, AccessKeySecret } = credentials;
     await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
     const data = await Client.saeClient.listApplications(application.name);
-    if (data['Data']['Applications'].length == 0) {
+    if (data['Data']['Applications'].length === 0) {
       logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
     } else {
       const app = data['Data']['Applications'][0];
@@ -37,11 +34,41 @@ export default class SaeComponent {
 
   async deploy(inputs: InputProps) {
     let appId: any;
-    let { props: { region, application, slb } } = inputs;
+    let { args, props: { region, application, slb } } = inputs;
     const credentials = await core.getCredential(inputs.project.access);
     const { AccessKeyID, AccessKeySecret } = credentials;
     await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
 
+    const {isHelp, useLocal, useRemote} = await utils.parseCommand(args);
+    if (isHelp) {
+      core.help(HELP.DEPLOY);
+      return;
+    }
+    const remoteData = await Client.saeClient.listApplications(application.name);
+    if(useLocal){
+      // go on
+    } else if(useRemote){
+      if (remoteData['Data']['Applications'].length === 0) {
+        logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
+        return;
+      }
+      const app = remoteData['Data']['Applications'][0];
+      return await utils.infoRes(app);
+    } else{
+      if (remoteData['Data']['Applications'].length > 0) {
+        const ans: {option: string } = await inquirer.prompt(configInquire);
+        switch (ans.option) {
+          case 'use local':
+            break;
+          case 'use remote':
+            const app = remoteData['Data']['Applications'][0];
+            return await utils.infoRes(app);
+          default:
+            break;
+        }
+      }
+    }
+    
     // 创建Namespace
     const vm = spinner('创建Namespace...');
     const env = await utils.handleEnv(inputs, application, credentials);
@@ -59,7 +86,6 @@ export default class SaeComponent {
       applicationObject.AppId = appId;
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
-        vm.text = `应用已存在，进行更新 ...`;
         try {
           let res = await Client.saeClient.updateApplication(applicationObject);
           appId = res['Data']['AppId'];

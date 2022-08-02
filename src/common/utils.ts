@@ -371,3 +371,16 @@ export async function setDefault(applicationObject: any) {
         }
     }
 }
+
+export function parseCommand(args: string) {
+    // @ts-ignore
+    const comParse: any = core.commandParse({ args });
+    const data = comParse?.data
+    if (!data) {
+        return {};
+    }
+    const isHelp = data.h || data.help;
+    const useLocal = data['use-local'];
+    const useRemote = data['use-remote'];
+    return { isHelp, useLocal, useRemote };
+}
