@@ -352,7 +352,7 @@ export async function setDefault(applicationObject: any) {
         }
         applicationObject.Memory = applicationObject.memory;
     } else {
-        applicationObject.Memory = 1024;
+        applicationObject.Memory = memoryLimit.get(applicationObject.Cpu)[0];
     }
     if (applicationObject.replicas) {
         if (Number.isInteger(applicationObject.replicas) && applicationObject.replicas > 0) {
