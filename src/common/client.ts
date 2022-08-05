@@ -7,7 +7,7 @@ export async function vpcAvailable(vpcId, region, credentials) {
     var client = new Core({
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
-        securityToken: credentials?.securityToken,
+        securityToken: credentials?.SecurityToken,
         endpoint: 'https://vpc.aliyuncs.com',
         apiVersion: '2016-04-28'
     });
