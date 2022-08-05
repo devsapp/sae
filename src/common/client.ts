@@ -1,11 +1,13 @@
 // @ts-ignore
-import Core, { ROAClient } from '@alicloud/pop-core';
+import { ROAClient } from '@alicloud/pop-core';
+const Core = require('@alicloud/pop-core');
 
-export async function vpcAvailable(vpcId, region, accessKeyID, accessKeySecret) {
+export async function vpcAvailable(vpcId, region, credentials) {
 
     var client = new Core({
-        accessKeyId: accessKeyID,
-        accessKeySecret: accessKeySecret,
+        accessKeyId: credentials?.AccessKeyID,
+        accessKeySecret: credentials?.AccessKeySecret,
+        securityToken: credentials?.securityToken,
         endpoint: 'https://vpc.aliyuncs.com',
         apiVersion: '2016-04-28'
     });
@@ -33,10 +35,11 @@ export async function vpcAvailable(vpcId, region, accessKeyID, accessKeySecret) 
 export default class Client {
     static saeClient: any;
 
-    static async setSaeClient(region, accessKeyID, accessKeySecret) {
+    static async setSaeClient(region, credentials) {
         const saeClient = new ROAClient({
-            accessKeyId: accessKeyID,
-            accessKeySecret: accessKeySecret,
+            accessKeyId: credentials?.AccessKeyID,
+            accessKeySecret: credentials?.AccessKeySecret,
+            securityToken: credentials?.SecurityToken,
             endpoint: `https://sae.${region}.aliyuncs.com`,
             apiVersion: "2019-05-06",
         });

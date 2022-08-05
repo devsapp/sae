@@ -7,7 +7,7 @@ import Client from './common/client';
 import * as utils from './common/utils';
 import * as HELP from './lib/help';
 import logger from './common/logger';
-import { configInquire } from './lib/help/constant';
+import { getInquire } from './lib/help/constant';
 
 
 export default class SaeComponent {
@@ -20,8 +20,7 @@ export default class SaeComponent {
       return;
     }
     const credentials = await core.getCredential(inputs.project.access);
-    const { AccessKeyID, AccessKeySecret } = credentials;
-    await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
+    await Client.setSaeClient(region, credentials);
     const data = await Client.saeClient.listApplications(application.name);
     if (data['Data']['Applications'].length === 0) {
       logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
@@ -36,8 +35,7 @@ export default class SaeComponent {
     let appId: any;
     let { args, props: { region, application, slb } } = inputs;
     const credentials = await core.getCredential(inputs.project.access);
-    const { AccessKeyID, AccessKeySecret } = credentials;
-    await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
+    await Client.setSaeClient(region, credentials);
 
     const {isHelp, useLocal, useRemote} = await utils.parseCommand(args);
     if (isHelp) {
@@ -56,6 +54,7 @@ export default class SaeComponent {
       return await utils.infoRes(app);
     } else{
       if (remoteData['Data']['Applications'].length > 0) {
+        const configInquire = getInquire(application.name);
         const ans: {option: string } = await inquirer.prompt(configInquire);
         switch (ans.option) {
           case 'use local':
@@ -134,8 +133,7 @@ export default class SaeComponent {
   async remove(inputs: InputProps) {
     const { props: { region, application } } = inputs;
     const credentials = await core.getCredential(inputs.project.access);
-    const { AccessKeyID, AccessKeySecret } = credentials;
-    await Client.setSaeClient(region, AccessKeyID, AccessKeySecret);
+    await Client.setSaeClient(region, credentials);
     let data = await Client.saeClient.listApplications(application.name);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);

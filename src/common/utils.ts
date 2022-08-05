@@ -7,10 +7,11 @@ import { InputProps, OutputProps } from './entity';
 import { vpcAvailable } from './client';
 import { cpuLimit, memoryLimit } from '../lib/help/constant';
 
-async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
+async function uploadFile(credentials:any, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
     const ossConfig: IOssConfig = {
-        accessKeyId: credentials.AccessKeyID,
-        accessKeySecret: credentials.AccessKeySecret,
+        accessKeyId: credentials?.AccessKeyID,
+        accessKeySecret: credentials?.AccessKeySecret,
+        securityToken: credentials?.SecurityToken,
         bucket: codePackage.bucket.name,
         region: codePackage.bucket.region,
         file: codePackage.path,
@@ -20,11 +21,12 @@ async function uploadFile(credentials: { AccessKeyID: any; AccessKeySecret: any;
     await oss(ossConfig);
 }
 
-async function deleteFile(credentials: { AccessKeyID: any; AccessKeySecret: any; }, name: string, region: string, fileName: string) {
+async function deleteFile(credentials: any, name: string, region: string, fileName: string) {
     const client = new OSS({
         region: `oss-${region}`,
-        accessKeyId: credentials.AccessKeyID,
-        accessKeySecret: credentials.AccessKeySecret,
+        accessKeyId: credentials?.AccessKeyID,
+        accessKeySecret: credentials?.AccessKeySecret,
+        securityToken: credentials?.SecurityToken,
         bucket: name,
     });
     try {
@@ -184,7 +186,7 @@ export async function handleEnv(inputs: InputProps, application: any, credential
     let { props: { region, namespace, vpcConfig, slb } } = inputs;
     let autoConfig = false;
     if (vpcConfig) {
-        const vpcAvail = await vpcAvailable(vpcConfig.vpcId, region, credentials.AccessKeyID, credentials.AccessKeySecret);
+        const vpcAvail = await vpcAvailable(vpcConfig.vpcId, region, credentials);
         if (!vpcAvail) {
             throw new core.CatchableError('vpc配置不可用');
         }

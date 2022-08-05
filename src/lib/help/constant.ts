@@ -1,14 +1,14 @@
-export const configInquire = [
-  {
-      type: 'list',
-      name: 'option',
-      message: 'Choose whether to use local configuration or remote configuration',
-      choices: [
-          {name:'use local'},
-          {name:'use remote'}
-      ]
+export function getInquire(appName: string) {
+  return {
+    type: 'list',
+    name: 'option',
+    message: `Remote application: ${appName} is inconsistent with the config you deployed last time, deploy it with local config or remote config?`,
+    choices: [
+      { name: 'use local' },
+      { name: 'use remote' }
+    ]
   }
-]
+}
 
 export const cpuLimit = [500, 1000, 2000, 4000, 8000, 12000, 16000, 32000];
 
