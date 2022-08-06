@@ -1,4 +1,10 @@
 import { InputProps, OutputProps } from './entity';
+/**
+ * 判断是否需要重新绑定slb
+ * @param slb 本地slb
+ * @param appId appid
+ */
+export declare function needBindSlb(slb: any, appId: string): Promise<boolean>;
 export declare function deleteFile(credentials: any, bucket: any, fileName: string): Promise<void>;
 export declare function file2delete(region: any, application: any, credentials: any): Promise<{
     fileName?: undefined;

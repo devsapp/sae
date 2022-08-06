@@ -27,6 +27,7 @@ export interface InputProps {
     };
 }
 export interface OutputProps {
+    accessLink?: string;
     console: string;
     namespace: {
         id: string;
@@ -54,6 +55,8 @@ export interface OutputProps {
     };
     slb: {
         InternetIp?: string;
-        IntranetSlbId?: string;
+        InternetPort?: string;
+        IntranetIp?: string;
+        IntranetPort?: string;
     };
 }

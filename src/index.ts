@@ -14,7 +14,7 @@ export default class SaeComponent {
 
   async info(inputs: InputProps) {
     const { args, props: { region, application } } = inputs;
-    const {isHelp} = await utils.parseCommand(args);
+    const { isHelp } = await utils.parseCommand(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
@@ -37,25 +37,25 @@ export default class SaeComponent {
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
 
-    const {isHelp, useLocal, useRemote} = await utils.parseCommand(args);
+    const { isHelp, useLocal, useRemote } = await utils.parseCommand(args);
     if (isHelp) {
       core.help(HELP.DEPLOY);
       return;
     }
     const remoteData = await Client.saeClient.listApplications(application.name);
-    if(useLocal){
+    if (useLocal) {
       // go on
-    } else if(useRemote){
+    } else if (useRemote) {
       if (remoteData['Data']['Applications'].length === 0) {
         logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
         return;
       }
       const app = remoteData['Data']['Applications'][0];
       return await utils.infoRes(app);
-    } else{
+    } else {
       if (remoteData['Data']['Applications'].length > 0) {
         const configInquire = getInquire(application.name);
-        const ans: {option: string } = await inquirer.prompt(configInquire);
+        const ans: { option: string } = await inquirer.prompt(configInquire);
         switch (ans.option) {
           case 'use local':
             break;
@@ -67,7 +67,7 @@ export default class SaeComponent {
         }
       }
     }
-    
+
     // 创建Namespace
     const vm = spinner('创建Namespace...');
     const env = await utils.handleEnv(inputs, application, credentials);
@@ -76,7 +76,8 @@ export default class SaeComponent {
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(region, application, credentials);
     await utils.setDefault(applicationObject);
-    let changeOrderId :any;
+    let changeOrderId: any;
+    let needBindSlb = true;
     try {
       vm.text = `创建应用 ...`
       let obj = await Client.saeClient.createApplication(applicationObject);
@@ -89,6 +90,7 @@ export default class SaeComponent {
           let res = await Client.saeClient.updateApplication(applicationObject);
           appId = res['Data']['AppId'];
           changeOrderId = res['Data']['ChangeOrderId'];
+          needBindSlb = await utils.needBindSlb(slb, appId);
         } catch (error) {
           vm.stop();
           logger.error(`${error.result.Message}`);
@@ -106,10 +108,8 @@ export default class SaeComponent {
     https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
     await utils.getStatusByOrderId(changeOrderId);
 
-    let slbConfig = null;
-    let addr = null;
-    // 绑定SLB
-    if (slb) {
+    if (needBindSlb) {
+      // 绑定SLB
       vm.text = `部署 slb ... `;
       changeOrderId = await Client.saeClient.bindSLB(slb, appId);
 
@@ -117,16 +117,16 @@ export default class SaeComponent {
       vm.text = `正在绑定slb... 查看详情：
     https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
       await utils.checkStatus(appId, 'CoBindSlb');
-
-      // 获取SLB信息
-      vm.text = `获取 slb 信息 ... `;
-      slbConfig = await Client.saeClient.getSLB(appId);
-      addr = slbConfig["Data"]['InternetIp'] ? slbConfig["Data"]['InternetIp'] : slbConfig["Data"]['IntranetSlbId'];
     }
+
+    // 获取SLB信息
+    vm.text = `获取 slb 信息 ... `;
+    const slbConfig = await Client.saeClient.getSLB(appId);
     vm.stop();
-    logger.success(`部署成功，请通过以下地址访问您的应用：http://${addr}`);
+    const result = await utils.output(applicationObject, slbConfig);
+
+    logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
     logger.success('应用详细信息如下：');
-    const result = utils.output(applicationObject, slbConfig);
     return result;
   }
 
@@ -145,7 +145,7 @@ export default class SaeComponent {
       return;
     }
     const file = await utils.file2delete(region, application, credentials);
-    if(!assumeYes){
+    if (!assumeYes) {
       try {
         const removeStatus = await utils.removePlan(data['Data']['Applications'][0], file);
         if (removeStatus !== 'assumeYes') {

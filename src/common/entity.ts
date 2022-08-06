@@ -29,6 +29,7 @@ export interface ICredentials {
   }
 
   export interface OutputProps{
+    accessLink?: string,
     console: string,
     namespace: {
       id: string,
@@ -56,6 +57,8 @@ export interface ICredentials {
     },
     slb: {
       InternetIp?: string,
-      IntranetSlbId?: string,
+      InternetPort?: string,
+      IntranetIp?: string,
+      IntranetPort?: string,
     }
   }

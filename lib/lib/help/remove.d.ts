@@ -14,13 +14,13 @@ export declare const REMOVE: ({
     optionList: ({
         name: string;
         description: string;
-        alias: string;
-        defaultOption: boolean;
-        type: BooleanConstructor;
+        type: StringConstructor;
     } | {
         name: string;
         description: string;
-        type: StringConstructor;
+        alias: string;
+        defaultOption: boolean;
+        type: BooleanConstructor;
     })[];
     content?: undefined;
 } | {

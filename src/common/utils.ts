@@ -23,6 +23,35 @@ async function uploadFile(credentials: any, codePackage: { bucket: { name: any; 
     await oss(ossConfig);
 }
 
+/**
+ * 判断是否需要重新绑定slb
+ * @param slb 本地slb
+ * @param appId appid
+ */
+export async function needBindSlb(slb: any, appId: string) {
+    const data = await Client.saeClient.getSLB(appId);
+    const remoteIntranet = data['Data']['Intranet'];
+    const remoteInternet = data['Data']['Internet'];
+    const localInternet = slb.Internet ? slb.Internet : [];
+    const localIntranet = slb.Intranet ? slb.Intranet : [];
+    if (remoteIntranet.length === 0 && remoteInternet.length === 0) {
+        return true;
+    }
+    if ((remoteInternet.length === 0 && localInternet.length > 0) || (remoteInternet.length > 0 && localInternet.length === 0)) {
+        return true;
+    }
+    if ((remoteIntranet.length === 0 && localIntranet.length > 0) || (remoteIntranet.length > 0 && localIntranet.length === 0)) {
+        return true;
+    }
+    if (localIntranet.length > 0 && remoteIntranet[0]['Port'] !== localIntranet[0]['port']) {
+        return true;
+    }
+    if (localInternet.length > 0 && remoteInternet[0]['Port'] !== localInternet[0]['port']) {
+        return true;
+    }
+    return false;
+}
+
 export async function deleteFile(credentials: any, bucket: any, fileName: string) {
     const client = new OSS({
         region: `oss-${bucket.region}`,
@@ -51,7 +80,7 @@ export async function file2delete(region: any, application: any, credentials: an
     const fileName = "sae-" + application.name + "-" + codePackage.path;
     const bucket = codePackage.bucket;
     const fileAddr = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${fileName}`;
-    return {fileName, bucket, fileAddr};
+    return { fileName, bucket, fileAddr };
 }
 
 export async function checkStatus(appId, coType) {
@@ -141,11 +170,11 @@ export async function infoRes(application: any) {
         slb: {
         }
     };
-    if (slbConfig["Data"]['InternetIp']) {
-        result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
+    if (slbConfig['Data']['InternetIp']) {
+        result.slb.InternetIp = slbConfig['Data']['InternetIp'] + ':' + String(slbConfig['Data']['Internet'][0]['Port']);
     }
-    if (slbConfig["Data"]['IntranetSlbId']) {
-        result.slb.IntranetSlbId = slbConfig["Data"]['IntranetSlbId'];
+    if (slbConfig['Data']['IntranetIp']) {
+        result.slb.IntranetIp = slbConfig['Data']['IntranetIp'] + ':' + String(slbConfig['Data']['Intranet'][0]['Port']);
     }
     return result;
 }
@@ -180,11 +209,15 @@ export async function output(applicationObject: any, slbConfig: any) {
     result.application.memory = applicationObject.Memory;
     result.application.replicas = applicationObject.Replicas;
 
-    if (slbConfig["Data"]['InternetIp']) {
-        result.slb.InternetIp = slbConfig["Data"]['InternetIp'];
+    if (slbConfig['Data']['InternetIp']) {
+        result.slb.InternetIp = slbConfig['Data']['InternetIp'];
+        result.slb.InternetPort = slbConfig['Data']['Internet'][0]['Port'];
+        result.accessLink = result.slb.InternetIp + ':' + String(result.slb.InternetPort);
     }
-    if (slbConfig["Data"]['IntranetSlbId']) {
-        result.slb.IntranetSlbId = slbConfig["Data"]['IntranetSlbId'];
+    if (slbConfig['Data']['IntranetIp']) {
+        result.slb.IntranetIp = slbConfig['Data']['IntranetIp'];
+        result.slb.IntranetPort = slbConfig['Data']['Intranet'][0]['Port'];
+        result.accessLink = result.slb.IntranetIp + ':' + String(result.slb.IntranetPort);
     }
     return result;
 }
@@ -450,8 +483,31 @@ export async function removePlan(application, file) {
     ]
     console.log('\r\napplication:');
     console.log(Table(header, data).render());
+    const slb = await Client.saeClient.getSLB(application.AppId);
+    let header2 = [{
+        value: "InternetIp",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    },
+    {
+        value: "IntranetIp",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    }
+    ];
+    let data2 = [{
+        InternetIp: slb['Data']['InternetIp'],
+        IntranetIp: slb['Data']['IntranetIp']
+    }
+    ]
+    console.log('\r\nslb:');
+    console.log(Table(header2, data2).render());
     if (file?.fileName) {
-        let header = [{
+        let header3 = [{
             value: "fileName",
             headerColor: "cyan",
             color: "white",
@@ -473,14 +529,14 @@ export async function removePlan(application, file) {
             width: 40
         }
         ];
-        let data = [{
+        let data3 = [{
             fileName: file.fileName,
             bucketName: file.bucket.name,
             fileAddr: file.fileAddr,
         }
         ]
         console.log('\r\noss:');
-        console.log(Table(header, data).render());
+        console.log(Table(header3, data3).render());
     }
     const assumeYes = await promptForConfirmOrDetails(
         'Are you sure you want to delete these resources?',
