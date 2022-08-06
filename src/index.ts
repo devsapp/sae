@@ -107,7 +107,6 @@ export default class SaeComponent {
     vm.text = `应用正在部署... 查看详情：
     https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
     await utils.getStatusByOrderId(changeOrderId);
-
     if (needBindSlb) {
       // 绑定SLB
       vm.text = `部署 slb ... `;

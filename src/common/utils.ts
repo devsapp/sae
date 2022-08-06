@@ -43,10 +43,10 @@ export async function needBindSlb(slb: any, appId: string) {
     if ((remoteIntranet.length === 0 && localIntranet.length > 0) || (remoteIntranet.length > 0 && localIntranet.length === 0)) {
         return true;
     }
-    if (localIntranet.length > 0 && remoteIntranet[0]['Port'] !== localIntranet[0]['port']) {
+    if (localIntranet.length > 0 && remoteIntranet[0]['TargetPort'] !== localIntranet[0]['targetPort']) {
         return true;
     }
-    if (localInternet.length > 0 && remoteInternet[0]['Port'] !== localInternet[0]['port']) {
+    if (localInternet.length > 0 && remoteInternet[0]['TargetPort'] !== localInternet[0]['targetPort']) {
         return true;
     }
     return false;
@@ -500,8 +500,8 @@ export async function removePlan(application, file) {
     }
     ];
     let data2 = [{
-        InternetIp: slb['Data']['InternetIp'],
-        IntranetIp: slb['Data']['IntranetIp']
+        InternetIp: slb['Data']['InternetIp']?slb['Data']['InternetIp']:'',
+        IntranetIp: slb['Data']['IntranetIp']?slb['Data']['IntranetIp']:''
     }
     ]
     console.log('\r\nslb:');
