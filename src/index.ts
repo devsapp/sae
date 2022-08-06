@@ -131,13 +131,33 @@ export default class SaeComponent {
   }
 
   async remove(inputs: InputProps) {
-    const { props: { region, application } } = inputs;
+    const { args, props: { region, application } } = inputs;
+    const { isHelp, assumeYes } = await utils.handlerRmInputs(args);
+    if (isHelp) {
+      core.help(HELP.REMOVE);
+      return;
+    }
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
     let data = await Client.saeClient.listApplications(application.name);
     if (data['Data']['Applications'].length == 0) {
-      logger.error(`未找到应用 ${application.name}，请先使用 's deploy' 命令进行部署`);
+      logger.error(`未找到应用 ${application.name}`);
       return;
+    }
+    const file = await utils.file2delete(region, application, credentials);
+    if(!assumeYes){
+      try {
+        const removeStatus = await utils.removePlan(data['Data']['Applications'][0], file);
+        if (removeStatus !== 'assumeYes') {
+          return;
+        }
+      } catch (ex) {
+        if (ex?.name === 'CatchableError') {
+          throw ex;
+        }
+        // 异常：不作处理兜底
+        logger.debug(`error: ${ex.message}`);
+      }
     }
     const appId = data['Data']['Applications'][0]['AppId'];
     const vm = spinner(`删除应用${application.name}...`);
@@ -150,9 +170,9 @@ export default class SaeComponent {
       return;
     }
     await utils.getStatusByOrderId(orderId);
-    if (application.code.package) {
+    if (file.fileName) {
       vm.text = `删除 oss 文件 ... `;
-      await utils.deleteOssFile(region, application, credentials);
+      await utils.deleteFile(credentials, file.bucket, file.fileName);
     }
     vm.stop();
     logger.success('删除成功');

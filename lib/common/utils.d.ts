@@ -1,5 +1,14 @@
 import { InputProps, OutputProps } from './entity';
-export declare function deleteOssFile(region: any, application: any, credentials: any): Promise<number>;
+export declare function deleteFile(credentials: any, bucket: any, fileName: string): Promise<void>;
+export declare function file2delete(region: any, application: any, credentials: any): Promise<{
+    fileName?: undefined;
+    bucket?: undefined;
+    fileAddr?: undefined;
+} | {
+    fileName: string;
+    bucket: any;
+    fileAddr: string;
+}>;
 export declare function checkStatus(appId: any, coType: any): Promise<void>;
 export declare function getStatusByOrderId(orderId: any): Promise<void>;
 export declare function infoRes(application: any): Promise<OutputProps>;
@@ -10,7 +19,7 @@ export declare function handleEnv(inputs: InputProps, application: any, credenti
 }>;
 export declare function handleCode(region: any, application: any, credentials: any): Promise<any>;
 export declare function setDefault(applicationObject: any): Promise<void>;
-export declare function parseCommand(args: string): {
+export declare function parseCommand(args: string): Promise<{
     isHelp?: undefined;
     useLocal?: undefined;
     useRemote?: undefined;
@@ -18,4 +27,10 @@ export declare function parseCommand(args: string): {
     isHelp: any;
     useLocal: any;
     useRemote: any;
-};
+}>;
+export declare function handlerRmInputs(args: string): Promise<{
+    isHelp: any;
+    assumeYes: any;
+}>;
+export declare function promptForConfirmOrDetails(message: string): Promise<boolean>;
+export declare function removePlan(application: any, file: any): Promise<"assumeYes" | "quit">;

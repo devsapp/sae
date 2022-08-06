@@ -6,8 +6,10 @@ import Client from './client';
 import { InputProps, OutputProps } from './entity';
 import { vpcAvailable } from './client';
 import { cpuLimit, memoryLimit } from '../lib/help/constant';
+import Table from 'tty-table';
+import inquirer from 'inquirer';
 
-async function uploadFile(credentials:any, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
+async function uploadFile(credentials: any, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
     const ossConfig: IOssConfig = {
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
@@ -21,13 +23,13 @@ async function uploadFile(credentials:any, codePackage: { bucket: { name: any; r
     await oss(ossConfig);
 }
 
-async function deleteFile(credentials: any, name: string, region: string, fileName: string) {
+export async function deleteFile(credentials: any, bucket: any, fileName: string) {
     const client = new OSS({
-        region: `oss-${region}`,
+        region: `oss-${bucket.region}`,
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
         securityToken: credentials?.SecurityToken,
-        bucket: name,
+        bucket: bucket.name,
     });
     try {
         await client.delete(fileName);
@@ -36,15 +38,20 @@ async function deleteFile(credentials: any, name: string, region: string, fileNa
     }
 }
 
-export async function deleteOssFile(region: any, application: any, credentials: any) {
-    let codePackage = application.code.package;
+export async function file2delete(region: any, application: any, credentials: any) {
+    let codePackage = application?.code?.package;
+    if (!codePackage) {
+        return {};
+    }
     const { AccountID } = credentials;
     codePackage = await getPackageStruct(codePackage, region, AccountID);
     if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
-        return 0;
+        return {};
     }
     const fileName = "sae-" + application.name + "-" + codePackage.path;
-    await deleteFile(credentials, codePackage.bucket.name, codePackage.bucket.region, fileName);
+    const bucket = codePackage.bucket;
+    const fileAddr = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${fileName}`;
+    return {fileName, bucket, fileAddr};
 }
 
 export async function checkStatus(appId, coType) {
@@ -374,7 +381,7 @@ export async function setDefault(applicationObject: any) {
     }
 }
 
-export function parseCommand(args: string) {
+export async function parseCommand(args: string) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data
@@ -385,4 +392,98 @@ export function parseCommand(args: string) {
     const useLocal = data['use-local'];
     const useRemote = data['use-remote'];
     return { isHelp, useLocal, useRemote };
+}
+
+export async function handlerRmInputs(args: string) {
+    const comParse: any = core.commandParse({ args });
+    const data = comParse?.data
+    const isHelp = data?.h || data?.help;
+    const assumeYes = data?.y || data?.assumeYes;
+    return { isHelp, assumeYes };
+}
+
+export async function promptForConfirmOrDetails(message: string): Promise<boolean> {
+    const answers: any = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'prompt',
+            message,
+            choices: ['yes', 'no'],
+        },
+    ]);
+
+    return answers.prompt === 'yes';
+}
+
+// 没有子资源：能够被删除，不作处理。 返回undefined
+// 存在子资源选择 no：一定不能被删除，需要退出程序。 返回quit
+// 存在子资源选择 yes：需要强制删除所有资源，需要向下传递 assumeYes。  返回assumeYes
+export async function removePlan(application, file) {
+    console.log(`Need to delete the resource in the ${application.RegionId} area:`);
+    let header = [{
+        value: "appName",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    },
+    {
+        value: "description",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    },
+    {
+        value: "runningInstances",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    }
+    ];
+    let data = [{
+        appName: application.AppName,
+        description: application.AppDescription,
+        runningInstances: application.RunningInstances
+    }
+    ]
+    console.log('\r\napplication:');
+    console.log(Table(header, data).render());
+    if (file?.fileName) {
+        let header = [{
+            value: "fileName",
+            headerColor: "cyan",
+            color: "white",
+            align: "left",
+            width: 40
+        },
+        {
+            value: "bucketName",
+            headerColor: "cyan",
+            color: "white",
+            align: "left",
+            width: 40
+        },
+        {
+            value: "fileAddr",
+            headerColor: "cyan",
+            color: "white",
+            align: "left",
+            width: 40
+        }
+        ];
+        let data = [{
+            fileName: file.fileName,
+            bucketName: file.bucket.name,
+            fileAddr: file.fileAddr,
+        }
+        ]
+        console.log('\r\noss:');
+        console.log(Table(header, data).render());
+    }
+    const assumeYes = await promptForConfirmOrDetails(
+        'Are you sure you want to delete these resources?',
+    );
+    return assumeYes ? 'assumeYes' : 'quit';
 }
