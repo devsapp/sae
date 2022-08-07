@@ -1,10 +1,10 @@
+import * as core from '@serverless-devs/core';
 // @ts-ignore
-import { ROAClient } from '@alicloud/pop-core';
-const Core = require('@alicloud/pop-core');
+const ROAClient = core.popCore.ROAClient;
 
 export async function vpcAvailable(vpcId, region, credentials) {
 
-    var client = new Core({
+    var client = new core.popCore({
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
         securityToken: credentials?.SecurityToken,
