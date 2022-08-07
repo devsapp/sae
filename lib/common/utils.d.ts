@@ -42,6 +42,9 @@ export declare function handlerInfoInputs(args: string): Promise<{
     outputFile: any;
 }>;
 export declare function handlerRmInputs(args: string): Promise<{
+    isHelp?: undefined;
+    assumeYes?: undefined;
+} | {
     isHelp: any;
     assumeYes: any;
 }>;

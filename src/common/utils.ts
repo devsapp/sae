@@ -445,9 +445,11 @@ export async function handlerInfoInputs(args: string) {
 export async function handlerRmInputs(args: string) {
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data
-    const isHelp = data?.h || data?.help;
+    if (!data) {
+        return {};
+    }
+    const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
-    console.log(data);
     return { isHelp, assumeYes };
 }
 
