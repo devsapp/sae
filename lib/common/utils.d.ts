@@ -34,6 +34,13 @@ export declare function parseCommand(args: string): Promise<{
     useLocal: any;
     useRemote: any;
 }>;
+export declare function handlerInfoInputs(args: string): Promise<{
+    isHelp?: undefined;
+    outputFile?: undefined;
+} | {
+    isHelp: any;
+    outputFile: any;
+}>;
 export declare function handlerRmInputs(args: string): Promise<{
     isHelp: any;
     assumeYes: any;

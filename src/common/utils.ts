@@ -414,6 +414,7 @@ export async function setDefault(applicationObject: any) {
     }
 }
 
+
 export async function parseCommand(args: string) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args });
@@ -427,11 +428,24 @@ export async function parseCommand(args: string) {
     return { isHelp, useLocal, useRemote };
 }
 
+export async function handlerInfoInputs(args: string) {
+    // @ts-ignore
+    const comParse: any = core.commandParse({ args });
+    const data = comParse?.data
+    if (!data) {
+        return {};
+    }
+    const isHelp = data.h || data.help;
+    const outputFile = data['output'];
+    return { isHelp, outputFile };
+}
+
 export async function handlerRmInputs(args: string) {
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data
     const isHelp = data?.h || data?.help;
-    const assumeYes = data?.y || data?.assumeYes;
+    const assumeYes = data.y || data['assume-yes'];
+    console.log(data);
     return { isHelp, assumeYes };
 }
 

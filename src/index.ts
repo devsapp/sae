@@ -14,7 +14,7 @@ export default class SaeComponent {
 
   async info(inputs: InputProps) {
     const { args, props: { region, application } } = inputs;
-    const { isHelp } = await utils.parseCommand(args);
+    const { isHelp, outputFile } = await utils.handlerInfoInputs(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
@@ -27,6 +27,18 @@ export default class SaeComponent {
     } else {
       const app = data['Data']['Applications'][0];
       const res = await utils.infoRes(app);
+
+      if (outputFile) {
+        let cache: any = {};
+        try {
+          cache = core.fse.readJsonSync(outputFile);
+        } catch (_e) {
+          /**/
+        }
+        cache[application.name] = res;
+        await core.fse.outputFile(outputFile, JSON.stringify(cache, null, 2));
+      }
+
       return res;
     }
   }
