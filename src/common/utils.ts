@@ -7,7 +7,9 @@ import { InputProps, OutputProps } from './entity';
 import { vpcAvailable } from './client';
 import { cpuLimit, memoryLimit } from '../lib/help/constant';
 import Table from 'tty-table';
-import inquirer from 'inquirer';
+
+const inquirer = core.inquirer;
+
 
 async function uploadFile(credentials: any, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
     const ossConfig: IOssConfig = {
