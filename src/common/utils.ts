@@ -59,7 +59,7 @@ export async function deleteFile(credentials: any, bucket: any, fileName: string
         region: `oss-${bucket.region}`,
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
-        securityToken: credentials?.SecurityToken,
+        stsToken: credentials?.SecurityToken,
         bucket: bucket.name,
     });
     try {

@@ -20,7 +20,7 @@ export default async (ossConfig: IOssConfig) => {
         region: `oss-${ossConfig?.region}`,
         accessKeyId: ossConfig?.accessKeyId,
         accessKeySecret: ossConfig?.accessKeySecret,
-        securityToken: ossConfig?.securityToken,
+        stsToken: ossConfig?.securityToken,
     });
 
     if(type == 'upload'){
@@ -33,7 +33,7 @@ export default async (ossConfig: IOssConfig) => {
             region: location.location,
             accessKeyId: ossConfig?.accessKeyId,
             accessKeySecret: ossConfig?.accessKeySecret,
-            securityToken: ossConfig?.securityToken,
+            stsToken: ossConfig?.securityToken,
         });
         // 文件上传
         await put(ossClient, file, object);
