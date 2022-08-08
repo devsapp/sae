@@ -27,6 +27,7 @@ export interface InputProps {
     };
 }
 export interface OutputProps {
+    region: string;
     componentType?: string;
     accessLink?: string;
     console: string;
