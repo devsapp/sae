@@ -7,6 +7,7 @@ export async function vpcAvailable(vpcId, region, credentials) {
     var client = new core.popCore({
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
+        // @ts-ignore
         securityToken: credentials?.SecurityToken,
         endpoint: 'https://vpc.aliyuncs.com',
         apiVersion: '2016-04-28'

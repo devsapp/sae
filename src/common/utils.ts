@@ -146,6 +146,7 @@ export async function infoRes(application: any) {
     const data = await Client.saeClient.describeApplicationConfig(appId);
     const appConfig = data['Data'];
     const result: OutputProps = {
+        region: application.RegionId,
         console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
         namespace: {
             id: appConfig.NamespaceId,
@@ -183,6 +184,7 @@ export async function infoRes(application: any) {
 
 export async function output(applicationObject: any, slbConfig: any) {
     const result: OutputProps = {
+        region: applicationObject.region,
         console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
         namespace: {
             id: applicationObject.NamespaceId,
