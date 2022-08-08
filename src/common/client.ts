@@ -1,11 +1,14 @@
+import * as core from '@serverless-devs/core';
 // @ts-ignore
-import Core, { ROAClient } from '@alicloud/pop-core';
+const ROAClient = core.popCore.ROAClient;
 
-export async function vpcAvailable(vpcId, region, accessKeyID, accessKeySecret) {
+export async function vpcAvailable(vpcId, region, credentials) {
 
-    var client = new Core({
-        accessKeyId: accessKeyID,
-        accessKeySecret: accessKeySecret,
+    var client = new core.popCore({
+        accessKeyId: credentials?.AccessKeyID,
+        accessKeySecret: credentials?.AccessKeySecret,
+        // @ts-ignore
+        securityToken: credentials?.SecurityToken,
         endpoint: 'https://vpc.aliyuncs.com',
         apiVersion: '2016-04-28'
     });
@@ -33,10 +36,11 @@ export async function vpcAvailable(vpcId, region, accessKeyID, accessKeySecret) 
 export default class Client {
     static saeClient: any;
 
-    static async setSaeClient(region, accessKeyID, accessKeySecret) {
+    static async setSaeClient(region, credentials) {
         const saeClient = new ROAClient({
-            accessKeyId: accessKeyID,
-            accessKeySecret: accessKeySecret,
+            accessKeyId: credentials?.AccessKeyID,
+            accessKeySecret: credentials?.AccessKeySecret,
+            securityToken: credentials?.SecurityToken,
             endpoint: `https://sae.${region}.aliyuncs.com`,
             apiVersion: "2019-05-06",
         });
@@ -60,7 +64,21 @@ export default class Client {
         const GETSLBUri = '/pop/v1/sam/app/slb';
         const DescribeChangeOrderUri = '/pop/v1/sam/changeorder/DescribeChangeOrder';
         const DescribeApplicationConfigUri = '/pop/v1/sam/app/describeApplicationConfig';
-        
+
+        saeClient.describeNamespace = async function (id: string) {
+            let queries = {
+                NamespaceId: id
+            };
+            let data = {};
+            try {
+                data = await saeClient.request("GET", NamespaceUri, queries, body, headers, requestOption);
+            } catch (e) {
+                if (e.message.includes('The specified NamespaceId does not exist.')) {
+                    data['Data'] = await this.getNamespace();
+                }
+            }
+            return data;
+        }
         /**
          * 获取应用配置信息
          * @param appId id
@@ -72,7 +90,7 @@ export default class Client {
             let data = await saeClient.request("GET", DescribeApplicationConfigUri, queries, body, headers, requestOption);
             return data;
         }
-        
+
         /**
          * 获取变更单列表
          * @param appId 应用ID
@@ -92,7 +110,7 @@ export default class Client {
          * @param orderId id
          * @returns 
          */
-        saeClient.describeChangeOrder = async function (orderId:any) {
+        saeClient.describeChangeOrder = async function (orderId: any) {
             let queries = {
                 ChangeOrderId: orderId,
             };

@@ -1,6 +1,7 @@
 export interface IOssConfig {
-    accessKeyId: string;
-    accessKeySecret: string;
+    accessKeyId?: string;
+    accessKeySecret?: string;
+    securityToken?: string;
     bucket: string;
     region: string;
     file: string;

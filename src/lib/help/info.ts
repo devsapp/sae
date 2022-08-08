@@ -1,5 +1,12 @@
 import { globalParams, globalDescribe, applicationNameDescribe } from './constant';
 
+const output = {
+    name: 'output',
+    description: '[Optional] Output the query details',
+    defaultOption: false,
+    type: String,
+};
+
 export const INFO = [
     {
         header: 'Info',
@@ -17,6 +24,7 @@ export const INFO = [
         header: 'Options',
         optionList: [
             applicationNameDescribe,
+            output,
         ],
     },
     { ...globalParams },

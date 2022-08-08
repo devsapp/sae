@@ -39,7 +39,7 @@ Properties:
             Example: desc
             Type:
               - String
-    vpcConfig:
+  vpcConfig:
     Description: VPC配置
     Required: False
     Type:

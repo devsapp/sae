@@ -1,3 +1,28 @@
+export function getInquire(appName: string) {
+  return {
+    type: 'list',
+    name: 'option',
+    message: `Remote application: ${appName} is inconsistent with the config you deployed last time, deploy it with local config or remote config?`,
+    choices: [
+      { name: 'use local' },
+      { name: 'use remote' }
+    ]
+  }
+}
+
+export const cpuLimit = [500, 1000, 2000, 4000, 8000, 12000, 16000, 32000];
+
+export const memoryLimit = new Map([
+  [500, [1024, 2048]],
+  [1000, [1024, 2048, 4096]],
+  [2000, [2048, 4096, 8192]],
+  [4000, [4096, 8192, 16384]],
+  [8000, [8192, 16384, 65536]],
+  [12000, [12288, 24576]],
+  [16000, [16384, 32768, 65536]],
+  [32000, [65536, 131072]],
+]);
+
 export const globalParams = {
   header: 'Global Options',
   optionList: [

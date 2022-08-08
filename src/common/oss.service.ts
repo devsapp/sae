@@ -2,8 +2,9 @@ import OssClient from 'ali-oss';
 import { spinner } from '@serverless-devs/core';
 
 export interface IOssConfig {
-    accessKeyId: string;
-    accessKeySecret: string;
+    accessKeyId?: string;
+    accessKeySecret?: string;
+    securityToken?: string;
     bucket: string;
     region: string;
     file: string;
@@ -12,13 +13,14 @@ export interface IOssConfig {
 }
 
 export default async (ossConfig: IOssConfig) => {
-    const { bucket, region, accessKeyId, accessKeySecret, file, object , type} = ossConfig;
+    const { bucket, file, object , type} = ossConfig;
     // 构造oss客户端
     let ossClient = new OssClient({
-        bucket,
-        region: `oss-${region}`,
-        accessKeyId,
-        accessKeySecret,
+        bucket: ossConfig?.bucket,
+        region: `oss-${ossConfig?.region}`,
+        accessKeyId: ossConfig?.accessKeyId,
+        accessKeySecret: ossConfig?.accessKeySecret,
+        stsToken: ossConfig?.securityToken,
     });
 
     if(type == 'upload'){
@@ -29,8 +31,9 @@ export default async (ossConfig: IOssConfig) => {
         ossClient = new OssClient({
             bucket,
             region: location.location,
-            accessKeyId,
-            accessKeySecret,
+            accessKeyId: ossConfig?.accessKeyId,
+            accessKeySecret: ossConfig?.accessKeySecret,
+            stsToken: ossConfig?.securityToken,
         });
         // 文件上传
         await put(ossClient, file, object);

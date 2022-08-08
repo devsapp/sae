@@ -29,6 +29,10 @@ export interface ICredentials {
   }
 
   export interface OutputProps{
+    region: string;
+    componentType?: string,
+    accessLink?: string,
+    console: string,
     namespace: {
       id: string,
       name?: string,
@@ -39,9 +43,8 @@ export interface ICredentials {
       securityGroupId?: string,
     },
     application: {
-      id?: string,
-      name: string,
-      console: string,
+      appId?: string,
+      appName: string,
       packageType?: string,
       imageUrl?: string,
       packageUrl?: string,
@@ -56,6 +59,8 @@ export interface ICredentials {
     },
     slb: {
       InternetIp?: string,
-      IntranetSlbId?: string,
+      InternetPort?: string,
+      IntranetIp?: string,
+      IntranetPort?: string,
     }
   }

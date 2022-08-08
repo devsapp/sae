@@ -27,6 +27,10 @@ export interface InputProps {
     };
 }
 export interface OutputProps {
+    region: string;
+    componentType?: string;
+    accessLink?: string;
+    console: string;
     namespace: {
         id: string;
         name?: string;
@@ -37,9 +41,8 @@ export interface OutputProps {
         securityGroupId?: string;
     };
     application: {
-        id?: string;
-        name: string;
-        console: string;
+        appId?: string;
+        appName: string;
         packageType?: string;
         imageUrl?: string;
         packageUrl?: string;
@@ -54,6 +57,8 @@ export interface OutputProps {
     };
     slb: {
         InternetIp?: string;
-        IntranetSlbId?: string;
+        InternetPort?: string;
+        IntranetIp?: string;
+        IntranetPort?: string;
     };
 }
