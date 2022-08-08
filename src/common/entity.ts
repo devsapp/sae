@@ -29,6 +29,7 @@ export interface ICredentials {
   }
 
   export interface OutputProps{
+    componentType?: string,
     accessLink?: string,
     console: string,
     namespace: {

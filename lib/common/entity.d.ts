@@ -27,6 +27,7 @@ export interface InputProps {
     };
 }
 export interface OutputProps {
+    componentType?: string;
     accessLink?: string;
     console: string;
     namespace: {
