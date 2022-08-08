@@ -1,11 +1,14 @@
 export interface Resource {
-    type: string;
-    appId?: string;
-    appName?: string;
-    namespaceId?: string;
-    region: string;
-    oss?: any;
-    slb?: any;
+    type: 'sae';
+    sae: {
+        type: string;
+        appId: string;
+        appName: string;
+        namespaceId?: string;
+        region: string;
+        oss?: any;
+        slb: any;
+    };
 }
 export default class ResourceFile {
     static filePath: any;
@@ -15,7 +18,7 @@ export default class ResourceFile {
      * @param {string} dir 路径
      */
     static checkDirExist(folderpath: any): Promise<void>;
-    static putResources(resource: Resource): Promise<void>;
+    static putResources(sae: any): Promise<void>;
     static removeResources(): Promise<void>;
     static appendResource(name: string, value: any): Promise<void>;
 }

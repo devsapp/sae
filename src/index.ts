@@ -83,7 +83,6 @@ export default class SaeComponent {
     }
 
     let resource = {
-      type: 'sae',
       region,
       appName: application.name,
     };
