@@ -1,0 +1,11 @@
+.s
+.github
+example
+docs
+src
+.gitignore
+.prettierrc.js
+LICENSE
+package-lock.json
+readme.md
+tsconfig.json
