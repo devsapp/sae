@@ -27,6 +27,7 @@ export default class SaeComponent {
     } else {
       const app = data['Data']['Applications'][0];
       const res = await utils.infoRes(app);
+      res.componentType="sae";
 
       if (outputFile) {
         let cache: any = {};
