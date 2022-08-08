@@ -224,7 +224,7 @@ export async function output(applicationObject: any, slbConfig: any) {
     return result;
 }
 
-export async function handleEnv(inputs: InputProps, application: any, credentials: any) {
+export async function handleEnv(inputs: InputProps, application: any, credentials: any, resource: any) {
     let { props: { region, namespace, vpcConfig, slb } } = inputs;
     let autoConfig = false;
     if (vpcConfig) {
@@ -259,6 +259,7 @@ export async function handleEnv(inputs: InputProps, application: any, credential
     } else {
         try {
             await Client.saeClient.createNamespace(namespace);
+            resource.namespaceId = namespace.id;
         } catch (e) {
             if (e.message.includes('The specified namespace ID already exists')) {
                 // The specified namespace ID already exists
@@ -308,7 +309,7 @@ async function getPackageStruct(codePackage: any, region: any, AccountID: any) {
     return codePackage;
 }
 
-export async function handleCode(region: any, application: any, credentials: any) {
+export async function handleCode(region: any, application: any, credentials: any, resource: any) {
     let { AccountID } = credentials;
 
     const applicationObject = JSON.parse(JSON.stringify(application));
@@ -350,6 +351,11 @@ export async function handleCode(region: any, application: any, credentials: any
             if (await fse.existsSync(codePackage.path)) {
                 await uploadFile(credentials, codePackage, tempObject, 'upload')
                 applicationObject.PackageUrl = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${tempObject}`;
+                resource.oss = {
+                    bucket: codePackage.bucket.name,
+                    region: codePackage.bucket.region,
+                    file: tempObject,
+                };
             } else if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
                 applicationObject.PackageUrl = codePackage.path;
             } else {
@@ -518,8 +524,8 @@ export async function removePlan(application, file) {
     }
     ];
     let data2 = [{
-        InternetIp: slb['Data']['InternetIp']?slb['Data']['InternetIp']:'',
-        IntranetIp: slb['Data']['IntranetIp']?slb['Data']['IntranetIp']:''
+        InternetIp: slb['Data']['InternetIp'] ? slb['Data']['InternetIp'] : '',
+        IntranetIp: slb['Data']['IntranetIp'] ? slb['Data']['IntranetIp'] : ''
     }
     ]
     console.log('\r\nslb:');
