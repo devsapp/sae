@@ -143,12 +143,15 @@ export async function getStatusByOrderId(orderId: any) {
 export async function infoRes(application: any) {
     const appId = application.AppId;
     const slbConfig = await Client.saeClient.getSLB(appId);
-    const data = await Client.saeClient.describeApplicationConfig(appId);
-    const appConfig = data['Data'];
+    const data1 = await Client.saeClient.describeApplicationConfig(appId);
+    const appConfig = data1['Data'];
+    const data2 = await Client.saeClient.describeNamespace(appConfig.NamespaceId);
+    const namespace = data2['Data'];
     const result: OutputProps = {
         console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
         namespace: {
             id: appConfig.NamespaceId,
+            name: namespace.NamespaceName,
         },
         vpcConfig: {
             vpcId: appConfig.VpcId,
@@ -156,7 +159,8 @@ export async function infoRes(application: any) {
             securityGroupId: appConfig.SecurityGroupId,
         },
         application: {
-            name: application.AppName,
+            appId: application.AppId,
+            appName: application.AppName,
             packageType: application.PackageType,
             imageUrl: application.ImageUrl,
             packageUrl: application.PackageUrl,
@@ -194,8 +198,8 @@ export async function output(applicationObject: any, slbConfig: any) {
             securityGroupId: applicationObject.SecurityGroupId,
         },
         application: {
-            id: applicationObject.AppId,
-            name: applicationObject.name,
+            appId: applicationObject.AppId,
+            appName: applicationObject.name,
             packageType: applicationObject.PackageType,
         },
         slb: {

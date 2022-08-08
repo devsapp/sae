@@ -7,5 +7,15 @@ export interface Resource {
     oss?: any;
     slb?: any;
 }
-export declare function putResources(accountID: string, resource: Resource): Promise<void>;
-export declare function removeResources(accountID: string, region: string, appName: string): Promise<void>;
+export default class ResourceFile {
+    static filePath: any;
+    static setFilePath(accountID: string, region: string, appName: string): Promise<void>;
+    /**
+     * 路径是否存在，不存在则创建
+     * @param {string} dir 路径
+     */
+    static checkDirExist(folderpath: any): Promise<void>;
+    static putResources(resource: Resource): Promise<void>;
+    static removeResources(): Promise<void>;
+    static appendResource(name: string, value: any): Promise<void>;
+}

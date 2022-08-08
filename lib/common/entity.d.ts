@@ -40,8 +40,8 @@ export interface OutputProps {
         securityGroupId?: string;
     };
     application: {
-        id?: string;
-        name: string;
+        appId?: string;
+        appName: string;
         packageType?: string;
         imageUrl?: string;
         packageUrl?: string;

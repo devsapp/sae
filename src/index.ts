@@ -8,7 +8,7 @@ import * as utils from './common/utils';
 import * as HELP from './lib/help';
 import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
-import {Resource, putResources, removeResources} from './common/resource';
+import ResourceFile from './common/resource';
 
 export default class SaeComponent {
 
@@ -49,6 +49,7 @@ export default class SaeComponent {
     let { args, props: { region, application, slb } } = inputs;
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
+    await ResourceFile.setFilePath(credentials.AccountID, region, application.name);
 
     const { isHelp, useLocal, useRemote } = await utils.parseCommand(args);
     if (isHelp) {
@@ -81,19 +82,26 @@ export default class SaeComponent {
       }
     }
 
-    let resource: Resource = {
+    let resource = {
       type: 'sae',
       region,
       appName: application.name,
     };
-    let createApp = true;
+    await ResourceFile.putResources(resource);
     // 创建Namespace
     const vm = spinner('设置Namespace...');
     const env = await utils.handleEnv(inputs, application, credentials, resource);
     slb = env.slb;
+    if(resource['namespaceId']){
+      await ResourceFile.appendResource('namespaceId',resource['namespaceId']);
+    }
 
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(region, application, credentials, resource);
+    if(resource['oss']){
+      await ResourceFile.appendResource('oss',resource['oss']);
+    }
+
     await utils.setDefault(applicationObject);
     let changeOrderId: any;
     let needBindSlb = true;
@@ -103,11 +111,10 @@ export default class SaeComponent {
       appId = obj['Data']['AppId'];
       changeOrderId = obj['Data']['ChangeOrderId'];
       applicationObject.AppId = appId;
-      resource.appId = appId;
+      await ResourceFile.appendResource('appId',appId);
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
         try {
-          createApp = false;
           let res = await Client.saeClient.updateApplication(applicationObject);
           appId = res['Data']['AppId'];
           changeOrderId = res['Data']['ChangeOrderId'];
@@ -144,10 +151,9 @@ export default class SaeComponent {
     const slbConfig = await Client.saeClient.getSLB(appId);
     vm.stop();
     const result = await utils.output(applicationObject, slbConfig);
-    resource.slb = result.slb;
-    if(createApp){
-      await putResources(credentials.AccountID, resource);
-    }
+    
+    await ResourceFile.appendResource('slb', result.slb);
+    
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
     logger.success('应用详细信息如下：');
     return result;
@@ -162,6 +168,7 @@ export default class SaeComponent {
     }
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
+    await ResourceFile.setFilePath(credentials.AccountID, region, application.name);
     let data = await Client.saeClient.listApplications(application.name);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${application.name}`);
@@ -193,12 +200,12 @@ export default class SaeComponent {
       return;
     }
     await utils.getStatusByOrderId(orderId);
-    await removeResources(credentials.AccountID, region, application.name);
     if (file.fileName) {
       vm.text = `删除 oss 文件 ... `;
       await utils.deleteFile(credentials, file.bucket, file.fileName);
     }
     vm.stop();
+    await ResourceFile.removeResources();
     logger.success('删除成功');
   }
 }

@@ -63,7 +63,21 @@ export default class Client {
         const GETSLBUri = '/pop/v1/sam/app/slb';
         const DescribeChangeOrderUri = '/pop/v1/sam/changeorder/DescribeChangeOrder';
         const DescribeApplicationConfigUri = '/pop/v1/sam/app/describeApplicationConfig';
-        
+
+        saeClient.describeNamespace = async function (id: string) {
+            let queries = {
+                NamespaceId: id
+            };
+            let data = {};
+            try {
+                data = await saeClient.request("GET", NamespaceUri, queries, body, headers, requestOption);
+            } catch (e) {
+                if (e.message.includes('The specified NamespaceId does not exist.')) {
+                    data['Data'] = await this.getNamespace();
+                }
+            }
+            return data;
+        }
         /**
          * 获取应用配置信息
          * @param appId id
@@ -75,7 +89,7 @@ export default class Client {
             let data = await saeClient.request("GET", DescribeApplicationConfigUri, queries, body, headers, requestOption);
             return data;
         }
-        
+
         /**
          * 获取变更单列表
          * @param appId 应用ID
@@ -95,7 +109,7 @@ export default class Client {
          * @param orderId id
          * @returns 
          */
-        saeClient.describeChangeOrder = async function (orderId:any) {
+        saeClient.describeChangeOrder = async function (orderId: any) {
             let queries = {
                 ChangeOrderId: orderId,
             };
