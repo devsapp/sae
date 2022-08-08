@@ -13,6 +13,7 @@
   "author": "Serverless-Devs",
   "contributors": [],
   "license": "MIT",
+  "autoInstall": false,
   "main": "./lib/index.js",
   "publishConfig": {
     "access": "public"
