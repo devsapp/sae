@@ -133,39 +133,34 @@ code是应用的代码配置，选用Java部署时，支持FatJar、War和Image�
 使用镜像方式部署：
 ```yaml
 code:
+  packageType: Image
   imageUrl: registry.cn-hangzhou.aliyuncs.com/namespace4sae/repo4sae:v1
 ```
 
 使用远程jar包地址：
 ```yaml
 code:
-  package: https://bucket4sae.oss-cn-hangzhou.aliyuncs.com/demo.jar
+  packageType: FatJar
+  packageVersion: 1.0.0
+  packageUrl: https://bucket4sae.oss-cn-hangzhou.aliyuncs.com/demo.jar
 ```
 
 使用本地jar包部署：
 ```yaml
 code:
-  package: demo.jar
+  packageType: FatJar
+  packageVersion: 1.0.0
+  packageUrl: demo.jar
 ```
 
 使用本地war包部署并指定上传地址：
 ```yaml
 code:
-  package:
-    path: test.war
-    bucket:
-      region: cn-hangzhou
-      name: bucket4sae
+  packageType: War
+  packageVersion: 1.0.0
+  packageUrl: test.war
+  ossConfig: bucket4sae
 ```
-
-## slb
-
-| 名称 |  类型  |  是否必选  |  示例值  |   描述  |
-| --- |  ---  |  ---  |  ---  | ---  |
-|Internet	|String	|	是	|[{"port":80,"targetPort":8080,"protocol":"TCP"}]|	绑定公网SLB。例如：[{"port":80,"targetPort":8080,"protocol":"TCP"}]，表示将容器的8080端口通过SLB的80端口暴露服务，协议为TCP。|
-|Intranet|	String	|	否|	[{"port":80,"targetPort":8080,"protocol":"TCP"}]	|绑定私网SLB。例如：[{"port":80,"targetPort":8080,"protocol":"TCP"}]，表示将容器的8080端口通过SLB的80端口暴露服务，协议为TCP。|
-|InternetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的公网SLB，目前只支持非共享型实例。|
-|IntranetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的私网SLB，目前只支持非共享型实例。|
 
 # 组件指令
 ## deploy
