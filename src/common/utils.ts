@@ -266,7 +266,7 @@ export async function handleEnv(application: any, credentials: any) {
 }
 
 async function getBucketName(ossConfig: any, region: any, AccountID: any) {
-    if(ossConfig.trim() === 'auto'){
+    if(ossConfig === 'auto'){
         return `sae-packages-${region}-${AccountID}`;
     }else{
         return ossConfig;
