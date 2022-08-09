@@ -3,7 +3,7 @@ import oss, { IOssConfig } from './oss.service';
 const OSS = require('ali-oss')
 import fse from "fs";
 import Client from './client';
-import { InputProps, OutputProps } from './entity';
+import { OutputProps } from './entity';
 import { vpcAvailable } from './client';
 import { cpuLimit, memoryLimit } from '../lib/help/constant';
 import Table from 'tty-table';
@@ -11,14 +11,14 @@ import Table from 'tty-table';
 const inquirer = core.inquirer;
 
 
-async function uploadFile(credentials: any, codePackage: { bucket: { name: any; region: any; }; path: any; }, object: string, type: string) {
+async function uploadFile(credentials: any, bucketName: string, region: string, packageUrl: string, object: string, type: string) {
     const ossConfig: IOssConfig = {
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
         securityToken: credentials?.SecurityToken,
-        bucket: codePackage.bucket.name,
-        region: codePackage.bucket.region,
-        file: codePackage.path,
+        bucket: bucketName,
+        region: region,
+        file: packageUrl,
         object: object,
         type: type,
     };
@@ -54,35 +54,41 @@ export async function needBindSlb(slb: any, appId: string) {
     return false;
 }
 
-export async function deleteFile(credentials: any, bucket: any, fileName: string) {
+export async function deleteFile(credentials: any, region: string, bucketName: any, filename: string) {
     const client = new OSS({
-        region: `oss-${bucket.region}`,
+        region: `oss-${region}`,
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
         stsToken: credentials?.SecurityToken,
-        bucket: bucket.name,
+        bucket: bucketName,
     });
     try {
-        await client.delete(fileName);
+        await client.delete(filename);
     } catch (e) {
         console.log(e);
     }
 }
 
 export async function file2delete(region: any, application: any, credentials: any) {
-    let codePackage = application?.code?.package;
-    if (!codePackage) {
+    const packageUrl = application.code.packageUrl;
+    if (!packageUrl) {
         return {};
     }
     const { AccountID } = credentials;
-    codePackage = await getPackageStruct(codePackage, region, AccountID);
-    if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
+    if (packageUrl.startsWith("http://") || packageUrl.startsWith("https://")) {
         return {};
     }
-    const fileName = "sae-" + application.name + "-" + codePackage.path;
-    const bucket = codePackage.bucket;
-    const fileAddr = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${fileName}`;
-    return { fileName, bucket, fileAddr };
+    const bucketName = await getBucketName(application.code.ossConfig, region, AccountID);
+    let filename = application.appName;
+    if (packageUrl.endsWith('.war')) {
+        filename = filename + '.war';
+    } else if (packageUrl.endsWith('.jar')) {
+        filename = filename + '.jar';
+    } else if (packageUrl.endsWith('.zip')) {
+        filename = filename + '.zip';
+    }
+    const fileAddr = `https://${bucketName}.oss-${region}.aliyuncs.com/${filename}`;
+    return { filename, bucketName, fileAddr };
 }
 
 export async function checkStatus(appId, coType) {
@@ -148,18 +154,14 @@ export async function infoRes(application: any) {
     const data2 = await Client.saeClient.describeNamespace(appConfig.NamespaceId);
     const namespace = data2['Data'];
     const result: OutputProps = {
-        region: application.RegionId,
         console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
-        namespace: {
-            id: appConfig.NamespaceId,
-            name: namespace.NamespaceName,
-        },
-        vpcConfig: {
+        application: {
+            region: application.RegionId,
+            namespaceId: appConfig.NamespaceId,
+            namespaceName: namespace.NamespaceName,
             vpcId: appConfig.VpcId,
             vSwitchId: appConfig.VSwitchId,
             securityGroupId: appConfig.SecurityGroupId,
-        },
-        application: {
             appId: application.AppId,
             appName: application.AppName,
             packageType: application.PackageType,
@@ -188,18 +190,15 @@ export async function infoRes(application: any) {
 
 export async function output(applicationObject: any, slbConfig: any) {
     const result: OutputProps = {
-        region: applicationObject.region,
+        
         console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
-        namespace: {
-            id: applicationObject.NamespaceId,
-            name: applicationObject.NamespaceName,
-        },
-        vpcConfig: {
+        application: {
+            region: applicationObject.region,
+            namespaceId: applicationObject.NamespaceId,
+            namespaceName: applicationObject.NamespaceName,
             vpcId: applicationObject.VpcId,
             vSwitchId: applicationObject.VSwitchId,
             securityGroupId: applicationObject.SecurityGroupId,
-        },
-        application: {
             appId: applicationObject.AppId,
             appName: applicationObject.name,
             packageType: applicationObject.PackageType,
@@ -230,60 +229,31 @@ export async function output(applicationObject: any, slbConfig: any) {
     return result;
 }
 
-export async function handleEnv(inputs: InputProps, application: any, credentials: any, resource: any) {
-    let { props: { region, namespace, vpcConfig, slb } } = inputs;
-    let autoConfig = false;
-    if (vpcConfig) {
-        const vpcAvail = await vpcAvailable(vpcConfig.vpcId, region, credentials);
+export async function handleEnv(application: any, credentials: any) {
+    let { region, namespaceId, vpcId, slb } = application;
+    application.autoConfig = false;
+    if (vpcId) {
+        const vpcAvail = await vpcAvailable(vpcId, region, credentials);
         if (!vpcAvail) {
             throw new core.CatchableError('vpc配置不可用');
         }
     }
-    if (!namespace && !vpcConfig) {
+    if (!namespaceId && !vpcId) {
         // 自动配置
-        autoConfig = true;
+        application.autoConfig = true;
         const defaultNamespace = await Client.saeClient.getNamespace();
-        namespace = {
-            id: defaultNamespace.NamespaceId,
-            name: defaultNamespace.NamespaceName,
-        }
-        vpcConfig = {
-            vpcId: defaultNamespace.VpcId,
-            vSwitchId: defaultNamespace.VSwitchId,
-            securityGroupId: defaultNamespace.SecurityGroupId,
-        }
-    } else if (!namespace && vpcConfig) {
+        application.namespaceId = defaultNamespace.NamespaceId;
+        application.vpcId = defaultNamespace.VpcId;
+        application.vSwitchId = defaultNamespace.VSwitchId;
+        application.securityGroupId = defaultNamespace.SecurityGroupId;
+    } else if (!namespaceId && vpcId) {
         // 使用默认命名空间
         const defaultNamespace = await Client.saeClient.getNamespace();
-        namespace = {
-            id: defaultNamespace.NamespaceId,
-            name: defaultNamespace.NamespaceName,
-        }
-        await Client.saeClient.updateNamespaceVpc(namespace.id, vpcConfig.vpcId);
-    } else if (namespace && !vpcConfig) {
+        application.namespaceId = defaultNamespace.NamespaceId;
+        await Client.saeClient.updateNamespaceVpc(namespaceId, vpcId);
+    } else if (namespaceId && !vpcId) {
         throw new core.CatchableError("The specified parameter 'vpcConfig' is invalid.")
-    } else {
-        try {
-            await Client.saeClient.createNamespace(namespace);
-            resource.namespaceId = namespace.id;
-        } catch (e) {
-            if (e.message.includes('The specified namespace ID already exists')) {
-                // The specified namespace ID already exists
-                await Client.saeClient.updateNamespace(namespace);
-            } else {
-                throw e
-            }
-        }
     }
-    application.AutoConfig = autoConfig;
-    application.AppName = application.name;
-    application.AppDescription = application.decription;
-    application.NamespaceId = namespace.id;
-    application.NamespaceName = namespace.name;
-    application.VpcId = vpcConfig.vpcId;
-    application.VSwitchId = vpcConfig.vSwitchId;
-    application.SecurityGroupId = vpcConfig.securityGroupId;
-    application.region = region;
 
     // slb
     if (application.port) {
@@ -291,33 +261,20 @@ export async function handleEnv(inputs: InputProps, application: any, credential
             Internet: [{ "port": 80, "targetPort": application.port, "protocol": "HTTP" }]
         };
     }
-    return { namespace, slb };
+    return { slb };
 }
 
-async function getPackageStruct(codePackage: any, region: any, AccountID: any) {
-    if (typeof codePackage == 'string') {
-        codePackage = {
-            path: codePackage,
-            bucket: {
-                region: region,
-                name: `sae-packages-${region}-${AccountID}`
-            }
-        }
-    } else {
-        if (!codePackage.path) {
-            throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确")
-        }
-        const codeBucket = codePackage.bucket || {}
-        codeBucket.region = codeBucket.region || region
-        codeBucket.name = codeBucket.name || `sae-packages-${region}-${AccountID}`
-        codePackage.bucket = codeBucket
+async function getBucketName(ossConfig: any, region: any, AccountID: any) {
+    if(ossConfig.trim() === 'auto'){
+        return `sae-packages-${region}-${AccountID}`;
+    }else{
+        return ossConfig;
     }
-    return codePackage;
 }
 
-export async function handleCode(region: any, application: any, credentials: any, resource: any) {
+export async function handleCode(application: any, credentials: any) {
     let { AccountID } = credentials;
-
+    let {region} = application;
     const applicationObject = JSON.parse(JSON.stringify(application));
     delete applicationObject.code;
 
@@ -326,44 +283,30 @@ export async function handleCode(region: any, application: any, credentials: any
         throw new core.CatchableError("未指定部署的代码");
     }
     const code = application.code;
-    const image = code.image;
-    let codePackage = code.package;
-    if (image) {
-        if (code.type === 'php') {
-            applicationObject.PackageType = 'IMAGE_PHP_7_3';
-        } else {
-            applicationObject.PackageType = 'Image';
-        }
-        applicationObject.ImageUrl = image;
-    } else if (codePackage) {
-        codePackage = await getPackageStruct(codePackage, region, AccountID);
-        if (codePackage.path.endsWith('.war') || codePackage.path.endsWith('.jar') || codePackage.path.endsWith('.zip')) {
+    if (code.imageUrl) {
+        // 使用用户设置的 packageType
+    } else if (code.packageUrl) {
+        const bucketName = await getBucketName(code.ossConfig, region, AccountID);
+        if (code.packageUrl.endsWith('.war') || code.packageUrl.endsWith('.jar') || code.packageUrl.endsWith('.zip')) {
             //文件命名规范：1.使用 UTF-8 编码 2.区分大小写 3.长度必须在 1~1023 字节之间 4. 不能以 / 或者 \ 字符开头
-            let tempObject = "sae-" + application.name + "-" + codePackage.path;
-            if (codePackage.path.endsWith('.war')) {
-                applicationObject.PackageType = 'War';
+            let filename = application.appName;
+            if (code.packageUrl.endsWith('.war')) {
+                filename = filename + '.war';
                 applicationObject.WebContainer = 'apache-tomcat-8.5.42';
                 applicationObject.Jdk = 'Open JDK 8';
-                // applicationObject.PackageVersion = '1.0.0';
-            } else if (codePackage.path.endsWith('.jar')) {
-                applicationObject.PackageType = 'FatJar';
+            } else if (code.packageUrl.endsWith('.jar')) {
+                filename = filename + '.jar';
                 applicationObject.Jdk = 'Open JDK 8';
-                // applicationObject.PackageVersion = '1.0.0';
-            } else if (codePackage.path.endsWith('.zip')) {
-                applicationObject.PackageType = 'PhpZip';
+            } else if (code.packageUrl.endsWith('.zip')) {
+                filename = filename + '.zip';
                 applicationObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
                 applicationObject.Php = 'PHP-FPM 7.3';
             }
-            if (await fse.existsSync(codePackage.path)) {
-                await uploadFile(credentials, codePackage, tempObject, 'upload')
-                applicationObject.PackageUrl = `https://${codePackage.bucket.name}.oss-${codePackage.bucket.region}.aliyuncs.com/${tempObject}`;
-                resource.oss = {
-                    bucket: codePackage.bucket.name,
-                    region: codePackage.bucket.region,
-                    file: tempObject,
-                };
-            } else if (codePackage.path.startsWith("http://") || codePackage.path.startsWith("https://")) {
-                applicationObject.PackageUrl = codePackage.path;
+            if (await fse.existsSync(code.packageUrl)) {
+                await uploadFile(credentials, bucketName, region, code.packageUrl, filename, 'upload');
+                applicationObject.PackageUrl = `https://${bucketName}.oss-${region}.aliyuncs.com/${filename}`;
+            } else if (code.packageUrl.startsWith("http://") || code.packageUrl.startsWith("https://")) {
+                applicationObject.PackageUrl = code.packageUrl;
             } else {
                 throw new core.CatchableError("未能成功找到文件，请确定package的路径正确");
             }
@@ -536,9 +479,9 @@ export async function removePlan(application, file) {
     ]
     console.log('\r\nslb:');
     console.log(Table(header2, data2).render());
-    if (file?.fileName) {
+    if (file?.filename) {
         let header3 = [{
-            value: "fileName",
+            value: "filename",
             headerColor: "cyan",
             color: "white",
             align: "left",
@@ -560,8 +503,8 @@ export async function removePlan(application, file) {
         }
         ];
         let data3 = [{
-            fileName: file.fileName,
-            bucketName: file.bucket.name,
+            filename: file.filename,
+            bucketName: file.bucketName,
             fileAddr: file.fileAddr,
         }
         ]

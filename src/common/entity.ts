@@ -29,20 +29,16 @@ export interface ICredentials {
   }
 
   export interface OutputProps{
-    region: string;
     componentType?: string,
     accessLink?: string,
     console: string,
-    namespace: {
-      id: string,
-      name?: string,
-    },
-    vpcConfig: {
+    application: {
+      region?: string,
+      namespaceId?: string,
+      namespaceName?: string,
       vpcId?: string,
       vSwitchId?: string,
       securityGroupId?: string,
-    },
-    application: {
       appId?: string,
       appName: string,
       packageType?: string,
