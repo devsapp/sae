@@ -46,7 +46,7 @@ export default class SaeComponent {
 
   async deploy(inputs: InputProps) {
     let appId: any;
-    let { args, props: { region, application, slb } } = inputs;
+    let { args, props: { region, application } } = inputs;
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
     await ResourceFile.setFilePath(credentials.AccountID, region, application.appName);
@@ -85,7 +85,7 @@ export default class SaeComponent {
     // 创建Namespace
     const vm = spinner('设置Namespace...');
     const env = await utils.handleEnv(application, credentials);
-    slb = env.slb;
+    let slb = env.slb;
 
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(application, credentials);
@@ -138,8 +138,6 @@ export default class SaeComponent {
     const slbConfig = await Client.saeClient.getSLB(appId);
     vm.stop();
     const result = await utils.output(applicationObject, slbConfig);
-    
-    await ResourceFile.appendResource('slb', result.slb);
     
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
     logger.success('应用详细信息如下：');

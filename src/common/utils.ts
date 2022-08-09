@@ -230,7 +230,7 @@ export async function output(applicationObject: any, slbConfig: any) {
 }
 
 export async function handleEnv(application: any, credentials: any) {
-    let { region, namespaceId, vpcId, slb } = application;
+    let { region, namespaceId, vpcId } = application;
     application.autoConfig = false;
     if (vpcId) {
         const vpcAvail = await vpcAvailable(vpcId, region, credentials);
@@ -256,11 +256,12 @@ export async function handleEnv(application: any, credentials: any) {
     }
 
     // slb
-    if (application.port) {
-        slb = {
-            Internet: [{ "port": 80, "targetPort": application.port, "protocol": "HTTP" }]
-        };
+    if (!application.port){
+        throw new core.CatchableError("port 为必填项.")
     }
+    const slb = {
+        Internet: [{ "port": 80, "targetPort": application.port, "protocol": "HTTP" }]
+    };
     return { slb };
 }
 
@@ -283,11 +284,14 @@ export async function handleCode(application: any, credentials: any) {
         throw new core.CatchableError("未指定部署的代码");
     }
     const code = application.code;
+    applicationObject.packageType = code.packageType;
     if (code.imageUrl) {
+        applicationObject.imageUrl = code.imageUrl;
         // 使用用户设置的 packageType
     } else if (code.packageUrl) {
         const bucketName = await getBucketName(code.ossConfig, region, AccountID);
         if (code.packageUrl.endsWith('.war') || code.packageUrl.endsWith('.jar') || code.packageUrl.endsWith('.zip')) {
+            applicationObject.packageVersion = code.packageVersion;
             //文件命名规范：1.使用 UTF-8 编码 2.区分大小写 3.长度必须在 1~1023 字节之间 4. 不能以 / 或者 \ 字符开头
             let filename = application.appName;
             if (code.packageUrl.endsWith('.war')) {

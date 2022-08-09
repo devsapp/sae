@@ -20,7 +20,13 @@ export declare function getStatusByOrderId(orderId: any): Promise<void>;
 export declare function infoRes(application: any): Promise<OutputProps>;
 export declare function output(applicationObject: any, slbConfig: any): Promise<OutputProps>;
 export declare function handleEnv(application: any, credentials: any): Promise<{
-    slb: any;
+    slb: {
+        Internet: {
+            port: number;
+            targetPort: any;
+            protocol: string;
+        }[];
+    };
 }>;
 export declare function handleCode(application: any, credentials: any): Promise<any>;
 export declare function setDefault(applicationObject: any): Promise<void>;
