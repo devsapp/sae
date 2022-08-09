@@ -191,16 +191,16 @@ export async function infoRes(application: any) {
 export async function output(applicationObject: any, slbConfig: any) {
     const result: OutputProps = {
         
-        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.region}&namespaceId=${applicationObject.NamespaceId}`,
+        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.Region}&namespaceId=${applicationObject.NamespaceId}`,
         application: {
-            region: applicationObject.region,
+            region: applicationObject.Region,
             namespaceId: applicationObject.NamespaceId,
             namespaceName: applicationObject.NamespaceName,
             vpcId: applicationObject.VpcId,
             vSwitchId: applicationObject.VSwitchId,
             securityGroupId: applicationObject.SecurityGroupId,
             appId: applicationObject.AppId,
-            appName: applicationObject.name,
+            appName: applicationObject.AppName,
             packageType: applicationObject.PackageType,
         },
         slb: {
@@ -266,7 +266,7 @@ export async function handleEnv(application: any, credentials: any) {
 }
 
 async function getBucketName(ossConfig: any, region: any, AccountID: any) {
-    if(ossConfig === 'auto'){
+    if(!ossConfig || ossConfig === 'auto'){
         return `sae-packages-${region}-${AccountID}`;
     }else{
         return ossConfig;
@@ -371,6 +371,7 @@ export async function setDefault(applicationObject: any) {
         if (/^[a-z].*$/.test(key)) {
             let Key = key.replace(key[0], key[0].toUpperCase());
             applicationObject[Key] = applicationObject[key];
+            delete(applicationObject[key]);
         }
     }
 }

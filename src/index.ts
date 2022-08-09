@@ -13,14 +13,14 @@ import ResourceFile from './common/resource';
 export default class SaeComponent {
 
   async info(inputs: InputProps) {
-    const { args, props: { region, application } } = inputs;
+    const { args, props: { application } } = inputs;
     const { isHelp, outputFile } = await utils.handlerInfoInputs(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
     }
     const credentials = await core.getCredential(inputs.project.access);
-    await Client.setSaeClient(region, credentials);
+    await Client.setSaeClient(application.region, credentials);
     const data = await Client.saeClient.listApplications(application.appName);
     if (data['Data']['Applications'].length === 0) {
       logger.error(`未找到应用 ${application.appName}，请先使用 's deploy' 命令进行部署`);
@@ -46,10 +46,9 @@ export default class SaeComponent {
 
   async deploy(inputs: InputProps) {
     let appId: any;
-    let { args, props: { region, application } } = inputs;
+    let { args, props: { application } } = inputs;
     const credentials = await core.getCredential(inputs.project.access);
-    await Client.setSaeClient(region, credentials);
-    await ResourceFile.setFilePath(credentials.AccountID, region, application.appName);
+    await Client.setSaeClient(application.region, credentials);
 
     const { isHelp, useLocal, useRemote } = await utils.parseCommand(args);
     if (isHelp) {
@@ -98,7 +97,6 @@ export default class SaeComponent {
       appId = obj['Data']['AppId'];
       changeOrderId = obj['Data']['ChangeOrderId'];
       applicationObject.AppId = appId;
-      await ResourceFile.appendResource('appId',appId);
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
         try {
@@ -120,7 +118,7 @@ export default class SaeComponent {
 
     // 检查应用部署状态
     vm.text = `应用正在部署... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${application.region}`;
     await utils.getStatusByOrderId(changeOrderId);
     if (needBindSlb) {
       // 绑定SLB
@@ -129,7 +127,7 @@ export default class SaeComponent {
 
       // 检查应用部署状态
       vm.text = `正在绑定slb... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${application.region}`;
       await utils.checkStatus(appId, 'CoBindSlb');
     }
 
@@ -145,21 +143,20 @@ export default class SaeComponent {
   }
 
   async remove(inputs: InputProps) {
-    const { args, props: { region, application } } = inputs;
+    const { args, props: { application } } = inputs;
     const { isHelp, assumeYes } = await utils.handlerRmInputs(args);
     if (isHelp) {
       core.help(HELP.REMOVE);
       return;
     }
     const credentials = await core.getCredential(inputs.project.access);
-    await Client.setSaeClient(region, credentials);
-    await ResourceFile.setFilePath(credentials.AccountID, region, application.appName);
+    await Client.setSaeClient(application.region, credentials);
     let data = await Client.saeClient.listApplications(application.appName);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${application.appName}`);
       return;
     }
-    const file = await utils.file2delete(region, application, credentials);
+    const file = await utils.file2delete(application.region, application, credentials);
     if (!assumeYes) {
       try {
         const removeStatus = await utils.removePlan(data['Data']['Applications'][0], file);
@@ -187,10 +184,9 @@ export default class SaeComponent {
     await utils.getStatusByOrderId(orderId);
     if (file.filename) {
       vm.text = `删除 oss 文件 ... `;
-      await utils.deleteFile(credentials, region, file.bucketName, file.filename);
+      await utils.deleteFile(credentials, application.region, file.bucketName, file.filename);
     }
     vm.stop();
-    await ResourceFile.removeResources();
     logger.success('删除成功');
   }
 }
