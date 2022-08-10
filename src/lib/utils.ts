@@ -217,7 +217,7 @@ export async function handleEnv(application: any, credentials: any) {
         // 使用默认命名空间
         const defaultNamespace = await Client.saeClient.getNamespace();
         application.namespaceId = defaultNamespace.NamespaceId;
-        await Client.saeClient.updateNamespaceVpc(namespaceId, vpcId);
+        await Client.saeClient.updateNamespaceVpc(application.namespaceId, vpcId);
     } else if (namespaceId && !vpcId) {
         throw new core.CatchableError("The specified parameter 'vpcConfig' is invalid.")
     }
