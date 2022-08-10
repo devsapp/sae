@@ -2,7 +2,7 @@ import OssClient from 'ali-oss';
 import { spinner, lodash } from '@serverless-devs/core';
 import { IOssConfig, IUpload } from '../interface/oss';
 import { ICredentials } from '../interface/entity';
-import { logger } from '@serverless-devs/core/dist/logger';
+import logger from '../common/logger';
 
 const getAutoName = (region, accountId) => `sae-packages-${region}-${accountId}`;
 

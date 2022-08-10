@@ -25,8 +25,9 @@
   "scripts": {
     "start": "npm run watch",
     "watch": "tsc -w",
-    "prebuild": "rm -rf node_modules && rm -rf package-lock.json && npm i && rimraf dist",
-    "build": "esbuild src/index.ts --bundle --log-level=error --minify --platform=node --format=cjs --target=node10.4 --external:@serverless-devs/core --outfile=dist/index.js"
+    "prebuild": "npm i rimraf --no-save && rimraf package-lock.json && rimraf dist && rimraf node_modules && npm i",
+    "build": "npm run esbuild",
+    "esbuild": "esbuild src/index.ts --bundle --log-level=error --minify --platform=node --format=cjs --target=node10.4 --external:@serverless-devs/core --outfile=dist/index.js"
   },
   "dependencies": {
     "ali-oss": "^6.15.2",
@@ -34,7 +35,7 @@
     "tty-table": "^4.1.6"
   },
   "devDependencies": {
-    "@serverless-devs/core": "^0.1.43",
+    "@serverless-devs/core": "latest",
     "@types/lodash": "^4.14.169",
     "@types/node": "^14.0.23",
     "@typescript-eslint/eslint-plugin": "^3.10.0",
