@@ -8,7 +8,6 @@ import * as utils from './common/utils';
 import * as HELP from './lib/help';
 import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
-import ResourceFile from './common/resource';
 
 export default class SaeComponent {
 

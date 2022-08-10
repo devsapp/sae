@@ -291,16 +291,17 @@ export async function handleCode(application: any, credentials: any) {
     } else if (code.packageUrl) {
         const bucketName = await getBucketName(code.ossConfig, region, AccountID);
         if (code.packageUrl.endsWith('.war') || code.packageUrl.endsWith('.jar') || code.packageUrl.endsWith('.zip')) {
-            applicationObject.packageVersion = code.packageVersion;
             //文件命名规范：1.使用 UTF-8 编码 2.区分大小写 3.长度必须在 1~1023 字节之间 4. 不能以 / 或者 \ 字符开头
             let filename = application.appName;
             if (code.packageUrl.endsWith('.war')) {
                 filename = filename + '.war';
                 applicationObject.WebContainer = 'apache-tomcat-8.5.42';
                 applicationObject.Jdk = 'Open JDK 8';
+                applicationObject.packageVersion = code.packageVersion;
             } else if (code.packageUrl.endsWith('.jar')) {
                 filename = filename + '.jar';
                 applicationObject.Jdk = 'Open JDK 8';
+                applicationObject.packageVersion = code.packageVersion;
             } else if (code.packageUrl.endsWith('.zip')) {
                 filename = filename + '.zip';
                 applicationObject.PhpArmsConfigLocation = '/usr/local/etc/php/conf.d/arms.ini';
