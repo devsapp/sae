@@ -141,7 +141,7 @@ export default class SaeComponent {
   async deploy(inputs: InputProps) {
     let appId: any;
     const configPath = core.lodash.get(inputs, 'path.configPath');
-    const { args, props: { application } } = inputs;
+    let { args, props: { application, slb } } = inputs;
     const { appName, region } = application;
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
@@ -179,8 +179,8 @@ export default class SaeComponent {
 
     // 创建Namespace
     const vm = spinner('设置Namespace...');
-    const env = await utils.handleEnv(application, credentials);
-    let slb = env.slb;
+    const env = await utils.handleEnv(slb, application, credentials);
+    slb = env.slb;
 
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(application, credentials, configPath);
@@ -211,14 +211,15 @@ export default class SaeComponent {
           changeOrderId = res['Data']['ChangeOrderId'];
           needBindSlb = await utils.needBindSlb(slb, appId);
         } catch (error) {
+          vm.stop();
           logger.error(`${error.result.Message}`);
+          return;
         }
+      } else {
         vm.stop();
+        logger.error(`${e.result.Message}`);
         return;
       }
-      vm.stop();
-      logger.error(`${e.result.Message}`);
-      return;
     }
 
     // 检查应用部署状态
@@ -229,7 +230,6 @@ export default class SaeComponent {
       // 绑定SLB
       vm.text = `部署 slb ... `;
       changeOrderId = await Client.saeClient.bindSLB(slb, appId);
-
       // 检查应用部署状态
       vm.text = `正在绑定slb... 查看详情：
     https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
@@ -290,7 +290,7 @@ export default class SaeComponent {
     await utils.getStatusByOrderId(orderId);
     if (file.filename) {
       vm.text = `删除 oss 文件 ... `;
-      const oss = new Oss({  bucket: file.bucketName, region: region, credentials  });
+      const oss = new Oss({ bucket: file.bucketName, region: region, credentials });
       await oss.deleteFile(file.filename);
     }
     vm.stop();
