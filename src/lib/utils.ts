@@ -1,29 +1,11 @@
 import * as core from '@serverless-devs/core';
-import oss, { IOssConfig } from './oss.service';
-const OSS = require('ali-oss')
-import fse from "fs";
-import Client from './client';
-import { OutputProps } from './entity';
-import { vpcAvailable } from './client';
-import { cpuLimit, memoryLimit } from '../lib/help/constant';
+import Oss from './oss.service';
+import Client, { vpcAvailable } from '../common/client';
+import { OutputProps } from '../interface/entity';
+import { cpuLimit, memoryLimit } from './help/constant';
 import Table from 'tty-table';
 
-const inquirer = core.inquirer;
-
-
-async function uploadFile(credentials: any, bucketName: string, region: string, packageUrl: string, object: string, type: string) {
-    const ossConfig: IOssConfig = {
-        accessKeyId: credentials?.AccessKeyID,
-        accessKeySecret: credentials?.AccessKeySecret,
-        securityToken: credentials?.SecurityToken,
-        bucket: bucketName,
-        region: region,
-        file: packageUrl,
-        object: object,
-        type: type,
-    };
-    await oss(ossConfig);
-}
+const { inquirer, fse } = core;
 
 /**
  * 判断是否需要重新绑定slb
@@ -54,21 +36,6 @@ export async function needBindSlb(slb: any, appId: string) {
     return false;
 }
 
-export async function deleteFile(credentials: any, region: string, bucketName: any, filename: string) {
-    const client = new OSS({
-        region: `oss-${region}`,
-        accessKeyId: credentials?.AccessKeyID,
-        accessKeySecret: credentials?.AccessKeySecret,
-        stsToken: credentials?.SecurityToken,
-        bucket: bucketName,
-    });
-    try {
-        await client.delete(filename);
-    } catch (e) {
-        console.log(e);
-    }
-}
-
 export async function file2delete(region: any, application: any, credentials: any) {
     const packageUrl = application.code.packageUrl;
     if (!packageUrl) {
@@ -78,7 +45,7 @@ export async function file2delete(region: any, application: any, credentials: an
     if (packageUrl.startsWith("http://") || packageUrl.startsWith("https://")) {
         return {};
     }
-    const bucketName = await getBucketName(application.code.ossConfig, region, AccountID);
+    const bucketName = await Oss.getBucketName(application.code.ossConfig, region, AccountID);
     let filename = application.appName;
     if (packageUrl.endsWith('.war')) {
         filename = filename + '.war';
@@ -265,14 +232,6 @@ export async function handleEnv(application: any, credentials: any) {
     return { slb };
 }
 
-async function getBucketName(ossConfig: any, region: any, AccountID: any) {
-    if(!ossConfig || ossConfig === 'auto'){
-        return `sae-packages-${region}-${AccountID}`;
-    }else{
-        return ossConfig;
-    }
-}
-
 export async function handleCode(application: any, credentials: any) {
     let { AccountID } = credentials;
     let {region} = application;
@@ -289,7 +248,7 @@ export async function handleCode(application: any, credentials: any) {
         applicationObject.imageUrl = code.imageUrl;
         // 使用用户设置的 packageType
     } else if (code.packageUrl) {
-        const bucketName = await getBucketName(code.ossConfig, region, AccountID);
+        const bucketName = await Oss.getBucketName(code.ossConfig, region, AccountID);
         if (code.packageUrl.endsWith('.war') || code.packageUrl.endsWith('.jar') || code.packageUrl.endsWith('.zip')) {
             //文件命名规范：1.使用 UTF-8 编码 2.区分大小写 3.长度必须在 1~1023 字节之间 4. 不能以 / 或者 \ 字符开头
             let filename = application.appName;
@@ -308,7 +267,8 @@ export async function handleCode(application: any, credentials: any) {
                 applicationObject.Php = 'PHP-FPM 7.3';
             }
             if (await fse.existsSync(code.packageUrl)) {
-                await uploadFile(credentials, bucketName, region, code.packageUrl, filename, 'upload');
+                const ossClient = new Oss({ bucket: bucketName, region, credentials });
+                await ossClient.upload({ file: code.packageUrl, object: filename, type: 'upload' });
                 applicationObject.PackageUrl = `https://${bucketName}.oss-${region}.aliyuncs.com/${filename}`;
             } else if (code.packageUrl.startsWith("http://") || code.packageUrl.startsWith("https://")) {
                 applicationObject.PackageUrl = code.packageUrl;

@@ -1,13 +1,14 @@
 import * as core from '@serverless-devs/core';
-import { InputProps } from './common/entity';
+import { InputProps } from './interface/entity';
 // @ts-ignore
 import { spinner, inquirer } from "@serverless-devs/core";
 
 import Client from './common/client';
-import * as utils from './common/utils';
+import * as utils from './lib/utils';
 import * as HELP from './lib/help';
 import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
+import Oss from './lib/oss.service';
 
 export default class SaeComponent {
 
@@ -187,6 +188,7 @@ export default class SaeComponent {
       let obj = await Client.saeClient.createApplication(applicationObject);
       appId = obj['Data']['AppId'];
       changeOrderId = obj['Data']['ChangeOrderId'];
+      // TODO
       applicationObject.AppId = appId;
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
@@ -275,7 +277,8 @@ export default class SaeComponent {
     await utils.getStatusByOrderId(orderId);
     if (file.filename) {
       vm.text = `删除 oss 文件 ... `;
-      await utils.deleteFile(credentials, application.region, file.bucketName, file.filename);
+      const oss = new Oss({  bucket: file.bucketName, region: application.region, credentials  });
+      await oss.deleteFile(file.filename);
     }
     vm.stop();
     logger.success('删除成功');
