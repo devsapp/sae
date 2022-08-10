@@ -64,7 +64,25 @@ export default class Client {
         const GETSLBUri = '/pop/v1/sam/app/slb';
         const DescribeChangeOrderUri = '/pop/v1/sam/changeorder/DescribeChangeOrder';
         const DescribeApplicationConfigUri = '/pop/v1/sam/app/describeApplicationConfig';
+        const StopApplicationUri = '/pop/v1/sam/app/stopApplication';
+        const StartApplicationUri = '/pop/v1/sam/app/startApplication';
 
+        saeClient.startApplication  = async function (id: string) {
+            let queries = {
+                "AppId": id
+            };
+            const data = await saeClient.request("PUT", StartApplicationUri, queries, body, headers, requestOption);
+            return data['Data'].ChangeOrderId;
+        }
+
+        saeClient.stopApplication = async function (id: string) {
+            let queries = {
+                "AppId": id
+            };
+            const data = await saeClient.request("PUT", StopApplicationUri, queries, body, headers, requestOption);
+            return data['Data'].ChangeOrderId;
+        }
+        
         saeClient.describeNamespace = async function (id: string) {
             let queries = {
                 NamespaceId: id

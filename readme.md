@@ -28,24 +28,19 @@ services:
   sae-test: #  服务名称
     component:  devsapp/sae
     props:
-      region: cn-beijing
-      namespace: #  选填
-        id: cn-beijing:test
-        name: test-name
-        description: namespace desc
-      vpcConfig: # 选填
+      application:
+        region: cn-beijing
+        namespaceId: cn-beijing:test
         vpcId: vpc-bpxxxxxxpobl
         vSwitchId: vsw-bpxxxxxxfg9zr
         securityGroupId: sg-bp1xxxxx4db
-      application:
-        name: test
-        decription: This is a test description.
+        appName: test
+        appDecription: This is a test description.
         code:
-         package:
-           path: test.war # 文件路径
-           bucket:
-             region: cn-hangzhou # 上传的oss地区
-             name: bucket4sae # 上传的oss名字
+          packageType: PhpZip # 必填
+          packageVersion: 0.0.1
+          packageUrl: test.war # 文件路径
+          ossConfig: bucket4sae
         cpu: 500 #  选填
         memory: 1024 #  选填
         replicas: 1 #  选填
@@ -61,47 +56,25 @@ services:
   sae-test:
     component:  ../lib
     props:
-      region: cn-hangzhou
       application:
-        name: test
+        region: cn-hangzhou
+        appName: test
         code:
-          package: demo.jar
+          packageUrl: demo.jar
         port: 8088
 ```
 2. 执行 `s deploy`，自动部署应用并绑定公网SLB，让您的应用可以被公网访问。
 - [快速应用实例](https://github.com/devsapp/start-sae)
 
-# 参数详情
-
-| 参数名 |  是否必选  |  类型  |  参数描述  |
-| --- |  ---  |  ---  |  ---  |
-| region | 是 | String | 地区 |
-| namespace | 否 | Struct | 命名空间 |
-| vpcConfig | 否 | Struct | VPC配置 |
-| application | 是 | Struct | 应用配置 |
-| slb | 否 | Struct | SLB配置 |
-
-
-## namespace
+# application 参数详情
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |
-|id	|String	|	是	|cn-beijing:test|	命名空间ID。仅允许小写英文字母和数字。|
-|name|	String	|	否|	name	|命名空间名称。|
-|description	|String	|	否|	desc	|命名空间描述信息。|
-
-## vpcConfig
-
-| 名称 |  类型  |  是否必选  |  示例值  |   描述  |
-| --- |  ---  |  ---  |  ---  | ---  |
+| region | String | 是 | cn-beijing | 地区 |
+|namespaceId	|String	|	是	|cn-beijing:test|	命名空间ID。仅允许小写英文字母和数字。|
 |vpcId	|String	|	是 |vpc-bp1ae8mh1q****|	SAE命名空间对应的VPC。|
 |vSwitchId|	String	|	是 |	vsw-bp12gk9****	|应用实例弹性网卡所在的虚拟交换机。|
 |securityGroupId	|String	|	是 |	sg-wz9695i4****	|安全组ID。|
-
-## application
-
-| 名称 |  类型  |  是否必选  |  示例值  |   描述  |
-| --- |  ---  |  ---  |  ---  | ---  |
 |name|	String	|	是|	test	| 应用名称。允许数字、字母以及短划线（-）组合。必须以字母开始，不超过36个字符。|
 |decription	|String	|	否	|This is a test description.	|应用描述信息。不超过1024个字符。|
 |code|Struct|是|-|代码|
@@ -145,66 +118,49 @@ services:
 |KafkaInstanceId|	String	|	否	|alikafka_pre-cn-7pp2l8kr****	|Kafka实例ID。|
 
 
-### application的code配置
+## code
 code是应用的代码配置，选用Java部署时，支持FatJar、War和Image三种部署方式。
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |
-| type | String  |  否  |  php  |   代码类型，当使用php时必填。  |
-| image | String  |  否  |  registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0  |   镜像地址，使用镜像方式部署时必填。  |
-| package |  String/Struct  |  否  |  https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar  |   本地文件或部署包地址，使用FatJar或War方式部署时必填。  |
+| imageUrl | String  |  否  |  registry-vpc.cn-shenzhen.aliyuncs.com/sae-demo-image/consumer:1.0  |   镜像地址，使用镜像方式部署时必填。  |
+| packageUrl |  String  |  否  |  https://edas-sh.oss-cn-shanghai.aliyuncs.com/apps/K8S_APP_ID/57ba4361-82aa-4b08-9295-b36b00f0a38e/hello-sae.jar  |   本地文件或部署包地址，使用FatJar或War方式部署时必填。  |
+|packageType|	String	|	是	|FatJar	|应用包类型。取值说明如下：<br>当您选择用Java部署时，支持FatJar、War和Image。<br>当您选择用PHP部署时，支持类型如下：<br>PhpZip<br>IMAGE_PHP_5_4<br>IMAGE_PHP_5_4_ALPINE<br>IMAGE_PHP_5_5<br>IMAGE_PHP_5_5_ALPINE<br>IMAGE_PHP_5_6<br>IMAGE_PHP_5_6_ALPINE<br>IMAGE_PHP_7_0<br>IMAGE_PHP_7_0_ALPINE<br>IMAGE_PHP_7_1<br>IMAGE_PHP_7_1_ALPINE<br>IMAGE_PHP_7_2<br>IMAGE_PHP_7_2_ALPINE<br>IMAGE_PHP_7_3<br>IMAGE_PHP_7_3_ALPINE|
+|packageVersion|	String	|	否	|1.0.0	|	部署包的版本号。当Package Type为FatJar或War时必填。|
+| ossConfig | String  |  否  |  auto  |   oss配置，bucket名字，填`auto`时，默认值为`sae-packages-${region}-${AccountID}`，不存在此bucket则自动创建。  |
 
-当package为String时，若使用了本地jar/war包，组件会自动上传该文件。当package为Struct时：
-
-| 名称 |  类型  |  是否必选  |  示例值  |   描述  |
-| --- |  ---  |  ---  |  ---  | ---  |
-| path | String  |  是  |  ./abc.jar  |   路径  |
-| bucket | Struct  |  否  |  -  |   对象存储配置  |
-
-bucket属性：
-
-| 名称 |  类型  |  是否必选  |  示例值  |   描述  |
-| --- |  ---  |  ---  |  ---  | ---  |
-| region | String  |  是  |  cn-hangzhou  |   上传的oss地区，默认与SAE的region相同。  |
-| name | Struct  |  是  |  test  |   上传的oss名字，默认值为`sae-packages-${region}-${AccountID}`，不存在此bucket则自动创建。  |
-
-#### code示例
+### code示例
 使用镜像方式部署：
 ```yaml
 code:
-  image: registry.cn-hangzhou.aliyuncs.com/namespace4sae/repo4sae:v1
+  packageType: Image
+  imageUrl: registry.cn-hangzhou.aliyuncs.com/namespace4sae/repo4sae:v1
 ```
 
 使用远程jar包地址：
 ```yaml
 code:
-  package: https://bucket4sae.oss-cn-hangzhou.aliyuncs.com/demo.jar
+  packageType: FatJar
+  packageVersion: 1.0.0
+  packageUrl: https://bucket4sae.oss-cn-hangzhou.aliyuncs.com/demo.jar
 ```
 
 使用本地jar包部署：
 ```yaml
 code:
-  package: demo.jar
+  packageType: FatJar
+  packageVersion: 1.0.0
+  packageUrl: demo.jar
 ```
 
 使用本地war包部署并指定上传地址：
 ```yaml
 code:
-  package:
-    path: test.war
-    bucket:
-      region: cn-hangzhou
-      name: bucket4sae
+  packageType: War
+  packageVersion: 1.0.0
+  packageUrl: test.war
+  ossConfig: bucket4sae
 ```
-
-## slb
-
-| 名称 |  类型  |  是否必选  |  示例值  |   描述  |
-| --- |  ---  |  ---  |  ---  | ---  |
-|Internet	|String	|	是	|[{"port":80,"targetPort":8080,"protocol":"TCP"}]|	绑定公网SLB。例如：[{"port":80,"targetPort":8080,"protocol":"TCP"}]，表示将容器的8080端口通过SLB的80端口暴露服务，协议为TCP。|
-|Intranet|	String	|	否|	[{"port":80,"targetPort":8080,"protocol":"TCP"}]	|绑定私网SLB。例如：[{"port":80,"targetPort":8080,"protocol":"TCP"}]，表示将容器的8080端口通过SLB的80端口暴露服务，协议为TCP。|
-|InternetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的公网SLB，目前只支持非共享型实例。|
-|IntranetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的私网SLB，目前只支持非共享型实例。|
 
 # 组件指令
 ## deploy
@@ -235,7 +191,7 @@ sae-test:
 通过`slb.InternetIp`的值即可访问应用。
 
 ## info
-通过 `s info` 指令，根据 application.name 的值查询已部署的应用。执行结果示例如下：
+通过 `s info` 指令，根据 application.appName 的值查询已部署的应用。执行结果示例如下：
 ```
   namespace: 
     id: cn-hangzhou
@@ -255,4 +211,4 @@ sae-test:
     InternetIp: 121.196.162.18
 ```
 ## remove
-通过 `s remove` 指令根据 application.name 的值删除应用。
+通过 `s remove` 指令根据 application.appName 的值删除应用。
