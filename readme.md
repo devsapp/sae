@@ -109,13 +109,13 @@ services:
 |ossMountDescs	|String	|	否	|[{"bucketName": "oss-bucket", "bucketPath": "data/user.data", "mountPath": "/usr/data/user.data", "readOnly": true}]	|OSS挂载描述信息。|
 |ossAkId|	String|	否	|xxxxxx	|OSS读写的AccessKey ID。|
 |ossAkSecret|	String	|	否	|xxxxxx	|OSS读写的AccessKey Secret。|
-|AcrInstanceId|	String	|	否	|cri-xxxxxx	|容器镜像服务ACR企业版实例ID。当ImageUrl为容器镜像服务企业版时必填。|
+|acrInstanceId|	String	|	否	|cri-xxxxxx	|容器镜像服务ACR企业版实例ID。当ImageUrl为容器镜像服务企业版时必填。|
 |acrAssumeRoleArn	|String	|	否	|acs:ram::123456789012****:role/adminrole|	跨账号拉取镜像时所需的RAM角色的ARN。|
-|AssociateEip|	Boolean	|	否	|true	|是否绑定EIP。true：绑定。false：不绑定。|
-|OpenCollectToKafka|	Boolean	|	否	|true	|是否开通日志采集到Kafka。true：开通。false：不开通。如果选择不开通，您需要在请求中将KafkaEndpoint、KafkaInstanceId和KafkaLogfileConfig字段的值设为空字符串（即请求中字段的值为""）。|
-|KafkaEndpoint|	String	|	否	|10.0.X.XXX:XXXX,10.0.X.XXX:XXXX,10.0.X.XXX:XXXX	|Kafka API的服务接入地址。|
-|KafkaLogfileConfig|	String	|	否	|[{"logType":"file_log","logDir":"/tmp/a.log","kafkaTopic":"test2"},{"logType":"stdout","logDir":"","kafkaTopic":"test"}]	|日志采集到Kafka的配置。参数说明如下：<br>logType：日志类型。取值如下：<br>- file_log：文件日志（容器内日志路径）。<br>- stdout：容器标准输出日志。仅可设置1条。<br>logDir：收集日志的路径。<br>kafkaTopic：消息的主题，用于分类消息。|
-|KafkaInstanceId|	String	|	否	|alikafka_pre-cn-7pp2l8kr****	|Kafka实例ID。|
+|associateEip|	Boolean	|	否	|true	|是否绑定EIP。true：绑定。false：不绑定。|
+|openCollectToKafka|	Boolean	|	否	|true	|是否开通日志采集到Kafka。true：开通。false：不开通。如果选择不开通，您需要在请求中将KafkaEndpoint、KafkaInstanceId和KafkaLogfileConfig字段的值设为空字符串（即请求中字段的值为""）。|
+|kafkaEndpoint|	String	|	否	|10.0.X.XXX:XXXX,10.0.X.XXX:XXXX,10.0.X.XXX:XXXX	|Kafka API的服务接入地址。|
+|kafkaLogfileConfig|	String	|	否	|[{"logType":"file_log","logDir":"/tmp/a.log","kafkaTopic":"test2"},{"logType":"stdout","logDir":"","kafkaTopic":"test"}]	|日志采集到Kafka的配置。参数说明如下：<br>logType：日志类型。取值如下：<br>- file_log：文件日志（容器内日志路径）。<br>- stdout：容器标准输出日志。仅可设置1条。<br>logDir：收集日志的路径。<br>kafkaTopic：消息的主题，用于分类消息。|
+|kafkaInstanceId|	String	|	否	|alikafka_pre-cn-7pp2l8kr****	|Kafka实例ID。|
 
 
 ## code

@@ -4,7 +4,7 @@ const ROAClient = core.popCore.ROAClient;
 
 export async function vpcAvailable(vpcId, region, credentials) {
 
-    var client = new core.popCore({
+    const client = new core.popCore({
         accessKeyId: credentials?.AccessKeyID,
         accessKeySecret: credentials?.AccessKeySecret,
         // @ts-ignore
@@ -13,17 +13,17 @@ export async function vpcAvailable(vpcId, region, credentials) {
         apiVersion: '2016-04-28'
     });
 
-    var params = {
+    const params = {
         "RegionId": region,
         "VpcId": vpcId
     }
 
-    var requestOption = {
+    const requestOption = {
         method: 'POST',
         formatParams: false,
 
     };
-    let data = await client.request('DescribeVpcs', params, requestOption);
+    const data = await client.request('DescribeVpcs', params, requestOption);
     if (data['TotalCount'] != 1) {
         return false;
     }
@@ -68,7 +68,7 @@ export default class Client {
         const StartApplicationUri = '/pop/v1/sam/app/startApplication';
 
         saeClient.startApplication  = async function (id: string) {
-            let queries = {
+            const queries = {
                 "AppId": id
             };
             const data = await saeClient.request("PUT", StartApplicationUri, queries, body, headers, requestOption);
@@ -76,7 +76,7 @@ export default class Client {
         }
 
         saeClient.stopApplication = async function (id: string) {
-            let queries = {
+            const queries = {
                 "AppId": id
             };
             const data = await saeClient.request("PUT", StopApplicationUri, queries, body, headers, requestOption);
@@ -84,7 +84,7 @@ export default class Client {
         }
         
         saeClient.describeNamespace = async function (id: string) {
-            let queries = {
+            const queries = {
                 NamespaceId: id
             };
             let data = {};
@@ -102,10 +102,10 @@ export default class Client {
          * @param appId id
          */
         saeClient.describeApplicationConfig = async function (appId: any) {
-            let queries = {
+            const queries = {
                 AppId: appId
             };
-            let data = await saeClient.request("GET", DescribeApplicationConfigUri, queries, body, headers, requestOption);
+            const data = await saeClient.request("GET", DescribeApplicationConfigUri, queries, body, headers, requestOption);
             return data;
         }
 
@@ -116,10 +116,10 @@ export default class Client {
          * @returns 变更单列表信息
          */
         saeClient.listChangeOrders = async function (appId: any, coType: any) {
-            let queries = {
+            const queries = {
                 AppId: appId, CoType: coType, CurrentPage: 1, PageSize: 10,
             };
-            let data = await saeClient.request("GET", ListChangeOrdersUri, queries, body, headers, requestOption);
+            const data = await saeClient.request("GET", ListChangeOrdersUri, queries, body, headers, requestOption);
             return data;
         }
 
@@ -129,10 +129,10 @@ export default class Client {
          * @returns 
          */
         saeClient.describeChangeOrder = async function (orderId: any) {
-            let queries = {
+            const queries = {
                 ChangeOrderId: orderId,
             };
-            let data = await saeClient.request("GET", DescribeChangeOrderUri, queries, body, headers, requestOption);
+            const data = await saeClient.request("GET", DescribeChangeOrderUri, queries, body, headers, requestOption);
             return data;
         }
         /**
@@ -141,12 +141,12 @@ export default class Client {
          * @returns 命名空间信息
          */
         saeClient.createNamespace = async function (namespace: any) {
-            let queries = {
+            const queries = {
                 NamespaceId: namespace.id,
                 NamespaceName: namespace.name,
                 NamespaceDescription: namespace.description,
             };
-            let data = await saeClient.request("POST", NamespaceUri, queries, body, headers, requestOption);
+            const data = await saeClient.request("POST", NamespaceUri, queries, body, headers, requestOption);
             return data;
         }
 
@@ -156,25 +156,25 @@ export default class Client {
          * @returns 命名空间信息
          */
         saeClient.updateNamespace = async function (namespace: any) {
-            let queries = {
+            const queries = {
                 NamespaceId: namespace.id,
                 NamespaceName: namespace.name,
                 NamespaceDescription: namespace.description,
             };
-            let data = await saeClient.request("PUT", NamespaceUri, queries, body, headers, requestOption);
+            const data = await saeClient.request("PUT", NamespaceUri, queries, body, headers, requestOption);
             return data;
         }
 
         saeClient.getNamespace = async function () {
-            let queries = {};
-            let obj = await saeClient.request("GET", DescribeNamespaceListUri, queries, body, headers, requestOption);
-            let data = obj['Data'][0];
+            const queries = {};
+            const obj = await saeClient.request("GET", DescribeNamespaceListUri, queries, body, headers, requestOption);
+            const data = obj['Data'][0];
             return data;
         }
 
         saeClient.updateNamespaceVpc = async function (namespaceId: string, vpcId: string) {
-            let queries = { NamespaceId: namespaceId, VpcId: vpcId };
-            let data = await saeClient.request("POST", UpdateNamespaceVpcUri, queries, body, headers, requestOption);
+            const queries = { NamespaceId: namespaceId, VpcId: vpcId };
+            const data = await saeClient.request("POST", UpdateNamespaceVpcUri, queries, body, headers, requestOption);
             return data
         }
         /*
@@ -183,7 +183,7 @@ export default class Client {
          * @returns 创建结果
          */
         saeClient.createApplication = async function (applicationObject: any) {
-            let data = await saeClient.request("POST", CreateApplicationUri, applicationObject, body, headers, requestOption);
+            const data = await saeClient.request("POST", CreateApplicationUri, applicationObject, body, headers, requestOption);
             return data;
         }
 
@@ -193,10 +193,10 @@ export default class Client {
          * @returns 应用列表
          */
         saeClient.listApplications = async function (appName: any) {
-            let queries = {
+            const queries = {
                 FieldType: 'appName', FieldValue: appName
             };
-            let data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
+            const data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
             return data;
         }
 
@@ -206,7 +206,7 @@ export default class Client {
          * @returns 部署结果
          */
         saeClient.deployApplication = async function (applicationObject: any) {
-            let data = await saeClient.request("POST", DeployApplicationUri, applicationObject, body, headers, requestOption);
+            const data = await saeClient.request("POST", DeployApplicationUri, applicationObject, body, headers, requestOption);
             return data;
         }
 
@@ -215,7 +215,7 @@ export default class Client {
          * @param appId id
          */
         saeClient.deleteApplication = async function (appId: any) {
-            let queries = {
+            const queries = {
                 "AppId": appId
             };
             const data = await saeClient.request("DELETE", DeleteApplicationUri, queries, body, headers, requestOption);
@@ -247,7 +247,7 @@ export default class Client {
          * @returns 
          */
         saeClient.getSLB = async function (appId: any) {
-            let data = await saeClient.request("GET", GETSLBUri, { AppId: appId }, body, headers, requestOption);
+            const data = await saeClient.request("GET", GETSLBUri, { AppId: appId }, body, headers, requestOption);
             return data;
         }
 
@@ -256,11 +256,11 @@ export default class Client {
          * @param applicationObject 
          */
         saeClient.updateApplication = async function (applicationObject: any) {
-            let queries = {
+            const queries = {
                 FieldType: 'appName', FieldValue: applicationObject.AppName
             };
-            let data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
-            let appId = data['Data']['Applications'][0]['AppId'];
+            const data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
+            const appId = data['Data']['Applications'][0]['AppId'];
             applicationObject.AppId = appId;
             const res = await saeClient.request("POST", DeployApplicationUri, applicationObject, body, headers, requestOption);
             return res;
