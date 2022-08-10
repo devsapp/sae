@@ -1,6 +1,6 @@
 import * as core from '@serverless-devs/core';
 import Oss from './oss.service';
-import Client, { vpcAvailable } from '../common/client';
+import Client, { vpcAvailable } from './client';
 import { OutputProps } from '../interface/entity';
 import { cpuLimit, memoryLimit } from './help/constant';
 import Table from 'tty-table';
