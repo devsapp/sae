@@ -45,6 +45,8 @@ services:
         memory: 1024 #  选填
         replicas: 1 #  选填
         port: 8080
+      slb: 
+        Internet: [{ "port": 80, "targetPort": 8080, "protocol": "HTTP" }]
 ```
   - s.yaml 样例2
 ```yaml
@@ -62,12 +64,19 @@ services:
         code:
           packageUrl: demo.jar
         port: 8088
+      slb: auto
 ```
 2. 执行 `s deploy`，自动部署应用并绑定公网SLB，让您的应用可以被公网访问。
 - [快速应用实例](https://github.com/devsapp/start-sae)
 
-# application 参数详情
+# 参数详情
+| 参数名 |  是否必选  |  类型  |  参数描述  |
+| --- |  ---  |  ---  |  ---  |
+| application | 是 | Struct | 应用配置 |
+| slb | 是 | String/Struct | SLB配置 |
 
+##  application
+sae组件对application中的code和port属性进行了单独处理，并且参数名使用小驼峰命名法，可对照SAE官方文档[CreateNamespace](https://help.aliyun.com/document_detail/126169.html)。
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |
 | region | String | 是 | cn-beijing | 地区 |
@@ -118,7 +127,7 @@ services:
 |kafkaInstanceId|	String	|	否	|alikafka_pre-cn-7pp2l8kr****	|Kafka实例ID。|
 
 
-## code
+### code
 code是应用的代码配置，选用Java部署时，支持FatJar、War和Image三种部署方式。
 
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
@@ -129,7 +138,7 @@ code是应用的代码配置，选用Java部署时，支持FatJar、War和Image�
 |packageVersion|	String	|	否	|1.0.0	|	部署包的版本号。当Package Type为FatJar或War时必填。|
 | ossConfig | String  |  否  |  auto  |   oss配置，bucket名字，填`auto`时，默认值为`sae-packages-${region}-${AccountID}`，不存在此bucket则自动创建。  |
 
-### code示例
+#### code示例
 使用镜像方式部署：
 ```yaml
 code:
@@ -160,6 +169,21 @@ code:
   packageVersion: 1.0.0
   packageUrl: test.war
   ossConfig: bucket4sae
+```
+
+## slb
+当 slb 为Struct时，可参照官方文档[BindSlb](https://help.aliyun.com/document_detail/126360.html)：
+| 名称 |  类型  |  是否必选  |  示例值  |   描述  |
+| --- |  ---  |  ---  |  ---  | ---  |
+|Internet	|String	|	是	|[{"port":80,"targetPort":8080,"protocol":"TCP"}]|	绑定公网SLB。例如：[{"port":80,"targetPort":8080,"protocol":"TCP"}]，表示将容器的8080端口通过SLB的80端口暴露服务，协议为TCP。|
+|Intranet|	String	|	否|	[{"port":80,"targetPort":8080,"protocol":"TCP"}]	|绑定私网SLB。例如：[{"port":80,"targetPort":8080,"protocol":"TCP"}]，表示将容器的8080端口通过SLB的80端口暴露服务，协议为TCP。|
+|InternetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的公网SLB，目前只支持非共享型实例。|
+|IntranetSlbId	|String	|	否|	lb-bp1tg0k6d9nqaw7l1****	|使用指定的已购买的私网SLB，目前只支持非共享型实例。|
+
+slb 为 String 类型且值为 `auto` 时，使用默认配置：
+```
+slb:
+  Internet: [{"port":80,"targetPort":application.port,"protocol":"TCP"}]
 ```
 
 # 组件指令
