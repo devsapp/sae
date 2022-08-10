@@ -39,6 +39,20 @@ export declare function parseCommand(args: string): Promise<{
     useLocal: any;
     useRemote: any;
 }>;
+export declare function handlerStartInputs(args: string): Promise<{
+    isHelp?: undefined;
+    assumeYes?: undefined;
+} | {
+    isHelp: any;
+    assumeYes: any;
+}>;
+export declare function handlerStopInputs(args: string): Promise<{
+    isHelp?: undefined;
+    assumeYes?: undefined;
+} | {
+    isHelp: any;
+    assumeYes: any;
+}>;
 export declare function handlerInfoInputs(args: string): Promise<{
     isHelp?: undefined;
     outputFile?: undefined;
@@ -55,3 +69,5 @@ export declare function handlerRmInputs(args: string): Promise<{
 }>;
 export declare function promptForConfirmOrDetails(message: string): Promise<boolean>;
 export declare function removePlan(application: any, file: any): Promise<"assumeYes" | "quit">;
+export declare function stopPlan(): Promise<"assumeYes" | "quit">;
+export declare function startPlan(): Promise<"assumeYes" | "quit">;

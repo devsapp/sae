@@ -1,34 +1,34 @@
 import { globalParams, globalDescribe, applicationNameDescribe, assumeYesDescribe } from './constant';
-  
-export const REMOVE = [
+
+export const START = [
     {
-        header: 'Remove',
-        content: 'Remove online application resources',
+        header: 'Start',
+        content: 'Start online application resources',
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/remove.md',
+        content: 'https://github.com/devsapp/sae/blob/main/docs/command/start.md',
     },
     {
         header: 'Usage',
-        content: '$ s remove <options> ',
+        content: '$ s start <options> ',
     },
     {
         header: 'Options',
         optionList: [
-            applicationNameDescribe,assumeYesDescribe
+            applicationNameDescribe, assumeYesDescribe
         ],
     },
     { ...globalParams },
     { ...globalDescribe },
     {
         header: 'Examples with Yaml',
-        content: ['$ s remove'],
+        content: ['$ s start'],
     },
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae remove --application-name appName',
+            '$ s cli sae start --application-name appName',
         ],
     },
 ];

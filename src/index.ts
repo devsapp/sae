@@ -11,6 +11,98 @@ import { getInquire } from './lib/help/constant';
 
 export default class SaeComponent {
 
+  async start(inputs: InputProps) {
+    const { args, props: { application } } = inputs;
+    const { isHelp, assumeYes } = await utils.handlerStartInputs(args);
+    if (isHelp) {
+      core.help(HELP.START);
+      return;
+    }
+    const credentials = await core.getCredential(inputs.project.access);
+    await Client.setSaeClient(application.region, credentials);
+    let data = await Client.saeClient.listApplications(application.appName);
+    if (data['Data']['Applications'].length == 0) {
+      logger.error(`未找到应用 ${application.appName}`);
+      return;
+    }
+    if (!assumeYes) {
+      try {
+        const startStatus = await utils.startPlan();
+        if (startStatus !== 'assumeYes') {
+          return;
+        }
+      } catch (ex) {
+        if (ex?.name === 'CatchableError') {
+          throw ex;
+        }
+        // 异常：不作处理兜底
+        logger.debug(`error: ${ex.message}`);
+      }
+    }
+    const appId = data['Data']['Applications'][0]['AppId'];
+    const vm = spinner(`启动应用${application.appName}...`);
+    let orderId: any;
+    try {
+      orderId = await Client.saeClient.startApplication(appId);
+    } catch (error) {
+      vm.stop();
+      logger.error(`${error.result.Message}`);
+      return;
+    }
+    await utils.getStatusByOrderId(orderId);
+    vm.stop();
+    logger.success('已启动应用');
+
+    const data2 = await Client.saeClient.listApplications(application.appName);
+    const app = data2['Data']['Applications'][0];
+    const res = await utils.infoRes(app);
+    res.componentType = "sae";
+    return res;
+  }
+
+  async stop(inputs: InputProps) {
+    const { args, props: { application } } = inputs;
+    const { isHelp, assumeYes } = await utils.handlerStopInputs(args);
+    if (isHelp) {
+      core.help(HELP.STOP);
+      return;
+    }
+    const credentials = await core.getCredential(inputs.project.access);
+    await Client.setSaeClient(application.region, credentials);
+    let data = await Client.saeClient.listApplications(application.appName);
+    if (data['Data']['Applications'].length == 0) {
+      logger.error(`未找到应用 ${application.appName}`);
+      return;
+    }
+    if (!assumeYes) {
+      try {
+        const stopStatus = await utils.stopPlan();
+        if (stopStatus !== 'assumeYes') {
+          return;
+        }
+      } catch (ex) {
+        if (ex?.name === 'CatchableError') {
+          throw ex;
+        }
+        // 异常：不作处理兜底
+        logger.debug(`error: ${ex.message}`);
+      }
+    }
+    const appId = data['Data']['Applications'][0]['AppId'];
+    const vm = spinner(`停止应用${application.appName}...`);
+    let orderId: any;
+    try {
+      orderId = await Client.saeClient.stopApplication(appId);
+    } catch (error) {
+      vm.stop();
+      logger.error(`${error.result.Message}`);
+      return;
+    }
+    await utils.getStatusByOrderId(orderId);
+    vm.stop();
+    logger.success('已停止应用');
+  }
+
   async info(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     const { isHelp, outputFile } = await utils.handlerInfoInputs(args);
@@ -26,7 +118,7 @@ export default class SaeComponent {
     } else {
       const app = data['Data']['Applications'][0];
       const res = await utils.infoRes(app);
-      res.componentType="sae";
+      res.componentType = "sae";
 
       if (outputFile) {
         let cache: any = {};
@@ -135,7 +227,7 @@ export default class SaeComponent {
     const slbConfig = await Client.saeClient.getSLB(appId);
     vm.stop();
     const result = await utils.output(applicationObject, slbConfig);
-    
+
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
     logger.success('应用详细信息如下：');
     return result;

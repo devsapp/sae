@@ -9,6 +9,13 @@ export function getInquire(appName: string) {
     ]
   }
 }
+export const assumeYesDescribe = {
+  name: 'assume-yes',
+  description: '[Optional] Assume that the answer to any question which would be asked is yes',
+  alias: 'y',
+  defaultOption: false,
+  type: Boolean,
+};
 
 export const cpuLimit = [500, 1000, 2000, 4000, 8000, 12000, 16000, 32000];
 

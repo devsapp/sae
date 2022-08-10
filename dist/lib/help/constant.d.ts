@@ -6,6 +6,13 @@ export declare function getInquire(appName: string): {
         name: string;
     }[];
 };
+export declare const assumeYesDescribe: {
+    name: string;
+    description: string;
+    alias: string;
+    defaultOption: boolean;
+    type: BooleanConstructor;
+};
 export declare const cpuLimit: number[];
 export declare const memoryLimit: Map<number, number[]>;
 export declare const globalParams: {

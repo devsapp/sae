@@ -391,6 +391,28 @@ export async function parseCommand(args: string) {
     return { isHelp, useLocal, useRemote };
 }
 
+export async function handlerStartInputs(args: string) {
+    const comParse: any = core.commandParse({ args });
+    const data = comParse?.data
+    if (!data) {
+        return {};
+    }
+    const isHelp = data.h || data.help;
+    const assumeYes = data.y || data['assume-yes'];
+    return { isHelp, assumeYes };
+}
+
+export async function handlerStopInputs(args: string) {
+    const comParse: any = core.commandParse({ args });
+    const data = comParse?.data
+    if (!data) {
+        return {};
+    }
+    const isHelp = data.h || data.help;
+    const assumeYes = data.y || data['assume-yes'];
+    return { isHelp, assumeYes };
+}
+
 export async function handlerInfoInputs(args: string) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args });
@@ -519,6 +541,20 @@ export async function removePlan(application, file) {
     }
     const assumeYes = await promptForConfirmOrDetails(
         'Are you sure you want to delete these resources?',
+    );
+    return assumeYes ? 'assumeYes' : 'quit';
+}
+
+export async function stopPlan(){
+    const assumeYes = await promptForConfirmOrDetails(
+        '停止应用后，系统将物理删除该应用下所有的实例，业务会中断，资源计费也会停止。但会保存应用的基本配置信息，负载均衡设备信息，方便后续启动应用时秒级拉起应用。（停止再启动应用后实例ip会变）。请确认是否真的要停止应用？',
+    );
+    return assumeYes ? 'assumeYes' : 'quit';
+}
+
+export async function startPlan(){
+    const assumeYes = await promptForConfirmOrDetails(
+        '启动应用后，系统将根据停止应用前保存的快照配置信息，秒级恢复应用。恢复之后开始进行资源计费，请确认是否真的要启动应用？',
     );
     return assumeYes ? 'assumeYes' : 'quit';
 }

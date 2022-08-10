@@ -1,4 +1,4 @@
-export declare const REMOVE: ({
+export declare const START: ({
     header: string;
     content: string;
     optionList?: undefined;
