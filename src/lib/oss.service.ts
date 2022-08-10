@@ -1,5 +1,5 @@
 import OssClient from 'ali-oss';
-import { spinner, lodash } from '@serverless-devs/core';
+import { spinner, lodash, CatchableError } from '@serverless-devs/core';
 import { IOssConfig, IUpload } from '../interface/oss';
 import { ICredentials } from '../interface/entity';
 import logger from '../common/logger';
@@ -9,7 +9,10 @@ const getAutoName = (region, accountId) => `sae-packages-${region}-${accountId}`
 
 export default class Oss {
 	static getBucketName(bucketName: any, region: any, accountId: any) {
-		if (lodash.isEmpty(bucketName) || lodash.isEqual(bucketName, 'auto')) {
+		if (lodash.isEmpty(bucketName)) {
+			throw new CatchableError('bucket 需要填写');
+		}
+		if (lodash.isEqual(bucketName, 'auto')) {
 			return getAutoName(region, accountId);
 		}
 		return bucketName;
