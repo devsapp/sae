@@ -106,14 +106,14 @@ export default class SaeComponent {
   }
 
   async info(inputs: InputProps) {
-    const { args, props: { application, region } } = inputs;
+    const { args, props: { application } } = inputs;
     const { isHelp, outputFile } = await utils.handlerInfoInputs(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
     }
     const credentials = await core.getCredential(inputs.project.access);
-    const { appName } = application || {};
+    const { appName, region } = application || {};
     await Client.setSaeClient(region, credentials);
     const data = await Client.saeClient.listApplications(appName);
     if (data['Data']['Applications'].length === 0) {
@@ -141,8 +141,8 @@ export default class SaeComponent {
   async deploy(inputs: InputProps) {
     let appId: any;
     const configPath = core.lodash.get(inputs, 'path.configPath');
-    const { args, props: { application, region } } = inputs;
-    const { appName } = application || {};
+    const { args, props: { application } } = inputs;
+    const { appName, region } = application;
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
 
@@ -188,7 +188,7 @@ export default class SaeComponent {
     let changeOrderId: any;
     let needBindSlb = true;
     try {
-      vm.text = `创建应用 ...`
+      vm.text = `创建应用 ...`;
       let obj = await Client.saeClient.createApplication(applicationObject);
       appId = obj['Data']['AppId'];
       changeOrderId = obj['Data']['ChangeOrderId'];
@@ -211,15 +211,14 @@ export default class SaeComponent {
           changeOrderId = res['Data']['ChangeOrderId'];
           needBindSlb = await utils.needBindSlb(slb, appId);
         } catch (error) {
-          vm.stop();
           logger.error(`${error.result.Message}`);
-          return;
         }
-      } else {
         vm.stop();
-        logger.error(`${e.result.Message}`);
         return;
       }
+      vm.stop();
+      logger.error(`${e.result.Message}`);
+      return;
     }
 
     // 检查应用部署状态
@@ -249,14 +248,14 @@ export default class SaeComponent {
   }
 
   async remove(inputs: InputProps) {
-    const { args, props: { application, region } } = inputs;
+    const { args, props: { application } } = inputs;
     const { isHelp, assumeYes } = await utils.handlerRmInputs(args);
     if (isHelp) {
       core.help(HELP.REMOVE);
       return;
     }
-    const { appName } = application || {};
-    const credentials = await core.getCredential(inputs.project.access);
+    const { appName, region } = application || {};
+    const credentials = await core.getCredential(inputs.project?.access);
     await Client.setSaeClient(region, credentials);
     let data = await Client.saeClient.listApplications(appName);
     if (data['Data']['Applications'].length == 0) {

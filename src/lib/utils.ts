@@ -197,7 +197,7 @@ export async function output(applicationObject: any, slbConfig: any) {
 }
 
 export async function handleEnv(application: any, credentials: any) {
-    let { region, namespaceId, vpcId } = application;
+    const { region, namespaceId, vpcId } = application;
     application.autoConfig = false;
     if (vpcId) {
         const vpcAvail = await vpcAvailable(vpcId, region, credentials);
