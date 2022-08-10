@@ -331,7 +331,9 @@ export async function setDefault(applicationObject: any) {
     }
     // 参数命名方式修改
     for (var key in applicationObject) {
-        if (/^[a-z].*$/.test(key)) {
+        if(!applicationObject[key]){
+            delete(applicationObject[key]);
+        }else if (/^[a-z].*$/.test(key)) {
             let Key = key.replace(key[0], key[0].toUpperCase());
             applicationObject[Key] = applicationObject[key];
             delete(applicationObject[key]);
