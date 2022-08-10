@@ -66,8 +66,18 @@ export default class Client {
         const DescribeApplicationConfigUri = '/pop/v1/sam/app/describeApplicationConfig';
         const StopApplicationUri = '/pop/v1/sam/app/stopApplication';
         const StartApplicationUri = '/pop/v1/sam/app/startApplication';
+        const RescaleApplicationUri = '/pop/v1/sam/app/rescaleApplication';
 
-        saeClient.startApplication  = async function (id: string) {
+        saeClient.rescaleApplication = async function (appId: string, replicas: number) {
+            const queries = {
+                "AppId": appId,
+                "Replicas": replicas,
+            };
+            const data = await saeClient.request("PUT", RescaleApplicationUri, queries, body, headers, requestOption);
+            return data['Data'].ChangeOrderId;
+        }
+
+        saeClient.startApplication = async function (id: string) {
             const queries = {
                 "AppId": id
             };
@@ -82,7 +92,7 @@ export default class Client {
             const data = await saeClient.request("PUT", StopApplicationUri, queries, body, headers, requestOption);
             return data['Data'].ChangeOrderId;
         }
-        
+
         saeClient.describeNamespace = async function (id: string) {
             const queries = {
                 NamespaceId: id

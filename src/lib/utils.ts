@@ -134,18 +134,20 @@ export async function infoRes(application: any) {
             packageType: application.PackageType,
             imageUrl: application.ImageUrl,
             packageUrl: application.PackageUrl,
-            cpu: application.Cpu,
-            memory: application.Memory,
-            replicas: application.Replicas,
+            cpu: appConfig.Cpu,
+            memory: appConfig.Memory,
+            replicas: appConfig.Replicas,
             scaleRuleEnabled: application.ScaleRuleEnabled,
             instances: application.Instances,
-            appDescription: application.AppDescription,
             runningInstances: application.RunningInstances,
             appDeletingStatus: application.AppDeletingStatus,
         },
         slb: {
         }
     };
+    if(!lodash.isEmpty(application.AppDescription)){
+        result.application.appDescription = application.AppDescription;
+    }
     if (slbConfig['Data']) {
         result.slb = slbConfig['Data'];
     }
@@ -360,6 +362,15 @@ export async function parseCommand(args: string) {
     const useLocal = data['use-local'];
     const useRemote = data['use-remote'];
     return { isHelp, useLocal, useRemote };
+}
+export async function handlerReScaleInputs(args: string) {
+    const comParse: any = core.commandParse({ args });
+    const data = comParse?.data
+    if (lodash.isEmpty(data)) {
+        return {};
+    }
+    const isHelp = data.h || data.help;
+    return { isHelp };
 }
 
 export async function handlerStartInputs(args: string) {

@@ -13,6 +13,42 @@ import { writeCreatCache } from './common/cache';
 
 export default class SaeComponent {
 
+  async rescale(inputs: InputProps){
+    const { args, props: { application } } = inputs;
+    const { isHelp } = await utils.handlerReScaleInputs(args);
+    if (isHelp) {
+      core.help(HELP.RESCALE);
+      return;
+    }
+    const credentials = await core.getCredential(inputs.project.access);
+    await Client.setSaeClient(application.region, credentials);
+    let data = await Client.saeClient.listApplications(application.appName);
+    if (data['Data']['Applications'].length == 0) {
+      logger.error(`未找到应用 ${application.appName}`);
+      return;
+    }
+    if(!(Number.isInteger(application.replicas) && application.replicas > 0)){
+      throw new core.CatchableError('需要指定正确的replicas参数')
+    }
+    const appId = data['Data']['Applications'][0]['AppId'];
+    const vm = spinner(`应用扩缩容`);
+    let orderId: any;
+    try {
+      orderId = await Client.saeClient.rescaleApplication(appId, application.replicas);
+    } catch (error) {
+      vm.stop();
+      logger.error(`${error.result.Message}`);
+      return;
+    }
+    // 检查状态
+    vm.text = `应用扩缩容${application.appName}... 查看详情：
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${orderId}`;
+    await utils.getStatusByOrderId(orderId);
+    vm.stop();
+    logger.success('完成应用扩缩容');
+    return ;
+  }
+
   async start(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     const { isHelp, assumeYes } = await utils.handlerStartInputs(args);
@@ -42,7 +78,7 @@ export default class SaeComponent {
       }
     }
     const appId = data['Data']['Applications'][0]['AppId'];
-    const vm = spinner(`启动应用${application.appName}...`);
+    const vm = spinner(`启动应用`);
     let orderId: any;
     try {
       orderId = await Client.saeClient.startApplication(appId);
@@ -51,6 +87,10 @@ export default class SaeComponent {
       logger.error(`${error.result.Message}`);
       return;
     }
+    // 检查状态
+    vm.text = `启动应用${application.appName}... 查看详情：
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${orderId}`;
+
     await utils.getStatusByOrderId(orderId);
     vm.stop();
     logger.success('已启动应用');
@@ -100,6 +140,9 @@ export default class SaeComponent {
       logger.error(`${error.result.Message}`);
       return;
     }
+    // 检查状态
+    vm.text = `停止应用${application.appName}... 查看详情：
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${orderId}`;
     await utils.getStatusByOrderId(orderId);
     vm.stop();
     logger.success('已停止应用');

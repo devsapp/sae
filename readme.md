@@ -193,46 +193,73 @@ slb:
 部署成功，请通过以下地址访问您的应用：114.55.2.240
 应用详细信息如下：
 sae-test: 
-  namespace: 
-    id:   cn-hangzhou:test
-    name: test-name
-  vpcConfig: 
-    vpcId:           vpc-bxxxxxhcc7pobl
-    vSwitchId:       vsw-bxxxxxpfg9zr
-    securityGroupId: sg-bp1xxxxxbpzx4db
+  console:     https://sae.console.aliyun.com/#/AppList/AppDetail?appId=3582e8ed-b0fxxxxf28932390b18&regionId=cn-hangzhou&namespaceId=cn-hangzhou
   application: 
-    id:          9e1c5e93-xxxxx-198d3581b261
-    name:        test
-    console:     https://sae.console.aliyun.com/#/AppList/AppDetail?appId=cn-hangzhou:test&regionId=cn-hangzhou&namespaceId=cn-hangzhou:test
-    packageType: FatJar
-    packageUrl:  https://sae-packages-cn-hangzhou-1976xxxx5242.oss-cn-hangzhou.aliyuncs.com/kEAF6sUck0vLhR8x.jar
+    region:      cn-hangzhou
+    namespaceId: cn-hangzhou
+    vpcId:       vpc-bp14oxxxxc7pobl
+    vSwitchId:   vsw-bp17xxxxyrmpfg9zr
+    appId:       3582e8ed-b0fxxxxf28932390b18
+    appName:     test
+    packageType: Image
+    imageUrl:    registry.cn-hangzhou.aliyuncs.com/s-sae/sae-java:latest
     cpu:         500
     memory:      1024
     replicas:    1
   slb: 
-    InternetIp: 114.55.2.240
+    InternetIp: 47.98.152.222
+    Intranet: 
+      (empty array)
+    Internet: 
+      - 
+        TargetPort: 80
+        Port:       80
+        Protocol:   HTTP
+  accessLink:  47.98.152.222:80
 ```
 通过`slb.InternetIp`的值即可访问应用。
 
 ## info
 通过 `s info` 指令，根据 application.appName 的值查询已部署的应用。执行结果示例如下：
 ```
-  namespace: 
-    id: cn-hangzhou
-  vpcConfig: 
-    vpcId:           vpc-bp14o0juad2lnhcc7pobl
-    vSwitchId:       vsw-bp17mndu8y2hyrmpfg9zr
-    securityGroupId: sg-bp1arin5aob5kmbwb6v2
+sae-test: 
+  console:       https://sae.console.aliyun.com/#/AppList/AppDetail?appId=3582e8ed-b0fxxxxf28932390b18&regionId=cn-hangzhou&namespaceId=undefined
   application: 
-    name:              test2
-    console:           https://sae.console.aliyun.com/#/AppList/AppDetail?appId=17cfd88b-91b0-407d-b284-17247a522e6c&regionId=cn-hangzhou&namespaceId=undefined
+    region:            cn-hangzhou
+    namespaceId:       cn-hangzhou
+    namespaceName:     China East 1 (Hangzhou)
+    vpcId:             vpc-bp14oxxxxc7pobl
+    vSwitchId:         vsw-bp17xxxxyrmpfg9zr
+    securityGroupId:   sg-bp1axxxx5kmbwb6v2
+    appId:             3582e8ed-b0fxxxxf28932390b18
+    appName:           test
+    cpu:               500
+    memory:            1024
+    replicas:          1
     scaleRuleEnabled:  false
     instances:         1
-    appDescription:    
     runningInstances:  1
     appDeletingStatus: false
+    appDescription:    This is a test.
   slb: 
-    InternetIp: 121.196.162.18
+    InternetIp: 47.98.152.222
+    Intranet: 
+      (empty array)
+    Internet: 
+      - 
+        TargetPort: 80
+        Port:       80
+        Protocol:   HTTP
+  componentType: sae
 ```
 ## remove
-通过 `s remove` 指令根据 application.appName 的值删除应用。
+通过 `s remove` 指令根据 `application.appName` 的值删除应用。
+
+## start
+通过 `s start` 指令根据 `application.appName` 的值启动应用。
+
+## stop
+通过 `s stop` 指令根据 `application.appName` 的值停止应用。
+
+## rescale
+通过 `s rescale` 指令对名为 `application.appName` 的应用进行扩缩容。
