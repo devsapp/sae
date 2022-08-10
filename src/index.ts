@@ -1,13 +1,15 @@
 import * as core from '@serverless-devs/core';
-import { InputProps } from './common/entity';
+import { InputProps } from './interface/entity';
 // @ts-ignore
 import { spinner, inquirer } from "@serverless-devs/core";
 
-import Client from './common/client';
-import * as utils from './common/utils';
+import Client from './lib/client';
+import * as utils from './lib/utils';
 import * as HELP from './lib/help';
 import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
+import Oss from './lib/oss.service';
+import { writeCreatCache } from './common/cache';
 
 export default class SaeComponent {
 
@@ -111,10 +113,11 @@ export default class SaeComponent {
       return;
     }
     const credentials = await core.getCredential(inputs.project.access);
-    await Client.setSaeClient(application.region, credentials);
-    const data = await Client.saeClient.listApplications(application.appName);
+    const { appName, region } = application || {};
+    await Client.setSaeClient(region, credentials);
+    const data = await Client.saeClient.listApplications(appName);
     if (data['Data']['Applications'].length === 0) {
-      logger.error(`未找到应用 ${application.appName}，请先使用 's deploy' 命令进行部署`);
+      logger.error(`未找到应用 ${appName}，请先使用 's deploy' 命令进行部署`);
     } else {
       const app = data['Data']['Applications'][0];
       const res = await utils.infoRes(app);
@@ -127,7 +130,7 @@ export default class SaeComponent {
         } catch (_e) {
           /**/
         }
-        cache[application.appName] = res;
+        cache[appName] = res;
         await core.fse.outputFile(outputFile, JSON.stringify(cache, null, 2));
       }
 
@@ -137,28 +140,30 @@ export default class SaeComponent {
 
   async deploy(inputs: InputProps) {
     let appId: any;
-    let { args, props: { application } } = inputs;
+    const configPath = core.lodash.get(inputs, 'path.configPath');
+    const { args, props: { application } } = inputs;
+    const { appName, region } = application;
     const credentials = await core.getCredential(inputs.project.access);
-    await Client.setSaeClient(application.region, credentials);
+    await Client.setSaeClient(region, credentials);
 
     const { isHelp, useLocal, useRemote } = await utils.parseCommand(args);
     if (isHelp) {
       core.help(HELP.DEPLOY);
       return;
     }
-    const remoteData = await Client.saeClient.listApplications(application.appName);
+    const remoteData = await Client.saeClient.listApplications(appName);
     if (useLocal) {
       // go on
     } else if (useRemote) {
       if (remoteData['Data']['Applications'].length === 0) {
-        logger.error(`未找到应用 ${application.appName}，请先使用 's deploy' 命令进行部署`);
+        logger.error(`未找到应用 ${appName}，请先使用 's deploy' 命令进行部署`);
         return;
       }
       const app = remoteData['Data']['Applications'][0];
       return await utils.infoRes(app);
     } else {
       if (remoteData['Data']['Applications'].length > 0) {
-        const configInquire = getInquire(application.appName);
+        const configInquire = getInquire(appName);
         const ans: { option: string } = await inquirer.prompt(configInquire);
         switch (ans.option) {
           case 'use local':
@@ -178,16 +183,26 @@ export default class SaeComponent {
     let slb = env.slb;
 
     vm.text = `上传代码...`;
-    const applicationObject = await utils.handleCode(application, credentials);
+    const applicationObject = await utils.handleCode(application, credentials, configPath);
     await utils.setDefault(applicationObject);
     let changeOrderId: any;
     let needBindSlb = true;
     try {
-      vm.text = `创建应用 ...`
+      vm.text = `创建应用 ...`;
       let obj = await Client.saeClient.createApplication(applicationObject);
       appId = obj['Data']['AppId'];
       changeOrderId = obj['Data']['ChangeOrderId'];
       applicationObject.AppId = appId;
+
+      await writeCreatCache(
+        {
+          region,
+          appName,
+          configPath,
+          accountID: credentials.AccountID,
+        },
+        { appId },
+      );
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
         try {
@@ -196,20 +211,19 @@ export default class SaeComponent {
           changeOrderId = res['Data']['ChangeOrderId'];
           needBindSlb = await utils.needBindSlb(slb, appId);
         } catch (error) {
-          vm.stop();
           logger.error(`${error.result.Message}`);
-          return;
         }
-      } else {
         vm.stop();
-        logger.error(`${e.result.Message}`);
         return;
       }
+      vm.stop();
+      logger.error(`${e.result.Message}`);
+      return;
     }
 
     // 检查应用部署状态
     vm.text = `应用正在部署... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${application.region}`;
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
     await utils.getStatusByOrderId(changeOrderId);
     if (needBindSlb) {
       // 绑定SLB
@@ -218,7 +232,7 @@ export default class SaeComponent {
 
       // 检查应用部署状态
       vm.text = `正在绑定slb... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${application.region}`;
+    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
       await utils.checkStatus(appId, 'CoBindSlb');
     }
 
@@ -240,14 +254,15 @@ export default class SaeComponent {
       core.help(HELP.REMOVE);
       return;
     }
-    const credentials = await core.getCredential(inputs.project.access);
-    await Client.setSaeClient(application.region, credentials);
-    let data = await Client.saeClient.listApplications(application.appName);
+    const { appName, region } = application || {};
+    const credentials = await core.getCredential(inputs.project?.access);
+    await Client.setSaeClient(region, credentials);
+    let data = await Client.saeClient.listApplications(appName);
     if (data['Data']['Applications'].length == 0) {
-      logger.error(`未找到应用 ${application.appName}`);
+      logger.error(`未找到应用 ${appName}`);
       return;
     }
-    const file = await utils.file2delete(application.region, application, credentials);
+    const file = await utils.file2delete(region, application, credentials);
     if (!assumeYes) {
       try {
         const removeStatus = await utils.removePlan(data['Data']['Applications'][0], file);
@@ -263,7 +278,7 @@ export default class SaeComponent {
       }
     }
     const appId = data['Data']['Applications'][0]['AppId'];
-    const vm = spinner(`删除应用${application.appName}...`);
+    const vm = spinner(`删除应用${appName}...`);
     let orderId: any;
     try {
       orderId = await Client.saeClient.deleteApplication(appId);
@@ -275,7 +290,8 @@ export default class SaeComponent {
     await utils.getStatusByOrderId(orderId);
     if (file.filename) {
       vm.text = `删除 oss 文件 ... `;
-      await utils.deleteFile(credentials, application.region, file.bucketName, file.filename);
+      const oss = new Oss({  bucket: file.bucketName, region: region, credentials  });
+      await oss.deleteFile(file.filename);
     }
     vm.stop();
     logger.success('删除成功');
