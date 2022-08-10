@@ -9,6 +9,7 @@ import * as HELP from './lib/help';
 import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
 import Oss from './lib/oss.service';
+import { writeCreatCache } from './common/cache';
 
 export default class SaeComponent {
 
@@ -105,14 +106,14 @@ export default class SaeComponent {
   }
 
   async info(inputs: InputProps) {
-    const { args, props: { application } } = inputs;
+    const { args, props: { application, region } } = inputs;
     const { isHelp, outputFile } = await utils.handlerInfoInputs(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
     }
     const credentials = await core.getCredential(inputs.project.access);
-    const { region, appName, } = application || {};
+    const { appName } = application || {};
     await Client.setSaeClient(region, credentials);
     const data = await Client.saeClient.listApplications(appName);
     if (data['Data']['Applications'].length === 0) {
@@ -139,8 +140,9 @@ export default class SaeComponent {
 
   async deploy(inputs: InputProps) {
     let appId: any;
-    let { args, props: { application } } = inputs;
-    const { region, appName, } = application || {};
+    const configPath = core.lodash.get(inputs, 'path.configPath');
+    const { args, props: { application, region } } = inputs;
+    const { appName } = application || {};
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
 
@@ -181,7 +183,7 @@ export default class SaeComponent {
     let slb = env.slb;
 
     vm.text = `上传代码...`;
-    const applicationObject = await utils.handleCode(application, credentials);
+    const applicationObject = await utils.handleCode(application, credentials, configPath);
     await utils.setDefault(applicationObject);
     let changeOrderId: any;
     let needBindSlb = true;
@@ -190,8 +192,17 @@ export default class SaeComponent {
       let obj = await Client.saeClient.createApplication(applicationObject);
       appId = obj['Data']['AppId'];
       changeOrderId = obj['Data']['ChangeOrderId'];
-      // TODO
       applicationObject.AppId = appId;
+
+      await writeCreatCache(
+        {
+          region,
+          appName,
+          configPath,
+          accountID: credentials.AccountID,
+        },
+        { appId },
+      );
     } catch (e) {
       if (e.message.includes('AppName is exsited')) {
         try {
@@ -238,13 +249,13 @@ export default class SaeComponent {
   }
 
   async remove(inputs: InputProps) {
-    const { args, props: { application } } = inputs;
+    const { args, props: { application, region } } = inputs;
     const { isHelp, assumeYes } = await utils.handlerRmInputs(args);
     if (isHelp) {
       core.help(HELP.REMOVE);
       return;
     }
-    const { region, appName, } = application || {};
+    const { appName } = application || {};
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
     let data = await Client.saeClient.listApplications(appName);

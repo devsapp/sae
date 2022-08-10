@@ -3,6 +3,7 @@ import { spinner, lodash } from '@serverless-devs/core';
 import { IOssConfig, IUpload } from '../interface/oss';
 import { ICredentials } from '../interface/entity';
 import logger from '../common/logger';
+import { writeCreatCache } from '../common/cache';
 
 const getAutoName = (region, accountId) => `sae-packages-${region}-${accountId}`;
 
@@ -41,10 +42,10 @@ export default class Oss {
 		}
 	}
 
-	async upload({ file, object, type }: IUpload) {
+	async upload({ file, object, type }: IUpload, cachePayload) {
 		if (type === 'upload') {
 			// bucket, 不存在此bucket,则创建: 并且加上权限
-			await this.getOrCreateBucket(this.bucket);
+			await this.getOrCreateBucket(this.bucket, cachePayload);
 			// 文件上传
 			await this.put(file, object);
 			return;
@@ -65,7 +66,7 @@ export default class Oss {
 		await this.ossClient.putACL(`${object}`, 'public-read')
 	}
 
-	private async getOrCreateBucket(bucket) {
+	private async getOrCreateBucket(bucket, cachePayload) {
 		try {
 			await this.ossClient.getBucketInfo(bucket);
 		} catch (error) {
@@ -81,7 +82,19 @@ export default class Oss {
 		const vm = spinner(`Create ${bucket} bucket`);
 		try {
 			await this.ossClient.putBucket(bucket);
-			// TODO: 
+			
+			if (cachePayload?.appName) {
+				await writeCreatCache(
+					{
+						region: this.region,
+						appName: cachePayload?.appName,
+						accountID: this.credentials.AccountID,
+						configPath: cachePayload?.configPath,
+					},
+					{ bucketName: bucket },
+				);
+			}
+
 			// region重新赋值
 			const location = await this.ossClient.getBucketLocation(bucket);
 			this.ossClient = new OssClient({
