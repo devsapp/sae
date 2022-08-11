@@ -23,12 +23,13 @@ category: '构建&部署'
 | 参数全称 | 参数缩写 | Yaml模式下必填 | Cli模式下必填 | 参数含义  |
 | ----- | -------- | -------------- | ------- | ---------- |
 | application-name  | -        | 必填           | 必填    | 应用名   |
+| replicas  | -        | 必填           | 必填    | 实例数目   |
 
 
 ### 操作案例
 
 - **有资源描述文件（Yaml）时**，可以直接执行`s rescale`对线上资源扩缩容；
-- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名，函数名等信息，例如`s cli sae rescale --application-name test`。
+- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名，函数名等信息，例如`s cli sae rescale --application-name test --replicas 5`。
 
 ## 权限与策略说明
 
