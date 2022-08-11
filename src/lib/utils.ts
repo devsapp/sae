@@ -8,6 +8,81 @@ import Table from 'tty-table';
 const { inquirer, fse, lodash } = core;
 const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_${appName}`;
 
+export const checkFileExists = (filePath) => {
+    try {
+        if (fse.statSync(filePath).isFile()) {
+            return true;
+        }
+    } catch (ex) {
+        // @ts-ignore: .
+    }
+    return false;
+};
+
+export async function getSyncConfig(inputs: any, appProps: any) {
+    const projectName = inputs.project.projectName;
+    let configs = {};
+    configs['component'] = 'devsapp/sae@dev';
+    const {application,slb} = appProps;
+    let props = {
+        application: {
+            region: application.region,
+            namespaceId: application.namespaceId,
+            vpcId: application.vpcId,
+            vSwitchId: application.vSwitchId,
+            securityGroupId: application.securityGroupId,
+            appName: application.appName,
+            port: slb.Internet[0].TargetPort,
+            cpu: application.cpu,
+            memory: application.memory,
+            replicas: application.replicas,
+        },
+        slb:{}
+    };
+    let code = {
+        packageType: application.packageType,
+    };
+    if(!lodash.isEmpty(application.imageUrl)){
+        code['imageUrl'] = application.imageUrl;
+    }
+    if(!lodash.isEmpty(application.packageUrl)){
+        code['packageUrl'] = application.packageUrl;
+        code['ossConfig'] = 'auto'
+    }
+    props.application['code'] = code;
+
+    // slb
+    let tempSlb={};
+
+    const Internets = lodash.get(slb, 'Internet', []);
+    for (const internet of Internets) {
+        const { Port, TargetPort, Protocol } = internet;
+        tempSlb['Internet'] = [
+        { port: Port, targetPort: TargetPort, protocol: Protocol }
+        ];
+    }
+    const Intranets = lodash.get(slb, 'Intranet', []);
+    for (const internet of Intranets) {
+        const { Port, TargetPort, Protocol } = internet;
+        tempSlb['Intranet'] = [
+        { port: Port, targetPort: TargetPort, protocol: Protocol }
+        ];
+    }
+
+    if(!lodash.isEmpty(slb.InternetSlbId)){
+        tempSlb['InternetSlbId'] = slb.InternetSlbId;
+    }
+    if(!lodash.isEmpty(slb.IntranetSlbId)){
+        tempSlb['IntranetSlbId'] = slb.IntranetSlbId;
+    }
+    props.slb = tempSlb;
+
+    configs['props'] = props;
+    let result ={};
+    result[`${projectName}`] = configs;
+    return result;
+}
+
 /**
  * 判断是否需要重新绑定slb
  * @param slb 本地slb
@@ -15,26 +90,41 @@ const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_
  */
 export async function needBindSlb(slb: any, appId: string) {
     const data = await Client.saeClient.getSLB(appId);
-    const remoteIntranet = data['Data']['Intranet'];
-    const remoteInternet = data['Data']['Internet'];
-    const localInternet = slb.Internet ? slb.Internet : [];
-    const localIntranet = slb.Intranet ? slb.Intranet : [];
-    if (remoteIntranet.length === 0 && remoteInternet.length === 0) {
-        return true;
+    const remoteIntranet = JSON.parse(JSON.stringify(data['Data']['Intranet']));
+    const remoteInternet = JSON.parse(JSON.stringify(data['Data']['Internet']));
+    for(var datum of remoteInternet){
+        for (var key in datum) {
+            if (/^[A-Z].*$/.test(key)) {
+                let Key = key.replace(key[0], key[0].toLowerCase());
+                datum[Key] = datum[key];
+                delete (datum[key]);
+            }
+        }
     }
-    if ((remoteInternet.length === 0 && localInternet.length > 0) || (remoteInternet.length > 0 && localInternet.length === 0)) {
-        return true;
+
+    for(var datum of remoteIntranet){
+        for (var key in datum) {
+            if (/^[A-Z].*$/.test(key)) {
+                let Key = key.replace(key[0], key[0].toLowerCase());
+                datum[Key] = datum[key];
+                delete (datum[key]);
+            }
+        }
     }
-    if ((remoteIntranet.length === 0 && localIntranet.length > 0) || (remoteIntranet.length > 0 && localIntranet.length === 0)) {
-        return true;
+
+
+    if(!slb.Internet){
+        slb['Internet'] = '[]'
     }
-    if (localIntranet.length > 0 && (remoteIntranet[0]['TargetPort'] !== localIntranet[0]['targetPort'] || remoteIntranet[0]['Port'] !== localIntranet[0]['port'])) {
-        return true;
+    if(!slb.Intranet){
+        slb['Intranet'] = '[]'
     }
-    if (localInternet.length > 0 && (remoteInternet[0]['TargetPort'] !== localInternet[0]['targetPort'] || remoteInternet[0]['Port'] !== localInternet[0]['port'])) {
-        return true;
+    const localInternet = JSON.parse(slb.Internet);
+    const localIntranet = JSON.parse(slb.Intranet);
+    if(lodash.isEqual(remoteIntranet, localIntranet)&&lodash.isEqual(remoteInternet, localInternet)){
+        return false;
     }
-    return false;
+    return true;
 }
 
 export async function file2delete(region: any, application: any, credentials: any) {
@@ -239,6 +329,12 @@ export async function handleEnv(slb: any, application: any, credentials: any) {
         };
     } else {
         // 使用用户配置的slb
+        if(slb.Internet){
+            slb.Internet = JSON.stringify(slb.Internet);
+        }
+        if(slb.Intranet){
+            slb.Intranet = JSON.stringify(slb.Intranet);
+        }
     }
     return { slb };
 }
@@ -365,16 +461,28 @@ export async function parseCommand(args: string) {
     const useRemote = data['use-remote'];
     return { isHelp, useLocal, useRemote };
 }
+
+export async function handlerSyncInputs(args: string) {
+    const comParse: any = core.commandParse({ args });
+    const data = comParse?.data
+    if (lodash.isEmpty(data)) {
+        return {};
+    }
+    const isHelp = data.h || data.help;
+    const appName = data['application-name'];
+    return { isHelp, appName };
+}
+
 export async function handlerReScaleInputs(args: string) {
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data;
-    if(lodash.isEmpty(data)){
+    if (lodash.isEmpty(data)) {
         throw new core.CatchableError('未指定replicas参数')
     }
     const isHelp = data.h || data.help;
     const replicas = data.replicas;
     const appName = data['application-name'];
-    if(!isHelp && !(Number.isInteger(replicas) && replicas > 0)){
+    if (!isHelp && !(Number.isInteger(replicas) && replicas > 0)) {
         throw new core.CatchableError('需要指定正确的replicas参数')
     }
     return { isHelp, replicas, appName };

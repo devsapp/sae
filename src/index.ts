@@ -10,8 +10,39 @@ import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
 import Oss from './lib/oss.service';
 import { writeCreatCache } from './common/cache';
+import WriteFile from './lib/write-file';
+
 const { lodash } = core;
 export default class SaeComponent {
+  async sync(inputs: InputProps) {
+    const { args, props: { application } } = inputs;
+    let appNameLocal = application.appName;
+    const { isHelp, appName } = await utils.handlerSyncInputs(args);
+    if (isHelp) {
+      core.help(HELP.SYNC);
+      return;
+    }
+    if(!lodash.isEmpty(appName)){
+      appNameLocal = appName;
+    }
+    const credentials = await core.getCredential(inputs.project.access);
+    await Client.setSaeClient(application.region, credentials);
+    let data = await Client.saeClient.listApplications(appNameLocal);
+    if (data['Data']['Applications'].length == 0) {
+      logger.error(`未找到应用 ${appNameLocal}`);
+      return;
+    }
+    const vm = spinner(`导出配置`);
+    const app = data['Data']['Applications'][0];
+    const res = await utils.infoRes(app);
+
+    WriteFile.access = inputs.project.access;
+    const configs = await utils.getSyncConfig(inputs, res);
+    const configYmlPath = await WriteFile.writeSYml(process.cwd(), configs, appNameLocal);
+    vm.stop();
+    logger.success(`配置文件已成功下载：${configYmlPath}`);
+    return { configs, configYmlPath };;
+  }
 
   async rescale(inputs: InputProps){
     const { args, props: { application } } = inputs;
@@ -312,17 +343,21 @@ export default class SaeComponent {
 
   async remove(inputs: InputProps) {
     const { args, props: { application } } = inputs;
-    const { isHelp, assumeYes } = await utils.handlerRmInputs(args);
+    let appNameLocal = application.appName;
+    const { isHelp, assumeYes, appName } = await utils.handlerRmInputs(args);
     if (isHelp) {
       core.help(HELP.REMOVE);
       return;
     }
-    const { appName, region } = application || {};
+    if(!lodash.isEmpty(appName)){
+      appNameLocal = appName;
+    }
+    const { region } = application || {};
     const credentials = await core.getCredential(inputs.project?.access);
     await Client.setSaeClient(region, credentials);
-    let data = await Client.saeClient.listApplications(appName);
+    let data = await Client.saeClient.listApplications(appNameLocal);
     if (data['Data']['Applications'].length == 0) {
-      logger.error(`未找到应用 ${appName}`);
+      logger.error(`未找到应用 ${appNameLocal}`);
       return;
     }
     const app = data['Data']['Applications'][0];
@@ -342,7 +377,7 @@ export default class SaeComponent {
       }
     }
     const appId = app['AppId'];
-    const vm = spinner(`删除应用${appName}...`);
+    const vm = spinner(`删除应用${appNameLocal}...`);
     let orderId: any;
     try {
       orderId = await Client.saeClient.deleteApplication(appId);
