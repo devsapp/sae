@@ -367,12 +367,17 @@ export async function parseCommand(args: string) {
 }
 export async function handlerReScaleInputs(args: string) {
     const comParse: any = core.commandParse({ args });
-    const data = comParse?.data
-    if (lodash.isEmpty(data)) {
-        return {};
+    const data = comParse?.data;
+    if(lodash.isEmpty(data)){
+        throw new core.CatchableError('未指定replicas参数')
     }
     const isHelp = data.h || data.help;
-    return { isHelp };
+    const replicas = data.replicas;
+    const appName = data['application-name'];
+    if(!isHelp && !(Number.isInteger(replicas) && replicas > 0)){
+        throw new core.CatchableError('需要指定正确的replicas参数')
+    }
+    return { isHelp, replicas, appName };
 }
 
 export async function handlerStartInputs(args: string) {
@@ -383,7 +388,8 @@ export async function handlerStartInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
-    return { isHelp, assumeYes };
+    const appName = data['application-name'];
+    return { isHelp, assumeYes, appName };
 }
 
 export async function handlerStopInputs(args: string) {
@@ -394,7 +400,8 @@ export async function handlerStopInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
-    return { isHelp, assumeYes };
+    const appName = data['application-name'];
+    return { isHelp, assumeYes, appName };
 }
 
 export async function handlerInfoInputs(args: string) {
@@ -406,7 +413,8 @@ export async function handlerInfoInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const outputFile = data['output'];
-    return { isHelp, outputFile };
+    const appName = data['application-name'];
+    return { isHelp, outputFile, appName };
 }
 
 export async function handlerRmInputs(args: string) {
@@ -417,7 +425,8 @@ export async function handlerRmInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
-    return { isHelp, assumeYes };
+    const appName = data['application-name'];
+    return { isHelp, assumeYes, appName };
 }
 
 export async function promptForConfirmOrDetails(message: string): Promise<boolean> {

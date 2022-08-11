@@ -27,7 +27,7 @@ export const RESCALE = [
     { ...globalDescribe },
     {
         header: 'Examples with Yaml',
-        content: ['$ s rescale'],
+        content: ['$ s rescale --replicas 5'],
     },
     {
         header: 'Examples with CLI',
