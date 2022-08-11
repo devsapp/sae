@@ -50,6 +50,11 @@ export default class SaeComponent {
     return ;
   }
 
+  // empty commander
+  async plan() {
+    return {};
+  }
+
   async start(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
