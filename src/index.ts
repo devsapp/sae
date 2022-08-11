@@ -49,6 +49,11 @@ export default class SaeComponent {
     return ;
   }
 
+  // empty commander
+  async plan() {
+    return {};
+  }
+
   async start(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     const { isHelp, assumeYes } = await utils.handlerStartInputs(args);
