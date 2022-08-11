@@ -286,6 +286,17 @@ export default class SaeComponent {
     const result = await utils.output(applicationObject, slbConfig);
 
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
+
+    /**
+     * 删除oss文件
+     */
+    const file = await utils.file2delete(region, application, credentials);
+    if (file.filename) {
+      vm.text = `删除 oss 文件 ... `;
+      const oss = new Oss({ bucket: file.bucketName, region: region, credentials });
+      await oss.deleteFile(file.filename);
+    }
+
     logger.success('应用详细信息如下：');
     return result;
   }
@@ -305,10 +316,11 @@ export default class SaeComponent {
       logger.error(`未找到应用 ${appName}`);
       return;
     }
-    const file = await utils.file2delete(region, application, credentials);
+    const app = data['Data']['Applications'][0];
+    const res = await utils.infoRes(app);
     if (!assumeYes) {
       try {
-        const removeStatus = await utils.removePlan(data['Data']['Applications'][0], file);
+        const removeStatus = await utils.removePlan(res);
         if (removeStatus !== 'assumeYes') {
           return;
         }
@@ -320,7 +332,7 @@ export default class SaeComponent {
         logger.debug(`error: ${ex.message}`);
       }
     }
-    const appId = data['Data']['Applications'][0]['AppId'];
+    const appId = app['AppId'];
     const vm = spinner(`删除应用${appName}...`);
     let orderId: any;
     try {
@@ -331,11 +343,7 @@ export default class SaeComponent {
       return;
     }
     await utils.getStatusByOrderId(orderId);
-    if (file.filename) {
-      vm.text = `删除 oss 文件 ... `;
-      const oss = new Oss({ bucket: file.bucketName, region: region, credentials });
-      await oss.deleteFile(file.filename);
-    }
+
     vm.stop();
     logger.success('删除成功');
   }
