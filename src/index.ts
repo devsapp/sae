@@ -5,6 +5,8 @@ import { spinner, inquirer } from "@serverless-devs/core";
 
 import Client from './lib/client';
 import * as utils from './lib/utils';
+import * as inputHandler from './lib/input-handler';
+import * as outputHandler from './lib/output-handler';
 import * as HELP from './lib/help';
 import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
@@ -17,7 +19,7 @@ export default class SaeComponent {
   async sync(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, appName } = await utils.handlerSyncInputs(args);
+    const { isHelp, appName } = await inputHandler.handlerSyncInputs(args);
     if (isHelp) {
       core.help(HELP.SYNC);
       return;
@@ -47,7 +49,7 @@ export default class SaeComponent {
   async rescale(inputs: InputProps){
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, replicas, appName } = await utils.handlerReScaleInputs(args);
+    const { isHelp, replicas, appName } = await inputHandler.handlerReScaleInputs(args);
     if (isHelp) {
       core.help(HELP.RESCALE);
       return;
@@ -89,7 +91,7 @@ export default class SaeComponent {
   async start(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await utils.handlerStartInputs(args);
+    const { isHelp, assumeYes, appName } = await inputHandler.handlerStartInputs(args);
     if (isHelp) {
       core.help(HELP.START);
       return;
@@ -106,7 +108,7 @@ export default class SaeComponent {
     }
     if (!assumeYes) {
       try {
-        const startStatus = await utils.startPlan();
+        const startStatus = await outputHandler.startPlan();
         if (startStatus !== 'assumeYes') {
           return;
         }
@@ -146,7 +148,7 @@ export default class SaeComponent {
   async stop(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await utils.handlerStopInputs(args);
+    const { isHelp, assumeYes, appName } = await inputHandler.handlerStopInputs(args);
     if (isHelp) {
       core.help(HELP.STOP);
       return;
@@ -163,7 +165,7 @@ export default class SaeComponent {
     }
     if (!assumeYes) {
       try {
-        const stopStatus = await utils.stopPlan();
+        const stopStatus = await outputHandler.stopPlan();
         if (stopStatus !== 'assumeYes') {
           return;
         }
@@ -195,7 +197,7 @@ export default class SaeComponent {
 
   async info(inputs: InputProps) {
     const { args, props: { application } } = inputs;
-    const { isHelp, outputFile } = await utils.handlerInfoInputs(args);
+    const { isHelp, outputFile } = await inputHandler.handlerInfoInputs(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
@@ -234,7 +236,7 @@ export default class SaeComponent {
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
 
-    const { isHelp, useLocal, useRemote } = await utils.parseCommand(args);
+    const { isHelp, useLocal, useRemote } = await inputHandler.parseCommand(args);
     if (isHelp) {
       core.help(HELP.DEPLOY);
       return;
@@ -272,7 +274,7 @@ export default class SaeComponent {
 
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(application, credentials, configPath);
-    await utils.setDefault(applicationObject);
+    await inputHandler.setDefault(applicationObject);
     let changeOrderId: any;
     let needBindSlb = true;
     try {
@@ -328,7 +330,7 @@ export default class SaeComponent {
     vm.text = `获取 slb 信息 ... `;
     const slbConfig = await Client.saeClient.getSLB(appId);
     vm.stop();
-    const result = await utils.output(applicationObject, slbConfig);
+    const result = await outputHandler.output(applicationObject, slbConfig);
 
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
 
@@ -349,7 +351,7 @@ export default class SaeComponent {
   async remove(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await utils.handlerRmInputs(args);
+    const { isHelp, assumeYes, appName } = await inputHandler.handlerRmInputs(args);
     if (isHelp) {
       core.help(HELP.REMOVE);
       return;
@@ -369,7 +371,7 @@ export default class SaeComponent {
     const res = await utils.infoRes(app);
     if (!assumeYes) {
       try {
-        const removeStatus = await utils.removePlan(res);
+        const removeStatus = await outputHandler.removePlan(res);
         if (removeStatus !== 'assumeYes') {
           return;
         }
