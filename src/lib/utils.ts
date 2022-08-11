@@ -6,6 +6,7 @@ import { cpuLimit, memoryLimit } from './help/constant';
 import Table from 'tty-table';
 
 const { inquirer, fse, lodash } = core;
+const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_${appName}`;
 
 /**
  * 判断是否需要重新绑定slb
@@ -27,7 +28,7 @@ export async function needBindSlb(slb: any, appId: string) {
     if ((remoteIntranet.length === 0 && localIntranet.length > 0) || (remoteIntranet.length > 0 && localIntranet.length === 0)) {
         return true;
     }
-    if (localIntranet.length > 0 && (remoteIntranet[0]['TargetPort'] !== localIntranet[0]['targetPort'] || remoteIntranet[0]['Port'] !== localIntranet[0]['port']) ) {
+    if (localIntranet.length > 0 && (remoteIntranet[0]['TargetPort'] !== localIntranet[0]['targetPort'] || remoteIntranet[0]['Port'] !== localIntranet[0]['port'])) {
         return true;
     }
     if (localInternet.length > 0 && (remoteInternet[0]['TargetPort'] !== localInternet[0]['targetPort'] || remoteInternet[0]['Port'] !== localInternet[0]['port'])) {
@@ -46,7 +47,8 @@ export async function file2delete(region: any, application: any, credentials: an
         return {};
     }
     const bucketName = await Oss.getBucketName(application.code.ossConfig, region, AccountID);
-    let filename = application.appName;
+    //${regionid}_${namespace}_${appName}.zip
+    let filename = getFilename(region, application.namespaceId, application.appName);
     if (packageUrl.endsWith('.war')) {
         filename = filename + '.war';
     } else if (packageUrl.endsWith('.jar')) {
@@ -131,9 +133,9 @@ export async function infoRes(application: any) {
             securityGroupId: appConfig.SecurityGroupId,
             appId: application.AppId,
             appName: application.AppName,
-            packageType: application.PackageType,
-            imageUrl: application.ImageUrl,
-            packageUrl: application.PackageUrl,
+            packageType: appConfig.PackageType,
+            imageUrl: appConfig.ImageUrl,
+            packageUrl: appConfig.PackageUrl,
             cpu: appConfig.Cpu,
             memory: appConfig.Memory,
             replicas: appConfig.Replicas,
@@ -145,7 +147,7 @@ export async function infoRes(application: any) {
         slb: {
         }
     };
-    if(!lodash.isEmpty(application.AppDescription)){
+    if (!lodash.isEmpty(application.AppDescription)) {
         result.application.appDescription = application.AppDescription;
     }
     if (slbConfig['Data']) {
@@ -212,14 +214,14 @@ export async function handleEnv(slb: any, application: any, credentials: any) {
         // 使用默认命名空间
         const defaultNamespace = await Client.saeClient.getNamespace();
         application.namespaceId = defaultNamespace.NamespaceId;
-        try{
+        try {
             await Client.saeClient.updateNamespaceVpc(application.namespaceId, vpcId);
-        }catch(e){
+        } catch (e) {
             if (e.message.includes('Please delete the application first')) {
                 throw new core.CatchableError('默认命名空间正在运行的应用');
             }
         }
-        
+
     } else if (namespaceId && lodash.isEmpty(vpcId)) {
         throw new core.CatchableError("The specified parameter 'vpcConfig' is invalid.")
     }
@@ -238,12 +240,12 @@ export async function handleEnv(slb: any, application: any, credentials: any) {
     } else {
         // 使用用户配置的slb
     }
-    return {slb};
+    return { slb };
 }
 
 export async function handleCode(application: any, credentials: any, configPath?: string) {
     const { AccountID } = credentials;
-    const { region, code, appName } = application;
+    const { region, code, appName, namespaceId } = application;
     const applicationObject = lodash.cloneDeep(application);
     delete applicationObject.code;
 
@@ -258,8 +260,8 @@ export async function handleCode(application: any, credentials: any, configPath?
     } else if (code.packageUrl) {
         const bucketName = await Oss.getBucketName(code.ossConfig, region, AccountID);
         if (code.packageUrl.endsWith('.war') || code.packageUrl.endsWith('.jar') || code.packageUrl.endsWith('.zip')) {
-            //文件命名规范：1.使用 UTF-8 编码 2.区分大小写 3.长度必须在 1~1023 字节之间 4. 不能以 / 或者 \ 字符开头
-            let filename = appName;
+            //${regionid}_${namespace}_${appName}.zip
+            let filename = getFilename(region, namespaceId, appName);
             if (code.packageUrl.endsWith('.war')) {
                 filename = filename + '.war';
                 applicationObject.WebContainer = 'apache-tomcat-8.5.42';
@@ -365,12 +367,17 @@ export async function parseCommand(args: string) {
 }
 export async function handlerReScaleInputs(args: string) {
     const comParse: any = core.commandParse({ args });
-    const data = comParse?.data
-    if (lodash.isEmpty(data)) {
-        return {};
+    const data = comParse?.data;
+    if(lodash.isEmpty(data)){
+        throw new core.CatchableError('未指定replicas参数')
     }
     const isHelp = data.h || data.help;
-    return { isHelp };
+    const replicas = data.replicas;
+    const appName = data['application-name'];
+    if(!isHelp && !(Number.isInteger(replicas) && replicas > 0)){
+        throw new core.CatchableError('需要指定正确的replicas参数')
+    }
+    return { isHelp, replicas, appName };
 }
 
 export async function handlerStartInputs(args: string) {
@@ -381,7 +388,8 @@ export async function handlerStartInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
-    return { isHelp, assumeYes };
+    const appName = data['application-name'];
+    return { isHelp, assumeYes, appName };
 }
 
 export async function handlerStopInputs(args: string) {
@@ -392,7 +400,8 @@ export async function handlerStopInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
-    return { isHelp, assumeYes };
+    const appName = data['application-name'];
+    return { isHelp, assumeYes, appName };
 }
 
 export async function handlerInfoInputs(args: string) {
@@ -404,7 +413,8 @@ export async function handlerInfoInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const outputFile = data['output'];
-    return { isHelp, outputFile };
+    const appName = data['application-name'];
+    return { isHelp, outputFile, appName };
 }
 
 export async function handlerRmInputs(args: string) {
@@ -415,7 +425,8 @@ export async function handlerRmInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
-    return { isHelp, assumeYes };
+    const appName = data['application-name'];
+    return { isHelp, assumeYes, appName };
 }
 
 export async function promptForConfirmOrDetails(message: string): Promise<boolean> {
@@ -434,9 +445,48 @@ export async function promptForConfirmOrDetails(message: string): Promise<boolea
 // 没有子资源：能够被删除，不作处理。 返回undefined
 // 存在子资源选择 no：一定不能被删除，需要退出程序。 返回quit
 // 存在子资源选择 yes：需要强制删除所有资源，需要向下传递 assumeYes。  返回assumeYes
-export async function removePlan(application, file) {
-    console.log(`Need to delete the resource in the ${application.RegionId} area:`);
-    let header = [{
+export async function removePlan(res: any) {
+    console.log(`Need to delete the resource in the ${res.application.region} area:`);
+    let namespaceHeader = [{
+        value: "namespaceId",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    },
+    {
+        value: "vpcId",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    },
+    {
+        value: "vSwitchId",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    },
+    {
+        value: "securityGroupId",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    }
+    ];
+    let namespaceData = [{
+        namespaceId: res.application.namespaceId,
+        vpcId: res.application.vpcId,
+        vSwitchId: res.application.vSwitchId,
+        securityGroupId: res.application.securityGroupId
+    }
+    ];
+    console.log('\r\nnamespace:');
+    console.log(Table(namespaceHeader, namespaceData).render());
+
+    let appHeader = [{
         value: "appName",
         headerColor: "cyan",
         color: "white",
@@ -444,83 +494,56 @@ export async function removePlan(application, file) {
         width: 40
     },
     {
-        value: "description",
+        value: "cpu",
         headerColor: "cyan",
         color: "white",
         align: "left",
         width: 40
     },
     {
-        value: "runningInstances",
+        value: "memory",
         headerColor: "cyan",
         color: "white",
         align: "left",
         width: 40
+    },
+    {
+        value: "runningInstances/instances",
+        headerColor: "cyan",
+        color: "white",
+        align: "left",
+        width: 40
+    },
+    ];
+    let appData = [{
+        appName: res.application.appName,
+        cpu: res.application.cpu,
+        memory: res.application.memory,
+        "runningInstances/instances": String(res.application.runningInstances) + '/' + String(res.application.instances)
     }
     ];
-    let data = [{
-        appName: application.AppName,
-        description: application.AppDescription,
-        runningInstances: application.RunningInstances
-    }
-    ]
+
+
     console.log('\r\napplication:');
-    console.log(Table(header, data).render());
-    const slb = await Client.saeClient.getSLB(application.AppId);
-    let header2 = [{
-        value: "InternetIp",
+    console.log(Table(appHeader, appData).render());
+
+    let slbHeader = [{
+        value: "slb",
         headerColor: "cyan",
         color: "white",
         align: "left",
-        width: 40
+        width: 80
     },
-    {
-        value: "IntranetIp",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    }
     ];
-    let data2 = [{
-        InternetIp: slb['Data']['InternetIp'] ? slb['Data']['InternetIp'] : '',
-        IntranetIp: slb['Data']['IntranetIp'] ? slb['Data']['IntranetIp'] : ''
+    let slbData = [{
+        slb: JSON.stringify(res.slb)
     }
     ]
+
+
     console.log('\r\nslb:');
-    console.log(Table(header2, data2).render());
-    if (file?.filename) {
-        let header3 = [{
-            value: "filename",
-            headerColor: "cyan",
-            color: "white",
-            align: "left",
-            width: 40
-        },
-        {
-            value: "bucketName",
-            headerColor: "cyan",
-            color: "white",
-            align: "left",
-            width: 40
-        },
-        {
-            value: "fileAddr",
-            headerColor: "cyan",
-            color: "white",
-            align: "left",
-            width: 40
-        }
-        ];
-        let data3 = [{
-            filename: file.filename,
-            bucketName: file.bucketName,
-            fileAddr: file.fileAddr,
-        }
-        ]
-        console.log('\r\noss:');
-        console.log(Table(header3, data3).render());
-    }
+    console.log(Table(slbHeader, slbData).render());
+
     const assumeYes = await promptForConfirmOrDetails(
         'Are you sure you want to delete these resources?',
     );

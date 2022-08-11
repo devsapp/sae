@@ -1,5 +1,9 @@
 import { globalParams, globalDescribe, applicationNameDescribe } from './constant';
-
+export const rescaleDescribe = {
+    name: 'replicas',
+    description: '[Required] Specify the sae application replicas',
+    type: Number,
+  };
 export const RESCALE = [
     {
         header: 'Rescale',
@@ -16,19 +20,19 @@ export const RESCALE = [
     {
         header: 'Options',
         optionList: [
-            applicationNameDescribe
+            applicationNameDescribe, rescaleDescribe
         ],
     },
     { ...globalParams },
     { ...globalDescribe },
     {
         header: 'Examples with Yaml',
-        content: ['$ s rescale'],
+        content: ['$ s rescale --replicas 5'],
     },
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae rescale --application-name appName',
+            '$ s cli sae rescale --application-name appName --replicas 5',
         ],
     },
 ];
