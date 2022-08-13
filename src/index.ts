@@ -24,7 +24,7 @@ export default class SaeComponent {
       core.help(HELP.SYNC);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const credentials = await core.getCredential(inputs.project.access);
@@ -46,7 +46,7 @@ export default class SaeComponent {
     return { configs, configYmlPath };;
   }
 
-  async rescale(inputs: InputProps){
+  async rescale(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
     const { isHelp, replicas, appName } = await inputHandler.handlerReScaleInputs(args);
@@ -54,7 +54,7 @@ export default class SaeComponent {
       core.help(HELP.RESCALE);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const credentials = await core.getCredential(inputs.project.access);
@@ -80,7 +80,7 @@ export default class SaeComponent {
     await utils.getStatusByOrderId(orderId);
     vm.stop();
     logger.success('完成应用扩缩容');
-    return ;
+    return;
   }
 
   // empty commander
@@ -96,7 +96,7 @@ export default class SaeComponent {
       core.help(HELP.START);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const credentials = await core.getCredential(inputs.project.access);
@@ -153,7 +153,7 @@ export default class SaeComponent {
       core.help(HELP.STOP);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const credentials = await core.getCredential(inputs.project.access);
@@ -266,6 +266,19 @@ export default class SaeComponent {
         }
       }
     }
+    // 查询发布单
+    if (remoteData['Data']['Applications'].length > 0) {
+      const app = remoteData['Data']['Applications'][0];
+      const orderList = await Client.saeClient.listChangeOrders(app.AppId, '');
+      const changeOrder = orderList['Data']['ChangeOrderList'];
+      for(const order of changeOrder){
+        if(lodash.isEqual(order['Status'], 1)){
+          logger.info(`当前应用有正在执行的变更单。查看详情：
+          https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${order['ChangeOrderId']}`);
+          return;
+        }
+      }
+    }
 
     // 创建Namespace
     const vm = spinner('设置Namespace...');
@@ -356,7 +369,7 @@ export default class SaeComponent {
       core.help(HELP.REMOVE);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const { region } = application || {};
