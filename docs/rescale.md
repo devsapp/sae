@@ -29,7 +29,7 @@ category: '构建&部署'
 ### 操作案例
 
 - **有资源描述文件（Yaml）时**，可以直接执行`s rescale`对线上资源扩缩容；
-- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名，函数名等信息，例如`s cli sae rescale --application-name test --replicas 5`。
+- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名信息，例如`s cli sae rescale --application-name test --replicas 5`。
 
 ## 权限与策略说明
 

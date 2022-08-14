@@ -5,23 +5,56 @@ import { spinner, inquirer } from "@serverless-devs/core";
 
 import Client from './lib/client';
 import * as utils from './lib/utils';
+import * as inputHandler from './lib/input-handler';
+import * as outputHandler from './lib/output-handler';
 import * as HELP from './lib/help';
 import logger from './common/logger';
 import { getInquire } from './lib/help/constant';
 import Oss from './lib/oss.service';
 import { writeCreatCache } from './common/cache';
+import WriteFile from './lib/write-file';
+
 const { lodash } = core;
 export default class SaeComponent {
-
-  async rescale(inputs: InputProps){
+  async sync(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, replicas, appName } = await utils.handlerReScaleInputs(args);
+    const { isHelp, appName } = await inputHandler.handlerSyncInputs(args);
+    if (isHelp) {
+      core.help(HELP.SYNC);
+      return;
+    }
+    if (!lodash.isEmpty(appName)) {
+      appNameLocal = appName;
+    }
+    const credentials = await core.getCredential(inputs.project.access);
+    await Client.setSaeClient(application.region, credentials);
+    let data = await Client.saeClient.listApplications(appNameLocal);
+    if (data['Data']['Applications'].length == 0) {
+      logger.error(`未找到应用 ${appNameLocal}`);
+      return;
+    }
+    const vm = spinner(`导出配置`);
+    const app = data['Data']['Applications'][0];
+    const res = await utils.infoRes(app);
+
+    WriteFile.access = inputs.project.access;
+    const configs = await utils.getSyncConfig(inputs, res);
+    const configYmlPath = await WriteFile.writeSYml(process.cwd(), configs, appNameLocal);
+    vm.stop();
+    logger.success(`配置文件已成功下载：${configYmlPath}`);
+    return { configs, configYmlPath };;
+  }
+
+  async rescale(inputs: InputProps) {
+    const { args, props: { application } } = inputs;
+    let appNameLocal = application.appName;
+    const { isHelp, replicas, appName } = await inputHandler.handlerReScaleInputs(args);
     if (isHelp) {
       core.help(HELP.RESCALE);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const credentials = await core.getCredential(inputs.project.access);
@@ -47,7 +80,7 @@ export default class SaeComponent {
     await utils.getStatusByOrderId(orderId);
     vm.stop();
     logger.success('完成应用扩缩容');
-    return ;
+    return;
   }
 
   // empty commander
@@ -58,12 +91,12 @@ export default class SaeComponent {
   async start(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await utils.handlerStartInputs(args);
+    const { isHelp, assumeYes, appName } = await inputHandler.handlerStartInputs(args);
     if (isHelp) {
       core.help(HELP.START);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const credentials = await core.getCredential(inputs.project.access);
@@ -75,7 +108,7 @@ export default class SaeComponent {
     }
     if (!assumeYes) {
       try {
-        const startStatus = await utils.startPlan();
+        const startStatus = await outputHandler.startPlan();
         if (startStatus !== 'assumeYes') {
           return;
         }
@@ -115,12 +148,12 @@ export default class SaeComponent {
   async stop(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await utils.handlerStopInputs(args);
+    const { isHelp, assumeYes, appName } = await inputHandler.handlerStopInputs(args);
     if (isHelp) {
       core.help(HELP.STOP);
       return;
     }
-    if(!lodash.isEmpty(appName)){
+    if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
     const credentials = await core.getCredential(inputs.project.access);
@@ -132,7 +165,7 @@ export default class SaeComponent {
     }
     if (!assumeYes) {
       try {
-        const stopStatus = await utils.stopPlan();
+        const stopStatus = await outputHandler.stopPlan();
         if (stopStatus !== 'assumeYes') {
           return;
         }
@@ -164,7 +197,7 @@ export default class SaeComponent {
 
   async info(inputs: InputProps) {
     const { args, props: { application } } = inputs;
-    const { isHelp, outputFile } = await utils.handlerInfoInputs(args);
+    const { isHelp, outputFile } = await inputHandler.handlerInfoInputs(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
@@ -203,7 +236,7 @@ export default class SaeComponent {
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
 
-    const { isHelp, useLocal, useRemote } = await utils.parseCommand(args);
+    const { isHelp, useLocal, useRemote } = await inputHandler.parseCommand(args);
     if (isHelp) {
       core.help(HELP.DEPLOY);
       return;
@@ -233,6 +266,19 @@ export default class SaeComponent {
         }
       }
     }
+    // 查询发布单
+    if (remoteData['Data']['Applications'].length > 0) {
+      const app = remoteData['Data']['Applications'][0];
+      const orderList = await Client.saeClient.listChangeOrders(app.AppId, '');
+      const changeOrder = orderList['Data']['ChangeOrderList'];
+      for(const order of changeOrder){
+        if(lodash.isEqual(order['Status'], 1)){
+          logger.info(`当前应用有正在执行的变更单。查看详情：
+          https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${order['ChangeOrderId']}`);
+          return;
+        }
+      }
+    }
 
     // 创建Namespace
     const vm = spinner('设置Namespace...');
@@ -241,7 +287,7 @@ export default class SaeComponent {
 
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(application, credentials, configPath);
-    await utils.setDefault(applicationObject);
+    await inputHandler.setDefault(applicationObject);
     let changeOrderId: any;
     let needBindSlb = true;
     try {
@@ -297,7 +343,7 @@ export default class SaeComponent {
     vm.text = `获取 slb 信息 ... `;
     const slbConfig = await Client.saeClient.getSLB(appId);
     vm.stop();
-    const result = await utils.output(applicationObject, slbConfig);
+    const result = await outputHandler.output(applicationObject, slbConfig);
 
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
 
@@ -317,24 +363,28 @@ export default class SaeComponent {
 
   async remove(inputs: InputProps) {
     const { args, props: { application } } = inputs;
-    const { isHelp, assumeYes } = await utils.handlerRmInputs(args);
+    let appNameLocal = application.appName;
+    const { isHelp, assumeYes, appName } = await inputHandler.handlerRmInputs(args);
     if (isHelp) {
       core.help(HELP.REMOVE);
       return;
     }
-    const { appName, region } = application || {};
+    if (!lodash.isEmpty(appName)) {
+      appNameLocal = appName;
+    }
+    const { region } = application || {};
     const credentials = await core.getCredential(inputs.project?.access);
     await Client.setSaeClient(region, credentials);
-    let data = await Client.saeClient.listApplications(appName);
+    let data = await Client.saeClient.listApplications(appNameLocal);
     if (data['Data']['Applications'].length == 0) {
-      logger.error(`未找到应用 ${appName}`);
+      logger.error(`未找到应用 ${appNameLocal}`);
       return;
     }
     const app = data['Data']['Applications'][0];
     const res = await utils.infoRes(app);
     if (!assumeYes) {
       try {
-        const removeStatus = await utils.removePlan(res);
+        const removeStatus = await outputHandler.removePlan(res);
         if (removeStatus !== 'assumeYes') {
           return;
         }
@@ -347,7 +397,7 @@ export default class SaeComponent {
       }
     }
     const appId = app['AppId'];
-    const vm = spinner(`删除应用${appName}...`);
+    const vm = spinner(`删除应用${appNameLocal}...`);
     let orderId: any;
     try {
       orderId = await Client.saeClient.deleteApplication(appId);

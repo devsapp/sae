@@ -1,6 +1,7 @@
 import * as core from '@serverless-devs/core';
 // @ts-ignore
 const ROAClient = core.popCore.ROAClient;
+const { lodash } = core;
 
 export async function vpcAvailable(vpcId, region, credentials) {
 
@@ -126,9 +127,12 @@ export default class Client {
          * @returns 变更单列表信息
          */
         saeClient.listChangeOrders = async function (appId: any, coType: any) {
-            const queries = {
-                AppId: appId, CoType: coType, CurrentPage: 1, PageSize: 10,
+            let queries = {
+                AppId: appId, CurrentPage: 1, PageSize: 10,
             };
+            if(!lodash.isEmpty()){
+                queries['CoType'] = coType;
+            }
             const data = await saeClient.request("GET", ListChangeOrdersUri, queries, body, headers, requestOption);
             return data;
         }

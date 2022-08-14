@@ -2,11 +2,84 @@ import * as core from '@serverless-devs/core';
 import Oss from './oss.service';
 import Client, { vpcAvailable } from './client';
 import { OutputProps } from '../interface/entity';
-import { cpuLimit, memoryLimit } from './help/constant';
-import Table from 'tty-table';
 
-const { inquirer, fse, lodash } = core;
+const { fse, lodash } = core;
 const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_${appName}`;
+
+export const checkFileExists = (filePath) => {
+    try {
+        if (fse.statSync(filePath).isFile()) {
+            return true;
+        }
+    } catch (ex) {
+        // @ts-ignore: .
+    }
+    return false;
+};
+
+export async function getSyncConfig(inputs: any, appProps: any) {
+    const projectName = inputs.project.projectName;
+    let configs = {};
+    configs['component'] = 'devsapp/sae@dev';
+    const {application,slb} = appProps;
+    let props = {
+        application: {
+            region: application.region,
+            namespaceId: application.namespaceId,
+            vpcId: application.vpcId,
+            vSwitchId: application.vSwitchId,
+            securityGroupId: application.securityGroupId,
+            appName: application.appName,
+            port: slb.Internet[0].TargetPort,
+            cpu: application.cpu,
+            memory: application.memory,
+            replicas: application.replicas,
+        },
+        slb:{}
+    };
+    let code = {
+        packageType: application.packageType,
+    };
+    if(!lodash.isEmpty(application.imageUrl)){
+        code['imageUrl'] = application.imageUrl;
+    }
+    if(!lodash.isEmpty(application.packageUrl)){
+        code['packageUrl'] = application.packageUrl;
+        code['ossConfig'] = 'auto'
+    }
+    props.application['code'] = code;
+
+    // slb
+    let tempSlb={};
+
+    const Internets = lodash.get(slb, 'Internet', []);
+    for (const internet of Internets) {
+        const { Port, TargetPort, Protocol } = internet;
+        tempSlb['Internet'] = [
+        { port: Port, targetPort: TargetPort, protocol: Protocol }
+        ];
+    }
+    const Intranets = lodash.get(slb, 'Intranet', []);
+    for (const internet of Intranets) {
+        const { Port, TargetPort, Protocol } = internet;
+        tempSlb['Intranet'] = [
+        { port: Port, targetPort: TargetPort, protocol: Protocol }
+        ];
+    }
+
+    if(!lodash.isEmpty(slb.InternetSlbId)){
+        tempSlb['InternetSlbId'] = slb.InternetSlbId;
+    }
+    if(!lodash.isEmpty(slb.IntranetSlbId)){
+        tempSlb['IntranetSlbId'] = slb.IntranetSlbId;
+    }
+    props.slb = tempSlb;
+
+    configs['props'] = props;
+    let result ={};
+    result[`${projectName}`] = configs;
+    return result;
+}
 
 /**
  * 判断是否需要重新绑定slb
@@ -15,26 +88,41 @@ const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_
  */
 export async function needBindSlb(slb: any, appId: string) {
     const data = await Client.saeClient.getSLB(appId);
-    const remoteIntranet = data['Data']['Intranet'];
-    const remoteInternet = data['Data']['Internet'];
-    const localInternet = slb.Internet ? slb.Internet : [];
-    const localIntranet = slb.Intranet ? slb.Intranet : [];
-    if (remoteIntranet.length === 0 && remoteInternet.length === 0) {
-        return true;
+    const remoteIntranet = JSON.parse(JSON.stringify(data['Data']['Intranet']));
+    const remoteInternet = JSON.parse(JSON.stringify(data['Data']['Internet']));
+    for(var datum of remoteInternet){
+        for (var key in datum) {
+            if (/^[A-Z].*$/.test(key)) {
+                let Key = key.replace(key[0], key[0].toLowerCase());
+                datum[Key] = datum[key];
+                delete (datum[key]);
+            }
+        }
     }
-    if ((remoteInternet.length === 0 && localInternet.length > 0) || (remoteInternet.length > 0 && localInternet.length === 0)) {
-        return true;
+
+    for(var datum of remoteIntranet){
+        for (var key in datum) {
+            if (/^[A-Z].*$/.test(key)) {
+                let Key = key.replace(key[0], key[0].toLowerCase());
+                datum[Key] = datum[key];
+                delete (datum[key]);
+            }
+        }
     }
-    if ((remoteIntranet.length === 0 && localIntranet.length > 0) || (remoteIntranet.length > 0 && localIntranet.length === 0)) {
-        return true;
+
+
+    if(!slb.Internet){
+        slb['Internet'] = '[]'
     }
-    if (localIntranet.length > 0 && (remoteIntranet[0]['TargetPort'] !== localIntranet[0]['targetPort'] || remoteIntranet[0]['Port'] !== localIntranet[0]['port'])) {
-        return true;
+    if(!slb.Intranet){
+        slb['Intranet'] = '[]'
     }
-    if (localInternet.length > 0 && (remoteInternet[0]['TargetPort'] !== localInternet[0]['targetPort'] || remoteInternet[0]['Port'] !== localInternet[0]['port'])) {
-        return true;
+    const localInternet = JSON.parse(slb.Internet);
+    const localIntranet = JSON.parse(slb.Intranet);
+    if(lodash.isEqual(remoteIntranet, localIntranet)&&lodash.isEqual(remoteInternet, localInternet)){
+        return false;
     }
-    return false;
+    return true;
 }
 
 export async function file2delete(region: any, application: any, credentials: any) {
@@ -156,43 +244,6 @@ export async function infoRes(application: any) {
     return result;
 }
 
-export async function output(applicationObject: any, slbConfig: any) {
-    const result: OutputProps = {
-
-        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.Region}&namespaceId=${applicationObject.NamespaceId}`,
-        application: {
-            region: applicationObject.Region,
-            namespaceId: applicationObject.NamespaceId,
-            namespaceName: applicationObject.NamespaceName,
-            vpcId: applicationObject.VpcId,
-            vSwitchId: applicationObject.VSwitchId,
-            securityGroupId: applicationObject.SecurityGroupId,
-            appId: applicationObject.AppId,
-            appName: applicationObject.AppName,
-            packageType: applicationObject.PackageType,
-        },
-        slb: {
-        }
-    };
-    if (applicationObject.ImageUrl) {
-        result.application.imageUrl = applicationObject.ImageUrl;
-    }
-    if (applicationObject.PackageUrl) {
-        result.application.packageUrl = applicationObject.PackageUrl;
-    }
-    result.application.cpu = applicationObject.Cpu;
-    result.application.memory = applicationObject.Memory;
-    result.application.replicas = applicationObject.Replicas;
-    result.slb = slbConfig['Data'];
-    if (slbConfig['Data']['InternetIp']) {
-        result.accessLink = result.slb.InternetIp + ':' + String(slbConfig['Data']['Internet'][0]['Port']);
-    }
-    if (slbConfig['Data']['IntranetIp']) {
-        result.accessLink = result.slb.IntranetIp + ':' + String(slbConfig['Data']['Intranet'][0]['Port']);
-    }
-    return result;
-}
-
 export async function handleEnv(slb: any, application: any, credentials: any) {
     const { region, namespaceId, vpcId } = application;
     application.autoConfig = false;
@@ -239,6 +290,12 @@ export async function handleEnv(slb: any, application: any, credentials: any) {
         };
     } else {
         // 使用用户配置的slb
+        if(slb.Internet){
+            slb.Internet = JSON.stringify(slb.Internet);
+        }
+        if(slb.Intranet){
+            slb.Intranet = JSON.stringify(slb.Intranet);
+        }
     }
     return { slb };
 }
@@ -295,271 +352,4 @@ export async function handleCode(application: any, credentials: any, configPath?
         throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确");
     }
     return applicationObject;
-}
-
-export async function setDefault(applicationObject: any) {
-    // 检查参数合法性
-    /**
-     * CPU，单位为毫核，不能为0。目前仅支持以下固定规格：500、1000、2000、4000、8000、16000、32000
-     * 内存，单位为MB，不能为0。与CPU为一一对应关系，目前仅支持以下固定规格：
-            1024：对应CPU为500毫核和1000毫核。
-            2048：对应CPU为500、1000毫核和2000毫核。
-            4096：对应CPU为1000、2000毫核和4000毫核。
-            8192：对应CPU为2000、4000毫核和8000毫核。
-            12288：对应CPU为12000毫核。
-            16384：对应CPU为4000、8000毫核和16000毫核。
-            24576：对应CPU为12000毫核。
-            32768：对应CPU为16000毫核。
-            65536：对应CPU为8000、16000和32000毫核。
-            131072：对应CPU为32000毫核。
-        初始实例数：整数
-     */
-    if (applicationObject.cpu) {
-        if (cpuLimit.indexOf(applicationObject.cpu) === -1) {
-            throw new core.CatchableError('cpu仅支持以下固定规格：500、1000、2000、4000、8000、16000、32000');
-        }
-        applicationObject.Cpu = applicationObject.cpu;
-    } else {
-        applicationObject.Cpu = 500;
-    }
-    if (applicationObject.memory) {
-        const arr = memoryLimit.get(applicationObject.Cpu);
-        if (arr.indexOf(applicationObject.memory) === -1) {
-            throw new core.CatchableError(`cpu取值为${applicationObject.Cpu}时，memory仅支持以下固定规格：${arr}`);
-        }
-        applicationObject.Memory = applicationObject.memory;
-    } else {
-        applicationObject.Memory = memoryLimit.get(applicationObject.Cpu)[0];
-    }
-    if (applicationObject.replicas) {
-        if (Number.isInteger(applicationObject.replicas) && applicationObject.replicas > 0) {
-            applicationObject.Replicas = applicationObject.replicas;
-        } else {
-            throw new core.CatchableError('replicas的值需要是正整数');
-        }
-    } else {
-        applicationObject.Replicas = 1;
-    }
-    // 参数命名方式修改
-    for (var key in applicationObject) {
-        if (!applicationObject[key]) {
-            delete (applicationObject[key]);
-        } else if (/^[a-z].*$/.test(key)) {
-            let Key = key.replace(key[0], key[0].toUpperCase());
-            applicationObject[Key] = applicationObject[key];
-            delete (applicationObject[key]);
-        }
-    }
-}
-
-
-export async function parseCommand(args: string) {
-    // @ts-ignore
-    const comParse: any = core.commandParse({ args });
-    const data = comParse?.data
-    if (lodash.isEmpty(data)) {
-        return {};
-    }
-    const isHelp = data.h || data.help;
-    const useLocal = data['use-local'];
-    const useRemote = data['use-remote'];
-    return { isHelp, useLocal, useRemote };
-}
-export async function handlerReScaleInputs(args: string) {
-    const comParse: any = core.commandParse({ args });
-    const data = comParse?.data;
-    if(lodash.isEmpty(data)){
-        throw new core.CatchableError('未指定replicas参数')
-    }
-    const isHelp = data.h || data.help;
-    const replicas = data.replicas;
-    const appName = data['application-name'];
-    if(!isHelp && !(Number.isInteger(replicas) && replicas > 0)){
-        throw new core.CatchableError('需要指定正确的replicas参数')
-    }
-    return { isHelp, replicas, appName };
-}
-
-export async function handlerStartInputs(args: string) {
-    const comParse: any = core.commandParse({ args });
-    const data = comParse?.data
-    if (lodash.isEmpty(data)) {
-        return {};
-    }
-    const isHelp = data.h || data.help;
-    const assumeYes = data.y || data['assume-yes'];
-    const appName = data['application-name'];
-    return { isHelp, assumeYes, appName };
-}
-
-export async function handlerStopInputs(args: string) {
-    const comParse: any = core.commandParse({ args });
-    const data = comParse?.data
-    if (lodash.isEmpty(data)) {
-        return {};
-    }
-    const isHelp = data.h || data.help;
-    const assumeYes = data.y || data['assume-yes'];
-    const appName = data['application-name'];
-    return { isHelp, assumeYes, appName };
-}
-
-export async function handlerInfoInputs(args: string) {
-    // @ts-ignore
-    const comParse: any = core.commandParse({ args });
-    const data = comParse?.data
-    if (lodash.isEmpty(data)) {
-        return {};
-    }
-    const isHelp = data.h || data.help;
-    const outputFile = data['output'];
-    const appName = data['application-name'];
-    return { isHelp, outputFile, appName };
-}
-
-export async function handlerRmInputs(args: string) {
-    const comParse: any = core.commandParse({ args });
-    const data = comParse?.data
-    if (lodash.isEmpty(data)) {
-        return {};
-    }
-    const isHelp = data.h || data.help;
-    const assumeYes = data.y || data['assume-yes'];
-    const appName = data['application-name'];
-    return { isHelp, assumeYes, appName };
-}
-
-export async function promptForConfirmOrDetails(message: string): Promise<boolean> {
-    const answers: any = await inquirer.prompt([
-        {
-            type: 'list',
-            name: 'prompt',
-            message,
-            choices: ['yes', 'no'],
-        },
-    ]);
-
-    return answers.prompt === 'yes';
-}
-
-// 没有子资源：能够被删除，不作处理。 返回undefined
-// 存在子资源选择 no：一定不能被删除，需要退出程序。 返回quit
-// 存在子资源选择 yes：需要强制删除所有资源，需要向下传递 assumeYes。  返回assumeYes
-export async function removePlan(res: any) {
-    console.log(`Need to delete the resource in the ${res.application.region} area:`);
-    let namespaceHeader = [{
-        value: "namespaceId",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    },
-    {
-        value: "vpcId",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    },
-    {
-        value: "vSwitchId",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    },
-    {
-        value: "securityGroupId",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    }
-    ];
-    let namespaceData = [{
-        namespaceId: res.application.namespaceId,
-        vpcId: res.application.vpcId,
-        vSwitchId: res.application.vSwitchId,
-        securityGroupId: res.application.securityGroupId
-    }
-    ];
-    console.log('\r\nnamespace:');
-    console.log(Table(namespaceHeader, namespaceData).render());
-
-    let appHeader = [{
-        value: "appName",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    },
-    {
-        value: "cpu",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    },
-    {
-        value: "memory",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    },
-    {
-        value: "runningInstances/instances",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 40
-    },
-    ];
-    let appData = [{
-        appName: res.application.appName,
-        cpu: res.application.cpu,
-        memory: res.application.memory,
-        "runningInstances/instances": String(res.application.runningInstances) + '/' + String(res.application.instances)
-    }
-    ];
-
-
-    console.log('\r\napplication:');
-    console.log(Table(appHeader, appData).render());
-
-    let slbHeader = [{
-        value: "slb",
-        headerColor: "cyan",
-        color: "white",
-        align: "left",
-        width: 80
-    },
-    ];
-    let slbData = [{
-        slb: JSON.stringify(res.slb)
-    }
-    ]
-
-
-    console.log('\r\nslb:');
-    console.log(Table(slbHeader, slbData).render());
-
-    const assumeYes = await promptForConfirmOrDetails(
-        'Are you sure you want to delete these resources?',
-    );
-    return assumeYes ? 'assumeYes' : 'quit';
-}
-
-export async function stopPlan() {
-    const assumeYes = await promptForConfirmOrDetails(
-        '停止应用后，系统将物理删除该应用下所有的实例，业务会中断，资源计费也会停止。但会保存应用的基本配置信息，负载均衡设备信息，方便后续启动应用时秒级拉起应用。（停止再启动应用后实例ip会变）。请确认是否真的要停止应用？',
-    );
-    return assumeYes ? 'assumeYes' : 'quit';
-}
-
-export async function startPlan() {
-    const assumeYes = await promptForConfirmOrDetails(
-        '启动应用后，系统将根据停止应用前保存的快照配置信息，秒级恢复应用。恢复之后开始进行资源计费，请确认是否真的要启动应用？',
-    );
-    return assumeYes ? 'assumeYes' : 'quit';
 }
