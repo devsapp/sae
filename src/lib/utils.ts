@@ -2,6 +2,7 @@ import * as core from '@serverless-devs/core';
 import Oss from './oss.service';
 import Client, { vpcAvailable } from './client';
 import { OutputProps } from '../interface/entity';
+import { isNumber, isString } from 'lodash';
 
 const { fse, lodash } = core;
 const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_${appName}`;
@@ -21,62 +22,60 @@ export async function getSyncConfig(inputs: any, appProps: any) {
     const projectName = inputs.project.projectName;
     let configs = {};
     configs['component'] = 'devsapp/sae@dev';
-    const {application,slb} = appProps;
-    let props = {
-        application: {
-            region: application.region,
-            namespaceId: application.namespaceId,
-            vpcId: application.vpcId,
-            vSwitchId: application.vSwitchId,
-            securityGroupId: application.securityGroupId,
-            appName: application.appName,
-            port: slb.Internet[0].TargetPort,
-            cpu: application.cpu,
-            memory: application.memory,
-            replicas: application.replicas,
-        },
-        slb:{}
-    };
+    const { application, slb } = appProps;
     let code = {
         packageType: application.packageType,
     };
-    if(!lodash.isEmpty(application.imageUrl)){
+    if (!lodash.isEmpty(application.imageUrl)) {
         code['imageUrl'] = application.imageUrl;
     }
-    if(!lodash.isEmpty(application.packageUrl)){
+    if (!lodash.isEmpty(application.packageUrl)) {
         code['packageUrl'] = application.packageUrl;
         code['ossConfig'] = 'auto'
     }
+
+    let tempApp = application;
+    delete tempApp.packageType;
+    delete tempApp.imageUrl;
+    delete tempApp.packageUrl;
+
+    let props = {
+        application: {
+            ...tempApp,
+            port: slb.Internet[0].TargetPort,
+        },
+        slb: {}
+    };
     props.application['code'] = code;
 
     // slb
-    let tempSlb={};
+    let tempSlb = {};
 
     const Internets = lodash.get(slb, 'Internet', []);
     for (const internet of Internets) {
         const { Port, TargetPort, Protocol } = internet;
         tempSlb['Internet'] = [
-        { port: Port, targetPort: TargetPort, protocol: Protocol }
+            { port: Port, targetPort: TargetPort, protocol: Protocol }
         ];
     }
     const Intranets = lodash.get(slb, 'Intranet', []);
     for (const internet of Intranets) {
         const { Port, TargetPort, Protocol } = internet;
         tempSlb['Intranet'] = [
-        { port: Port, targetPort: TargetPort, protocol: Protocol }
+            { port: Port, targetPort: TargetPort, protocol: Protocol }
         ];
     }
 
-    if(!lodash.isEmpty(slb.InternetSlbId)){
+    if (!lodash.isEmpty(slb.InternetSlbId)) {
         tempSlb['InternetSlbId'] = slb.InternetSlbId;
     }
-    if(!lodash.isEmpty(slb.IntranetSlbId)){
+    if (!lodash.isEmpty(slb.IntranetSlbId)) {
         tempSlb['IntranetSlbId'] = slb.IntranetSlbId;
     }
     props.slb = tempSlb;
 
     configs['props'] = props;
-    let result ={};
+    let result = {};
     result[`${projectName}`] = configs;
     return result;
 }
@@ -90,7 +89,7 @@ export async function needBindSlb(slb: any, appId: string) {
     const data = await Client.saeClient.getSLB(appId);
     const remoteIntranet = JSON.parse(JSON.stringify(data['Data']['Intranet']));
     const remoteInternet = JSON.parse(JSON.stringify(data['Data']['Internet']));
-    for(var datum of remoteInternet){
+    for (var datum of remoteInternet) {
         for (var key in datum) {
             if (/^[A-Z].*$/.test(key)) {
                 let Key = key.replace(key[0], key[0].toLowerCase());
@@ -100,7 +99,7 @@ export async function needBindSlb(slb: any, appId: string) {
         }
     }
 
-    for(var datum of remoteIntranet){
+    for (var datum of remoteIntranet) {
         for (var key in datum) {
             if (/^[A-Z].*$/.test(key)) {
                 let Key = key.replace(key[0], key[0].toLowerCase());
@@ -111,15 +110,15 @@ export async function needBindSlb(slb: any, appId: string) {
     }
 
 
-    if(!slb.Internet){
+    if (!slb.Internet) {
         slb['Internet'] = '[]'
     }
-    if(!slb.Intranet){
+    if (!slb.Intranet) {
         slb['Intranet'] = '[]'
     }
     const localInternet = JSON.parse(slb.Internet);
     const localIntranet = JSON.parse(slb.Intranet);
-    if(lodash.isEqual(remoteIntranet, localIntranet)&&lodash.isEqual(remoteInternet, localInternet)){
+    if (lodash.isEqual(remoteIntranet, localIntranet) && lodash.isEqual(remoteInternet, localInternet)) {
         return false;
     }
     return true;
@@ -203,30 +202,45 @@ export async function getStatusByOrderId(orderId: any) {
 
 }
 
+/**
+ * 转换大小写，去除空值
+ * @param appConfig 接口数据
+ */
+async function getConfig(data: any) {
+    let appConfig = data['Data'];
+    // 去掉create时不需要的
+    appConfig['region'] = appConfig.RegionId;
+    delete appConfig.MinReadyInstances;
+    delete appConfig.MseApplicationId;
+    delete appConfig.PhpExtensions;
+    delete appConfig.PhpPECLExtensions;
+    delete appConfig.RegionId;
+    for (var key in appConfig) {
+        if (!appConfig[key] ||
+            (!isNumber(appConfig[key]) && (lodash.isEmpty(appConfig[key]))) ||
+            (isString(appConfig[key]) && (appConfig[key] == 'null' || appConfig[key] == '[]'))) {
+            delete (appConfig[key]);
+        } else if (/^[A-Z].*$/.test(key)) {
+            let Key = key.replace(key[0], key[0].toLowerCase());
+            appConfig[Key] = appConfig[key];
+            delete (appConfig[key]);
+        }
+    }
+    return appConfig;
+}
+
 export async function infoRes(application: any) {
     const appId = application.AppId;
     const slbConfig = await Client.saeClient.getSLB(appId);
     const data1 = await Client.saeClient.describeApplicationConfig(appId);
-    const appConfig = data1['Data'];
-    const data2 = await Client.saeClient.describeNamespace(appConfig.NamespaceId);
+    const appConfig = await getConfig(data1);
+    const data2 = await Client.saeClient.describeNamespace(appConfig.namespaceId);
     const namespace = data2['Data'];
     const result: OutputProps = {
         console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
         application: {
-            region: application.RegionId,
-            namespaceId: appConfig.NamespaceId,
+            ...appConfig,
             namespaceName: namespace.NamespaceName,
-            vpcId: appConfig.VpcId,
-            vSwitchId: appConfig.VSwitchId,
-            securityGroupId: appConfig.SecurityGroupId,
-            appId: application.AppId,
-            appName: application.AppName,
-            packageType: appConfig.PackageType,
-            imageUrl: appConfig.ImageUrl,
-            packageUrl: appConfig.PackageUrl,
-            cpu: appConfig.Cpu,
-            memory: appConfig.Memory,
-            replicas: appConfig.Replicas,
             scaleRuleEnabled: application.ScaleRuleEnabled,
             instances: application.Instances,
             runningInstances: application.RunningInstances,
@@ -235,9 +249,6 @@ export async function infoRes(application: any) {
         slb: {
         }
     };
-    if (!lodash.isEmpty(application.AppDescription)) {
-        result.application.appDescription = application.AppDescription;
-    }
     if (slbConfig['Data']) {
         result.slb = slbConfig['Data'];
     }
@@ -290,10 +301,10 @@ export async function handleEnv(slb: any, application: any, credentials: any) {
         };
     } else {
         // 使用用户配置的slb
-        if(slb.Internet){
+        if (slb.Internet) {
             slb.Internet = JSON.stringify(slb.Internet);
         }
-        if(slb.Intranet){
+        if (slb.Intranet) {
             slb.Intranet = JSON.stringify(slb.Intranet);
         }
     }

@@ -16,6 +16,7 @@ Commands:
     stop: Stop online application
   Others:
     info: Query online application details
+    sync: Sync online application config
   Config:
     rescale: Rescale online application
 Properties:
