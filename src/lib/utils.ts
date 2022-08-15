@@ -38,6 +38,7 @@ export async function getSyncConfig(inputs: any, appProps: any) {
     delete tempApp.packageType;
     delete tempApp.imageUrl;
     delete tempApp.packageUrl;
+    delete tempApp.appId;
 
     let props = {
         application: {
@@ -85,7 +86,7 @@ export async function getSyncConfig(inputs: any, appProps: any) {
  * @param slb 本地slb
  * @param appId appid
  */
-export async function needBindSlb(slb: any, appId: string) {
+export async function slbDiff(slb: any, appId: string) {
     const data = await Client.saeClient.getSLB(appId);
     const remoteIntranet = JSON.parse(JSON.stringify(data['Data']['Intranet']));
     const remoteInternet = JSON.parse(JSON.stringify(data['Data']['Internet']));
@@ -116,8 +117,15 @@ export async function needBindSlb(slb: any, appId: string) {
     if (!slb.Intranet) {
         slb['Intranet'] = '[]'
     }
-    const localInternet = JSON.parse(slb.Internet);
-    const localIntranet = JSON.parse(slb.Intranet);
+    
+    let localInternet = slb.Internet;
+    if(isString(slb.Internet)){
+        localInternet = JSON.parse(slb.Internet);
+    }
+    let localIntranet = slb.Intranet;
+    if(isString(slb.Intranet)){
+        localIntranet = JSON.parse(slb.Intranet);
+    }
     if (lodash.isEqual(remoteIntranet, localIntranet) && lodash.isEqual(remoteInternet, localInternet)) {
         return false;
     }
@@ -363,4 +371,11 @@ export async function handleCode(application: any, credentials: any, configPath?
         throw new core.CatchableError("未能找到iamge/package，请确定参数传递正确");
     }
     return applicationObject;
+}
+
+export async function getDiff(application:any, slb:any, remoteData: any) {
+    const appId = application.AppId;
+    const remoteApp = await infoRes(remoteData);
+    
+    return {};
 }

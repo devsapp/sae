@@ -238,12 +238,16 @@ export default class SaeComponent {
     await Client.setSaeClient(region, credentials);
 
     const { isHelp, useLocal, useRemote } = await inputHandler.parseCommand(args);
+    let updateRemote = false;
     if (isHelp) {
       core.help(HELP.DEPLOY);
       return;
     }
     const remoteData = await Client.saeClient.listApplications(appName);
     if (useLocal) {
+      if (remoteData['Data']['Applications'].length > 0) {
+        updateRemote = true;
+      }
       // go on
     } else if (useRemote) {
       if (remoteData['Data']['Applications'].length === 0) {
@@ -254,10 +258,12 @@ export default class SaeComponent {
       return await utils.infoRes(app);
     } else {
       if (remoteData['Data']['Applications'].length > 0) {
+        const diff = await utils.getDiff(application, slb, remoteData['Data']['Applications'][0]);
         const configInquire = getInquire(appName);
         const ans: { option: string } = await inquirer.prompt(configInquire);
         switch (ans.option) {
           case 'use local':
+            updateRemote = true;
             break;
           case 'use remote':
             const app = remoteData['Data']['Applications'][0];
@@ -272,15 +278,14 @@ export default class SaeComponent {
       const app = remoteData['Data']['Applications'][0];
       const orderList = await Client.saeClient.listChangeOrders(app.AppId, '');
       const changeOrder = orderList['Data']['ChangeOrderList'];
-      for(const order of changeOrder){
-        if(lodash.isEqual(order['Status'], 1)){
+      for (const order of changeOrder) {
+        if (lodash.isEqual(order['Status'], 1)) {
           logger.info(`当前应用有正在执行的变更单。查看详情：
           https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${order['ChangeOrderId']}`);
           return;
         }
       }
     }
-
     // 创建Namespace
     const vm = spinner('设置Namespace...');
     const env = await utils.handleEnv(slb, application, credentials);
@@ -290,36 +295,34 @@ export default class SaeComponent {
     const applicationObject = await utils.handleCode(application, credentials, configPath);
     await inputHandler.setDefault(applicationObject);
     let changeOrderId: any;
-    let needBindSlb = true;
-    try {
-      vm.text = `创建应用 ...`;
-      let obj = await Client.saeClient.createApplication(applicationObject);
-      appId = obj['Data']['AppId'];
-      changeOrderId = obj['Data']['ChangeOrderId'];
-      applicationObject.AppId = appId;
+    if (updateRemote) {
+      try {
+        let res = await Client.saeClient.updateApplication(applicationObject);
+        appId = res['Data']['AppId'];
+        changeOrderId = res['Data']['ChangeOrderId'];
+      } catch (error) {
+        vm.stop();
+        logger.error(`${error.result.Message}`);
+        return;
+      }
+    } else {
+      try {
+        vm.text = `创建应用 ...`;
+        let obj = await Client.saeClient.createApplication(applicationObject);
+        appId = obj['Data']['AppId'];
+        changeOrderId = obj['Data']['ChangeOrderId'];
+        applicationObject.AppId = appId;
 
-      await writeCreatCache(
-        {
-          region,
-          appName,
-          configPath,
-          accountID: credentials.AccountID,
-        },
-        { appId },
-      );
-    } catch (e) {
-      if (e.message.includes('AppName is exsited')) {
-        try {
-          let res = await Client.saeClient.updateApplication(applicationObject);
-          appId = res['Data']['AppId'];
-          changeOrderId = res['Data']['ChangeOrderId'];
-          needBindSlb = await utils.needBindSlb(slb, appId);
-        } catch (error) {
-          vm.stop();
-          logger.error(`${error.result.Message}`);
-          return;
-        }
-      } else {
+        await writeCreatCache(
+          {
+            region,
+            appName,
+            configPath,
+            accountID: credentials.AccountID,
+          },
+          { appId },
+        );
+      } catch (e) {
         vm.stop();
         logger.error(`${e.result.Message}`);
         return;
@@ -330,6 +333,7 @@ export default class SaeComponent {
     vm.text = `应用正在部署... 查看详情：
     https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
     await utils.getStatusByOrderId(changeOrderId);
+    const needBindSlb = await utils.slbDiff(slb, appId);
     if (needBindSlb) {
       // 绑定SLB
       vm.text = `部署 slb ... `;
