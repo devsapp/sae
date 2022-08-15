@@ -39,6 +39,7 @@ export default class SaeComponent {
     const res = await utils.infoRes(app);
 
     WriteFile.access = inputs.project.access;
+    WriteFile.projectName = inputs.project.projectName;
     const configs = await utils.getSyncConfig(inputs, res);
     const configYmlPath = await WriteFile.writeSYml(process.cwd(), configs, appNameLocal);
     vm.stop();

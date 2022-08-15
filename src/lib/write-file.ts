@@ -5,13 +5,13 @@ import { checkFileExists } from './utils';
 
 export default class WriteFile {
   static access: string;
-
+  static projectName: string;
   static async writeSYml(targetDir, config, fileAffix?) {
     const targetDirResolve = path.resolve(targetDir);
     const ymlPath = this.getYmlFilePath(targetDirResolve, fileAffix);
     const configStr = yaml.dump({
       edition: '1.0.0',
-      name: 'compoent-test',
+      name: this.projectName,
       access: this.access,
       services: JSON.parse(JSON.stringify(config)),
     });
