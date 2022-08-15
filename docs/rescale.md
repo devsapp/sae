@@ -1,13 +1,13 @@
 ---
-title: Stop 命令
-description: 'Stop 命令'
+title: Rescale 命令
+description: 'Rescale 命令'
 position: 3
 category: '构建&部署'
 ---
 
-# Stop 命令
+# Rescale 命令
 
-`stop` 命令是对已经部署的资源进行停止的操作。
+`rescale` 命令是对已经部署的资源进行扩缩容的操作。
 
 - [命令解析](#命令解析)
   - [参数解析](#参数解析)
@@ -16,20 +16,20 @@ category: '构建&部署'
 
 ## 命令解析
 
-当执行命令`stop -h`/`stop --help`命令时，可以获取帮助文档。
+当执行命令`rescale -h`/`rescale --help`命令时，可以获取帮助文档。
 
 ### 参数解析
 
 | 参数全称 | 参数缩写 | Yaml模式下必填 | Cli模式下必填 | 参数含义  |
 | ----- | -------- | -------------- | ------- | ---------- |
 | application-name  | -        | 必填           | 必填    | 应用名   |
-| assume-yes | y        | 选填           | 在交互时，默认选择`y`      |
+| replicas  | -        | 必填           | 必填    | 实例数目   |
 
 
 ### 操作案例
 
-- **有资源描述文件（Yaml）时**，可以直接执行`s stop`停止线上资源；
-- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名信息，例如`s cli sae stop --application-name test`。
+- **有资源描述文件（Yaml）时**，可以直接执行`s rescale`对线上资源扩缩容；
+- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名信息，例如`s cli sae rescale --application-name test --replicas 5`。
 
 ## 权限与策略说明
 

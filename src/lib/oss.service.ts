@@ -72,6 +72,7 @@ export default class Oss {
 	private async getOrCreateBucket(bucket, cachePayload) {
 		try {
 			await this.ossClient.getBucketInfo(bucket);
+			return;
 		} catch (error) {
 			if (!lodash.isEqual(error?.code, 'NoSuchBucket')) {
 				throw new Error(error.message);

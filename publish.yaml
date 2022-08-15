@@ -9,7 +9,16 @@ Tags: #标签详情
   - SAE
 Category: 其它
 Commands:
-  create: 部署应用
+  Build & Deploy:
+    deploy: Deploy local application online 
+    remove: Delete online application
+    start: Start online application
+    stop: Stop online application
+  Others:
+    info: Query online application details
+    sync: Sync online application config
+  Config:
+    rescale: Rescale online application
 Properties:
   region:
     Description: 地区
