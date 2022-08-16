@@ -230,6 +230,7 @@ export default class SaeComponent {
   }
 
   async deploy(inputs: InputProps) {
+    await inputHandler.checkInputs(inputs);
     let appId: any;
     const configPath = core.lodash.get(inputs, 'path.configPath');
     let { args, props: { application, slb } } = inputs;
@@ -258,7 +259,7 @@ export default class SaeComponent {
       return await utils.infoRes(app);
     } else {
       if (remoteData['Data']['Applications'].length > 0) {
-        const diff = await utils.getDiff(application, slb, remoteData['Data']['Applications'][0]);
+        await utils.getDiff(application, slb, remoteData['Data']['Applications'][0]);
         const configInquire = getInquire(appName);
         const ans: { option: string } = await inquirer.prompt(configInquire);
         switch (ans.option) {
@@ -289,7 +290,7 @@ export default class SaeComponent {
     // 创建Namespace
     const vm = spinner('设置Namespace...');
     const env = await utils.handleEnv(slb, application, credentials);
-    slb = env.slb;
+    slb = env.localSlb;
 
     vm.text = `上传代码...`;
     const applicationObject = await utils.handleCode(application, credentials, configPath);

@@ -1,6 +1,20 @@
 import * as core from '@serverless-devs/core';
 import { cpuLimit, memoryLimit } from './help/constant';
 const { lodash } = core;
+
+export async function checkInputs(inputs: any) {
+    let { application, slb } = inputs['props'];
+    if (!application.port) {
+        throw new core.CatchableError('port 为必填项.');
+    }
+    if (lodash.isEmpty(slb)) {
+        throw new core.CatchableError('slb 为必填项.');
+    }
+    const { code } = application;
+    if (lodash.isEmpty(code)) {
+        throw new core.CatchableError("未指定部署的代码");
+    }
+}
 export async function parseCommand(args: string) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args });
