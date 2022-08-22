@@ -1,7 +1,7 @@
 import * as core from '@serverless-devs/core';
 import { InputProps } from './interface/entity';
 // @ts-ignore
-import { spinner, inquirer } from "@serverless-devs/core";
+import { spinner } from "@serverless-devs/core";
 
 import Client from './lib/client';
 import * as utils from './lib/utils';
@@ -9,9 +9,8 @@ import * as inputHandler from './lib/input-handler';
 import * as outputHandler from './lib/output-handler';
 import * as HELP from './lib/help';
 import logger from './common/logger';
-import { getInquire } from './lib/help/constant';
 import Oss from './lib/oss.service';
-import { writeCreatCache } from './common/cache';
+import { writeCreatCache, writeDeployCache } from './common/cache';
 import WriteFile from './lib/write-file';
 
 const { lodash } = core;
@@ -235,7 +234,8 @@ export default class SaeComponent {
     await inputHandler.checkInputs(inputs);
     let appId: any;
     const configPath = core.lodash.get(inputs, 'path.configPath');
-    let { args, props: { application, slb } } = inputs;
+    const { args, props } = inputs;
+    let { application, slb } = props;
     const { appName, region } = application;
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
@@ -263,21 +263,15 @@ export default class SaeComponent {
       return await utils.infoRes(app);
     } else {
       if (remoteData['Data']['Applications'].length > 0) {
-        change = await utils.getDiff(application, slb, remoteData['Data']['Applications'][0]);
-        const configInquire = getInquire(appName);
-        const ans: { option: string } = await inquirer.prompt(configInquire);
-        switch (ans.option) {
-          case 'use local':
-            updateRemote = true;
-            break;
-          case 'use remote':
-            const app = remoteData['Data']['Applications'][0];
-            return await utils.infoRes(app);
-          default:
-            break;
+        change = await utils.getDiff(application, slb, remoteData['Data']['Applications'][0], credentials, configPath);
+        updateRemote = change['updateRemote'];
+        if (!updateRemote) {
+          const app = remoteData['Data']['Applications'][0];
+          return await utils.infoRes(app);
         }
       }
     }
+    const lastProps = lodash.cloneDeep(props);
     // 查询发布单
     if (remoteData['Data']['Applications'].length > 0) {
       const app = remoteData['Data']['Applications'][0];
@@ -303,7 +297,7 @@ export default class SaeComponent {
     if (updateRemote) {
       appId = remoteAppId;
       try {
-        if(change['needDeploy']){
+        if (change['needDeploy']) {
           let res = await Client.saeClient.updateApplication(applicationObject);
           changeOrderId = res['Data']['ChangeOrderId'];
           // 检查应用部署状态
@@ -377,6 +371,18 @@ export default class SaeComponent {
 
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
 
+    /**
+     * 缓存记录上一次部署细节
+     */
+    await writeDeployCache(
+      {
+        region,
+        appName,
+        configPath,
+        accountID: credentials.AccountID,
+      },
+      lastProps,
+    );
     /**
      * 删除oss文件
      */

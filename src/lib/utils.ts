@@ -3,6 +3,9 @@ import Oss from './oss.service';
 import Client, { vpcAvailable } from './client';
 import { OutputProps } from '../interface/entity';
 import { isNumber, isString } from 'lodash';
+import { getInquire } from './help/constant';
+import { getDeployCache } from '../common/cache';
+import { inquirer } from "@serverless-devs/core";
 
 const { fse, lodash } = core;
 const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_${appName}`;
@@ -352,7 +355,7 @@ export async function handleCode(application: any, credentials: any, configPath?
     return applicationObject;
 }
 
-export async function getDiff(application: any, slb: any, remoteData: any) {
+export async function getDiff(application: any, slb: any, remoteData: any, credentials: any, configPath: string) {
     const remoteResult = await infoRes(remoteData);
     let localApp = lodash.cloneDeep(application);
     const port = localApp.port;
@@ -365,6 +368,7 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
     let diffList = [];
 
     let change = {
+        updateRemote:false,
         needRescale: false,
         needUpdateSecurityGroup: false,
         needRescaleVertically: false,
@@ -464,6 +468,26 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
     console.log(`📑 Config check:\n\rOnline status => Target Status`);
     for (let data of diffList) {
         console.log(`${data.name}: ${data.remote} => ${data.local}`);
+    }
+
+    // 用户选择
+    // lastDeploy == localApp && remoteApp != localApp ----> 用户选择local或remote
+    // lastDeploy != localApp ----> 自动选择local
+    const lastDeploy = await getDeployCache(credentials.AccountID, localApp.region, localApp.appName, configPath);
+    if(!lodash.isEqual(lastDeploy.props.application, application) || !lodash.isEqual(lastDeploy.props.slb, slb)){
+        change.updateRemote = true;
+    }else{
+        const configInquire = getInquire(application.appName);
+        const ans: { option: string } = await inquirer.prompt(configInquire);
+        switch (ans.option) {
+          case 'use local':
+            change.updateRemote = true;
+            break;
+          case 'use remote':
+            break;
+          default:
+            break;
+        }
     }
     return change;
 }
