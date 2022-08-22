@@ -3,7 +3,6 @@ import Oss from './oss.service';
 import Client, { vpcAvailable } from './client';
 import { OutputProps } from '../interface/entity';
 import { isNumber, isString } from 'lodash';
-import logger from '../common/logger';
 
 const { fse, lodash } = core;
 const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_${appName}`;
@@ -364,6 +363,58 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
     const remoteApp = remoteResult.application;
     const remoteSlb = await slbLower(remoteResult.slb);
     let diffList = [];
+
+    let change = {
+        needRescale: false,
+        needUpdateSecurityGroup: false,
+        needRescaleVertically: false,
+        needDeploy: false,
+    };
+
+    // UpdateAppSecurityGroup
+    if (!lodash.isEmpty(localApp.securityGroupId) && !lodash.isEqual(localApp.securityGroupId, remoteApp.securityGroupId)) {
+        change.needUpdateSecurityGroup = true;
+
+        diffList.push({
+            name: 'securityGroupId',
+            local: localApp.securityGroupId,
+            remote: remoteApp.securityGroupId
+        });
+
+    }
+    // RescaleApplicationVertically
+    if (localApp.cpu != remoteApp.cpu || localApp.memory != remoteApp.memory) {
+        change.needRescaleVertically = true;
+        if (localApp.cpu != remoteApp.cpu) {
+
+            diffList.push({
+                name: 'cpu',
+                local: localApp.cpu,
+                remote: remoteApp.cpu
+            });
+        }
+        if (localApp.memory != remoteApp.memory) {
+            diffList.push({
+                name: 'memory',
+                local: localApp.memory,
+                remote: remoteApp.memory
+            });
+        }
+    }
+    // RescaleApplication
+    if (localApp.replicas != remoteApp.replicas) {
+        change.needRescale = true;
+        diffList.push({
+            name: 'replicas',
+            local: localApp.replicas,
+            remote: remoteApp.replicas
+        });
+
+    }
+    delete localApp.securityGroupId;
+    delete localApp.cpu;
+    delete localApp.replicas;
+
     for (let key in localApp) {
         const localV = await formatArray(localApp[key]);
         const remoteV = await formatArray(remoteApp[key]);
@@ -373,6 +424,7 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
                 local: JSON.stringify(localV),
                 remote: JSON.stringify(remoteV)
             });
+            change.needDeploy = true;
         }
     }
 
@@ -385,11 +437,12 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
                 local: code[key],
                 remote: remoteApp[key]
             });
+            change.needDeploy = true;
         }
     }
 
     // 对比 slb
-    const remotePort = remoteSlb['Internet'][0]['targetPort'];
+    const remotePort = remoteSlb['Internet'].length > 0 ? remoteSlb['Internet'][0]['targetPort'] : null;
     if (port != remotePort) {
         diffList.push({
             name: 'port',
@@ -412,7 +465,7 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
     for (let data of diffList) {
         console.log(`${data.name}: ${data.remote} => ${data.local}`);
     }
-    return {};
+    return change;
 }
 
 async function formatSlb(slb: any, port: any) {

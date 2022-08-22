@@ -15,6 +15,11 @@ import { writeCreatCache } from './common/cache';
 import WriteFile from './lib/write-file';
 
 const { lodash } = core;
+
+const getLink = (changeOrderId) => `查看详情：
+https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}`;
+
+
 export default class SaeComponent {
   async sync(inputs: InputProps) {
     const { args, props: { application } } = inputs;
@@ -76,8 +81,7 @@ export default class SaeComponent {
       return;
     }
     // 检查状态
-    vm.text = `应用扩缩容${appNameLocal}... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${orderId}`;
+    vm.text = `应用扩缩容${appNameLocal}...` + getLink(orderId);
     await utils.getStatusByOrderId(orderId);
     vm.stop();
     logger.success('完成应用扩缩容');
@@ -132,8 +136,7 @@ export default class SaeComponent {
       return;
     }
     // 检查状态
-    vm.text = `启动应用${appNameLocal}... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${orderId}`;
+    vm.text = `启动应用${appNameLocal}...` + getLink(orderId);
 
     await utils.getStatusByOrderId(orderId);
     vm.stop();
@@ -189,8 +192,7 @@ export default class SaeComponent {
       return;
     }
     // 检查状态
-    vm.text = `停止应用${appNameLocal}... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${orderId}`;
+    vm.text = `停止应用${appNameLocal}...` + getLink(orderId);
     await utils.getStatusByOrderId(orderId);
     vm.stop();
     logger.success('已停止应用');
@@ -240,6 +242,8 @@ export default class SaeComponent {
 
     const { isHelp, useLocal, useRemote } = await inputHandler.parseCommand(args);
     let updateRemote = false;
+    let remoteAppId = null;
+    let change = {};
     if (isHelp) {
       core.help(HELP.DEPLOY);
       return;
@@ -259,7 +263,7 @@ export default class SaeComponent {
       return await utils.infoRes(app);
     } else {
       if (remoteData['Data']['Applications'].length > 0) {
-        await utils.getDiff(application, slb, remoteData['Data']['Applications'][0]);
+        change = await utils.getDiff(application, slb, remoteData['Data']['Applications'][0]);
         const configInquire = getInquire(appName);
         const ans: { option: string } = await inquirer.prompt(configInquire);
         switch (ans.option) {
@@ -277,12 +281,12 @@ export default class SaeComponent {
     // 查询发布单
     if (remoteData['Data']['Applications'].length > 0) {
       const app = remoteData['Data']['Applications'][0];
+      remoteAppId = app.AppId;
       const orderList = await Client.saeClient.listChangeOrders(app.AppId, '');
       const changeOrder = orderList['Data']['ChangeOrderList'];
       for (const order of changeOrder) {
         if (lodash.isEqual(order['Status'], 1)) {
-          logger.info(`当前应用有正在执行的变更单。查看详情：
-          https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${order['ChangeOrderId']}`);
+          logger.info(`当前应用有正在执行的变更单。` + getLink(order['ChangeOrderId']));
           return;
         }
       }
@@ -297,10 +301,34 @@ export default class SaeComponent {
     await inputHandler.setDefault(applicationObject);
     let changeOrderId: any;
     if (updateRemote) {
+      appId = remoteAppId;
       try {
-        let res = await Client.saeClient.updateApplication(applicationObject);
-        appId = res['Data']['AppId'];
-        changeOrderId = res['Data']['ChangeOrderId'];
+        if(change['needDeploy']){
+          let res = await Client.saeClient.updateApplication(applicationObject);
+          changeOrderId = res['Data']['ChangeOrderId'];
+          // 检查应用部署状态
+          vm.text = `应用正在部署...` + getLink(changeOrderId);
+          await utils.getStatusByOrderId(changeOrderId);
+        }
+
+        if (change['needRescale']) {
+          changeOrderId = await Client.saeClient.rescaleApplication(remoteAppId, applicationObject.Replicas);
+          // 检查应用部署状态
+          vm.text = `应用扩缩容...` + getLink(changeOrderId);
+          await utils.getStatusByOrderId(changeOrderId);
+        }
+        if (change['needUpdateSecurityGroup']) {
+          changeOrderId = await Client.saeClient.updateSecurityGroup(remoteAppId, applicationObject.securityGroupId);
+          // 检查应用部署状态
+          vm.text = `更新应用安全组...` + getLink(changeOrderId);
+          await utils.getStatusByOrderId(changeOrderId);
+        }
+        if (change['needRescaleVertically']) {
+          changeOrderId = await Client.saeClient.rescaleVertically(remoteAppId, applicationObject.Cpu, applicationObject.Memory);
+          // 检查应用部署状态
+          vm.text = `更改应用实例规格...` + getLink(changeOrderId);
+          await utils.getStatusByOrderId(changeOrderId);
+        }
       } catch (error) {
         vm.stop();
         logger.error(`${error.result.Message}`);
@@ -313,7 +341,9 @@ export default class SaeComponent {
         appId = obj['Data']['AppId'];
         changeOrderId = obj['Data']['ChangeOrderId'];
         applicationObject.AppId = appId;
-
+        // 检查应用部署状态
+        vm.text = `应用正在部署...` + getLink(changeOrderId);
+        await utils.getStatusByOrderId(changeOrderId);
         await writeCreatCache(
           {
             region,
@@ -329,19 +359,13 @@ export default class SaeComponent {
         return;
       }
     }
-
-    // 检查应用部署状态
-    vm.text = `应用正在部署... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
-    await utils.getStatusByOrderId(changeOrderId);
     const needBindSlb = await utils.slbDiff(slb, appId);
     if (needBindSlb) {
       // 绑定SLB
       vm.text = `部署 slb ... `;
       changeOrderId = await Client.saeClient.bindSLB(slb, appId);
       // 检查应用部署状态
-      vm.text = `正在绑定slb... 查看详情：
-    https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${changeOrderId}&regionId=${region}`;
+      vm.text = `正在绑定slb...` + getLink(changeOrderId);
       await utils.checkStatus(appId, 'CoBindSlb');
     }
 
