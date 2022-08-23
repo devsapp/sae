@@ -68,6 +68,27 @@ export default class Client {
         const StopApplicationUri = '/pop/v1/sam/app/stopApplication';
         const StartApplicationUri = '/pop/v1/sam/app/startApplication';
         const RescaleApplicationUri = '/pop/v1/sam/app/rescaleApplication';
+        const UpdateAppSecurityGroupUri = '/pop/v1/sam/app/updateAppSecurityGroup';
+        const RescaleApplicationVerticallyUri = '/pop/v1/sam/app/rescaleApplicationVertically';
+
+        saeClient.rescaleVertically = async function (appId: string, cpu: number, memory: number) {
+            const queries = {
+                "AppId": appId,
+                "Cpu": cpu,
+                "Memory": memory,
+            };
+            const data = await saeClient.request("POST", RescaleApplicationVerticallyUri, queries, body, headers, requestOption);
+            return data['Data'].ChangeOrderId;
+        }
+
+        saeClient.updateSecurityGroup = async function (appId: string, securityGroupId: string) {
+            const queries = {
+                "AppId": appId,
+                "SecurityGroupId": securityGroupId,
+            };
+            const data = await saeClient.request("PUT", UpdateAppSecurityGroupUri, queries, body, headers, requestOption);
+            return data['Data'].ChangeOrderId;
+        }
 
         saeClient.rescaleApplication = async function (appId: string, replicas: number) {
             const queries = {

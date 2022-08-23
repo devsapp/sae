@@ -3,7 +3,9 @@ import Oss from './oss.service';
 import Client, { vpcAvailable } from './client';
 import { OutputProps } from '../interface/entity';
 import { isNumber, isString } from 'lodash';
-import logger from '../common/logger';
+import { getInquire } from './help/constant';
+import { getDeployCache } from '../common/cache';
+import { inquirer } from "@serverless-devs/core";
 
 const { fse, lodash } = core;
 const getFilename = (region, namespaceId, appName) => `${region}_${namespaceId}_${appName}`;
@@ -353,7 +355,7 @@ export async function handleCode(application: any, credentials: any, configPath?
     return applicationObject;
 }
 
-export async function getDiff(application: any, slb: any, remoteData: any) {
+export async function getDiff(application: any, slb: any, remoteData: any, credentials: any, configPath: string) {
     const remoteResult = await infoRes(remoteData);
     let localApp = lodash.cloneDeep(application);
     const port = localApp.port;
@@ -364,6 +366,59 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
     const remoteApp = remoteResult.application;
     const remoteSlb = await slbLower(remoteResult.slb);
     let diffList = [];
+
+    let change = {
+        updateRemote:false,
+        needRescale: false,
+        needUpdateSecurityGroup: false,
+        needRescaleVertically: false,
+        needDeploy: false,
+    };
+
+    // UpdateAppSecurityGroup
+    if (!lodash.isEmpty(localApp.securityGroupId) && !lodash.isEqual(localApp.securityGroupId, remoteApp.securityGroupId)) {
+        change.needUpdateSecurityGroup = true;
+
+        diffList.push({
+            name: 'securityGroupId',
+            local: localApp.securityGroupId,
+            remote: remoteApp.securityGroupId
+        });
+
+    }
+    // RescaleApplicationVertically
+    if (localApp.cpu != remoteApp.cpu || localApp.memory != remoteApp.memory) {
+        change.needRescaleVertically = true;
+        if (localApp.cpu != remoteApp.cpu) {
+
+            diffList.push({
+                name: 'cpu',
+                local: localApp.cpu,
+                remote: remoteApp.cpu
+            });
+        }
+        if (localApp.memory != remoteApp.memory) {
+            diffList.push({
+                name: 'memory',
+                local: localApp.memory,
+                remote: remoteApp.memory
+            });
+        }
+    }
+    // RescaleApplication
+    if (localApp.replicas != remoteApp.replicas) {
+        change.needRescale = true;
+        diffList.push({
+            name: 'replicas',
+            local: localApp.replicas,
+            remote: remoteApp.replicas
+        });
+
+    }
+    delete localApp.securityGroupId;
+    delete localApp.cpu;
+    delete localApp.replicas;
+
     for (let key in localApp) {
         const localV = await formatArray(localApp[key]);
         const remoteV = await formatArray(remoteApp[key]);
@@ -373,6 +428,7 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
                 local: JSON.stringify(localV),
                 remote: JSON.stringify(remoteV)
             });
+            change.needDeploy = true;
         }
     }
 
@@ -385,11 +441,12 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
                 local: code[key],
                 remote: remoteApp[key]
             });
+            change.needDeploy = true;
         }
     }
 
     // 对比 slb
-    const remotePort = remoteSlb['Internet'][0]['targetPort'];
+    const remotePort = remoteSlb['Internet'].length > 0 ? remoteSlb['Internet'][0]['targetPort'] : null;
     if (port != remotePort) {
         diffList.push({
             name: 'port',
@@ -412,7 +469,27 @@ export async function getDiff(application: any, slb: any, remoteData: any) {
     for (let data of diffList) {
         console.log(`${data.name}: ${data.remote} => ${data.local}`);
     }
-    return {};
+
+    // 用户选择
+    // lastDeploy == localApp && remoteApp != localApp ----> 用户选择local或remote
+    // lastDeploy != localApp ----> 自动选择local
+    const lastDeploy = await getDeployCache(credentials.AccountID, localApp.region, localApp.appName, configPath);
+    if(!lodash.isEqual(lastDeploy.props.application, application) || !lodash.isEqual(lastDeploy.props.slb, slb)){
+        change.updateRemote = true;
+    }else{
+        const configInquire = getInquire(application.appName);
+        const ans: { option: string } = await inquirer.prompt(configInquire);
+        switch (ans.option) {
+          case 'use local':
+            change.updateRemote = true;
+            break;
+          case 'use remote':
+            break;
+          default:
+            break;
+        }
+    }
+    return change;
 }
 
 async function formatSlb(slb: any, port: any) {
