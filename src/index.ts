@@ -365,9 +365,8 @@ export default class SaeComponent {
 
     // 获取SLB信息
     vm.text = `获取 slb 信息 ... `;
-    const slbConfig = await Client.saeClient.getSLB(appId);
     vm.stop();
-    const result = await outputHandler.output(applicationObject, slbConfig);
+    const result = await outputHandler.output(appName);
 
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
 

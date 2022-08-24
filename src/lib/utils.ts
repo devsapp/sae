@@ -24,7 +24,7 @@ export const checkFileExists = (filePath) => {
 export async function getSyncConfig(inputs: any, appProps: any) {
     const projectName = inputs.project.projectName;
     let configs = {};
-    configs['component'] = 'devsapp/sae@dev';
+    configs['component'] = 'devsapp/sae';
     const { application, slb } = appProps;
     let code = {
         packageType: application.packageType,
@@ -255,7 +255,7 @@ export async function infoRes(application: any) {
     const data2 = await Client.saeClient.describeNamespace(appConfig.namespaceId);
     const namespace = data2['Data'];
     const result: OutputProps = {
-        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${application.RegionId}&namespaceId=${application.NamespaceId}`,
+        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${appId}&regionId=${appConfig.region}&namespaceId=${appConfig.namespaceId}`,
         application: {
             ...appConfig,
             namespaceName: namespace.NamespaceName,
@@ -268,7 +268,7 @@ export async function infoRes(application: any) {
         }
     };
     if (slbConfig['Data']) {
-        result.slb = slbConfig['Data'];
+        result.slb = JSON.parse(JSON.stringify(slbConfig['Data']));
     }
     return result;
 }
