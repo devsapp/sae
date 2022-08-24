@@ -42,6 +42,13 @@ export async function getSyncConfig(inputs: any, appProps: any) {
     delete tempApp.imageUrl;
     delete tempApp.packageUrl;
     delete tempApp.appId;
+    delete tempApp.instances;
+    delete tempApp.runningInstances;
+    delete tempApp.minReadyInstanceRatio;
+    delete tempApp.batchWaitTime;
+    delete tempApp.namespaceName;
+    delete tempApp.appDeletingStatus;
+    delete tempApp.scaleRuleEnabled;
 
     let props = {
         application: {
@@ -368,7 +375,7 @@ export async function getDiff(application: any, slb: any, remoteData: any, crede
     let diffList = [];
 
     let change = {
-        updateRemote:false,
+        updateRemote: false,
         needRescale: false,
         needUpdateSecurityGroup: false,
         needRescaleVertically: false,
@@ -456,10 +463,14 @@ export async function getDiff(application: any, slb: any, remoteData: any, crede
     }
     const localSlb = await formatSlb(slb, port);
     for (let key in localSlb) {
-        if (!lodash.isEqual(localSlb[key], remoteSlb[key])) {
+        let temp = localSlb[key];
+        if (typeof temp == 'string') {
+            temp = JSON.parse(localSlb[key]);
+        }
+        if (!lodash.isEqual(temp, remoteSlb[key])) {
             diffList.push({
                 name: key,
-                local: JSON.stringify(localSlb[key]),
+                local: JSON.stringify(temp),
                 remote: JSON.stringify(remoteSlb[key])
             });
         }
@@ -474,19 +485,19 @@ export async function getDiff(application: any, slb: any, remoteData: any, crede
     // lastDeploy == localApp && remoteApp != localApp ----> 用户选择local或remote
     // lastDeploy != localApp ----> 自动选择local
     const lastDeploy = await getDeployCache(credentials.AccountID, localApp.region, localApp.appName, configPath);
-    if(!lodash.isEqual(lastDeploy?.props?.application, application) || !lodash.isEqual(lastDeploy?.props?.slb, slb)){
+    if (!lodash.isEqual(lastDeploy?.props?.application, application) || !lodash.isEqual(lastDeploy?.props?.slb, slb)) {
         change.updateRemote = true;
-    }else{
+    } else {
         const configInquire = getInquire(application.appName);
         const ans: { option: string } = await inquirer.prompt(configInquire);
         switch (ans.option) {
-          case 'use local':
-            change.updateRemote = true;
-            break;
-          case 'use remote':
-            break;
-          default:
-            break;
+            case 'use local':
+                change.updateRemote = true;
+                break;
+            case 'use remote':
+                break;
+            default:
+                break;
         }
     }
     return change;
@@ -500,10 +511,10 @@ async function formatSlb(slb: any, port: any) {
         };
     } else {
         // 使用用户配置的slb
-        if (slb.Internet) {
+        if (slb.Internet && typeof slb.Internet == 'object' && slb.Internet.length > 0) {
             newSlb.Internet = JSON.stringify(slb.Internet);
         }
-        if (slb.Intranet) {
+        if (slb.Intranet && typeof slb.Intranet == 'object' && slb.Intranet.length > 0) {
             newSlb.Intranet = JSON.stringify(slb.Intranet);
         }
     }
