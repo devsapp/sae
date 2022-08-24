@@ -474,7 +474,7 @@ export async function getDiff(application: any, slb: any, remoteData: any, crede
     // lastDeploy == localApp && remoteApp != localApp ----> 用户选择local或remote
     // lastDeploy != localApp ----> 自动选择local
     const lastDeploy = await getDeployCache(credentials.AccountID, localApp.region, localApp.appName, configPath);
-    if(!lodash.isEqual(lastDeploy.props.application, application) || !lodash.isEqual(lastDeploy.props.slb, slb)){
+    if(!lodash.isEqual(lastDeploy?.props?.application, application) || !lodash.isEqual(lastDeploy?.props?.slb, slb)){
         change.updateRemote = true;
     }else{
         const configInquire = getInquire(application.appName);
