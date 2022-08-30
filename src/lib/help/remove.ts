@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe, assumeYesDescribe, namespaceIdDescribe } from './constant';
+import { globalParams, regionDescribe, globalDescribe, applicationNameDescribe, assumeYesDescribe, namespaceIdDescribe } from './constant';
   
 export const REMOVE = [
     {
@@ -16,6 +16,7 @@ export const REMOVE = [
     {
         header: 'Options',
         optionList: [
+            regionDescribe,
             applicationNameDescribe,
             namespaceIdDescribe,
             assumeYesDescribe

@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe, namespaceIdDescribe } from './constant';
+import { globalParams, regionDescribe, globalDescribe, applicationNameDescribe, namespaceIdDescribe } from './constant';
 
 export const SYNC = [
     {
@@ -16,7 +16,9 @@ export const SYNC = [
     {
         header: 'Options',
         optionList: [
-            applicationNameDescribe, namespaceIdDescribe
+            regionDescribe,
+            applicationNameDescribe, 
+            namespaceIdDescribe
         ],
     },
     { ...globalParams },

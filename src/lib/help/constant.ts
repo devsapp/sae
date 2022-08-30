@@ -69,7 +69,7 @@ export const applicationNameDescribe = {
 
 export const namespaceIdDescribe = {
   name: 'namespace-id',
-  description: '[Required] Specify the namespace id',
+  description: '[Optional] Specify the namespace id',
   type: String,
 };
 

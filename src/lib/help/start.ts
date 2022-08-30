@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe, assumeYesDescribe, namespaceIdDescribe } from './constant';
+import { globalParams, regionDescribe, globalDescribe, applicationNameDescribe, assumeYesDescribe, namespaceIdDescribe } from './constant';
 
 export const START = [
     {
@@ -16,6 +16,7 @@ export const START = [
     {
         header: 'Options',
         optionList: [
+            regionDescribe,
             applicationNameDescribe,
             namespaceIdDescribe,
             assumeYesDescribe

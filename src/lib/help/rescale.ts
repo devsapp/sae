@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe, namespaceIdDescribe } from './constant';
+import { globalParams, regionDescribe, globalDescribe, applicationNameDescribe, namespaceIdDescribe } from './constant';
 export const rescaleDescribe = {
     name: 'replicas',
     description: '[Required] Specify the sae application replicas',
@@ -20,6 +20,7 @@ export const RESCALE = [
     {
         header: 'Options',
         optionList: [
+            regionDescribe,
             applicationNameDescribe,
             namespaceIdDescribe,
             rescaleDescribe
