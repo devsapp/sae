@@ -30,7 +30,7 @@ category: '其他功能'
 ### 操作案例
 
 - **有资源描述文件（Yaml）时**，可以直接执行`s info`获取函数详情；
-- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名信息，例如`s cli sae info --region cn-hangzhou --application-name test`；
+- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名信息，例如`s cli sae info --region cn-hangzhou --application-name test --namespace-id cn-hangzhou`；
 
 上述命令的执行结果示例：
 

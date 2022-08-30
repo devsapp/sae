@@ -30,7 +30,7 @@ category: '构建&部署'
 ### 操作案例
 
 - **有资源描述文件（Yaml）时**，可以直接执行`s stop`停止线上资源；
-- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名信息，例如`s cli sae stop --region cn-hangzhou --application-name test`。
+- **纯命令行形式（在没有资源描述 Yaml 文件时）**，需要根据需求，指定服务名信息，例如`s cli sae stop --region cn-hangzhou --application-name test --namespace-id cn-hangzhou`。
 
 ## 权限与策略说明
 
