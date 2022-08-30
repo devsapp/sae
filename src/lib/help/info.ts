@@ -24,8 +24,8 @@ export const INFO = [
         header: 'Options',
         optionList: [
             regionDescribe,
-            applicationNameDescribe,
             namespaceIdDescribe,
+            applicationNameDescribe,
             output,
         ],
     },
@@ -38,7 +38,7 @@ export const INFO = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae info --application-name appName --region cn-hangzhou',
+            '$ s cli sae info --region cn-hangzhou --namespace-id cn-hanghzou --application-name appName',
         ],
     },
 ];
