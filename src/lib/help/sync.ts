@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe } from './constant';
+import { globalParams, globalDescribe, applicationNameDescribe, namespaceIdDescribe } from './constant';
 
 export const SYNC = [
     {
@@ -16,7 +16,7 @@ export const SYNC = [
     {
         header: 'Options',
         optionList: [
-            applicationNameDescribe
+            applicationNameDescribe, namespaceIdDescribe
         ],
     },
     { ...globalParams },
@@ -28,7 +28,7 @@ export const SYNC = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae sync --application-name appName',
+            '$ s cli sae sync --application-name appName --namespace-id cn-hangzhou',
         ],
     },
 ];

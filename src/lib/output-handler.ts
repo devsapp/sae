@@ -139,8 +139,8 @@ export async function startPlan() {
     return assumeYes ? 'assumeYes' : 'quit';
 }
 
-export async function output(appName) {
-    const data = await Client.saeClient.listApplications(appName);
+export async function output(appName, namespaceId) {
+    const data = await Client.saeClient.listApplications(appName, namespaceId);
     const app = data['Data']['Applications'][0];
     const res = await infoRes(app);
     delete res.application.batchWaitTime;

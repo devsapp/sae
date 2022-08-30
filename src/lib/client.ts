@@ -227,9 +227,15 @@ export default class Client {
          * @param appName 应用名称
          * @returns 应用列表
          */
-        saeClient.listApplications = async function (appName: any) {
+        saeClient.listApplications = async function (appName: any, namespaceId?: any) {
+            if(lodash.isEmpty(namespaceId)){
+                // 使用默认命名空间
+                const defaultNamespace = await this.getNamespace();
+                namespaceId = defaultNamespace.NamespaceId;
+            }
             const queries = {
-                FieldType: 'appName', FieldValue: appName
+                "AppName": appName,
+                "NamespaceId": namespaceId
             };
             const data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
             return data;

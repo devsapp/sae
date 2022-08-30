@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe } from './constant';
+import { globalParams, globalDescribe, applicationNameDescribe, namespaceIdDescribe } from './constant';
 
 const output = {
     name: 'output',
@@ -24,6 +24,7 @@ export const INFO = [
         header: 'Options',
         optionList: [
             applicationNameDescribe,
+            namespaceIdDescribe,
             output,
         ],
     },

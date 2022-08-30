@@ -23,7 +23,8 @@ export default class SaeComponent {
   async sync(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, appName } = await inputHandler.handlerSyncInputs(args);
+    let namespaceIdLocal = application.namespaceId;
+    const { isHelp, appName, namespaceId } = await inputHandler.handlerSyncInputs(args);
     if (isHelp) {
       core.help(HELP.SYNC);
       return;
@@ -31,9 +32,12 @@ export default class SaeComponent {
     if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
+    if(!lodash.isEmpty(namespaceId)) {
+      namespaceIdLocal = namespaceId;
+    }
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(application.region, credentials);
-    let data = await Client.saeClient.listApplications(appNameLocal);
+    let data = await Client.saeClient.listApplications(appNameLocal, namespaceIdLocal);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${appNameLocal}`);
       return;
@@ -54,7 +58,8 @@ export default class SaeComponent {
   async rescale(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, replicas, appName } = await inputHandler.handlerReScaleInputs(args);
+    let namespaceIdLocal = application.namespaceId;
+    const { isHelp, replicas, appName, namespaceId } = await inputHandler.handlerReScaleInputs(args);
     if (isHelp) {
       core.help(HELP.RESCALE);
       return;
@@ -62,9 +67,12 @@ export default class SaeComponent {
     if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
+    if(!lodash.isEmpty(namespaceId)) {
+      namespaceIdLocal = namespaceId;
+    }
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(application.region, credentials);
-    let data = await Client.saeClient.listApplications(appNameLocal);
+    let data = await Client.saeClient.listApplications(appNameLocal, namespaceIdLocal);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${appNameLocal}`);
       return;
@@ -95,7 +103,8 @@ export default class SaeComponent {
   async start(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await inputHandler.handlerStartInputs(args);
+    let namespaceIdLocal = application.namespaceId;
+    const { isHelp, assumeYes, appName, namespaceId } = await inputHandler.handlerStartInputs(args);
     if (isHelp) {
       core.help(HELP.START);
       return;
@@ -103,9 +112,12 @@ export default class SaeComponent {
     if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
+    if(!lodash.isEmpty(namespaceId)) {
+      namespaceIdLocal = namespaceId;
+    }
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(application.region, credentials);
-    let data = await Client.saeClient.listApplications(appNameLocal);
+    let data = await Client.saeClient.listApplications(appNameLocal, namespaceIdLocal);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${appNameLocal}`);
       return;
@@ -141,7 +153,7 @@ export default class SaeComponent {
     vm.stop();
     logger.success('已启动应用');
 
-    const data2 = await Client.saeClient.listApplications(appNameLocal);
+    const data2 = await Client.saeClient.listApplications(appNameLocal, namespaceIdLocal);
     const app = data2['Data']['Applications'][0];
     const res = await utils.infoRes(app);
     res.componentType = "sae";
@@ -151,7 +163,8 @@ export default class SaeComponent {
   async stop(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await inputHandler.handlerStopInputs(args);
+    let namespaceIdLocal = application.namespaceId;
+    const { isHelp, assumeYes, appName, namespaceId } = await inputHandler.handlerStopInputs(args);
     if (isHelp) {
       core.help(HELP.STOP);
       return;
@@ -159,9 +172,12 @@ export default class SaeComponent {
     if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
+    if(!lodash.isEmpty(namespaceId)) {
+      namespaceIdLocal = namespaceId;
+    }
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(application.region, credentials);
-    let data = await Client.saeClient.listApplications(appNameLocal);
+    let data = await Client.saeClient.listApplications(appNameLocal, namespaceIdLocal);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${appNameLocal}`);
       return;
@@ -199,17 +215,25 @@ export default class SaeComponent {
 
   async info(inputs: InputProps) {
     const { args, props: { application } } = inputs;
-    const { isHelp, outputFile } = await inputHandler.handlerInfoInputs(args);
+    const { isHelp, outputFile, appName, namespaceId } = await inputHandler.handlerInfoInputs(args);
     if (isHelp) {
       core.help(HELP.INFO);
       return;
     }
     const credentials = await core.getCredential(inputs.project.access);
-    const { appName, region } = application || {};
+    let { appNameLocal, region } = application || {};
+    let namespaceIdLocal = application.namespaceId;
+    if (!lodash.isEmpty(appName)) {
+      appNameLocal = appName;
+    }
+    if(!lodash.isEmpty(namespaceId)) {
+      namespaceIdLocal = namespaceId;
+    }
+
     await Client.setSaeClient(region, credentials);
-    const data = await Client.saeClient.listApplications(appName);
+    const data = await Client.saeClient.listApplications(appNameLocal, namespaceIdLocal);
     if (data['Data']['Applications'].length === 0) {
-      logger.error(`未找到应用 ${appName}，请先使用 's deploy' 命令进行部署`);
+      logger.error(`未找到应用 ${appNameLocal}，请先使用 's deploy' 命令进行部署`);
     } else {
       const app = data['Data']['Applications'][0];
       const res = await utils.infoRes(app);
@@ -222,10 +246,9 @@ export default class SaeComponent {
         } catch (_e) {
           /**/
         }
-        cache[appName] = res;
+        cache[appNameLocal] = res;
         await core.fse.outputFile(outputFile, JSON.stringify(cache, null, 2));
       }
-
       return res;
     }
   }
@@ -248,7 +271,11 @@ export default class SaeComponent {
       core.help(HELP.DEPLOY);
       return;
     }
-    const remoteData = await Client.saeClient.listApplications(appName);
+    // 设置Namespace
+    const env = await utils.handleEnv(slb, application, credentials);
+    slb = env.localSlb;
+    const namespaceId = application.namespaceId;
+    const remoteData = await Client.saeClient.listApplications(appName, namespaceId);
     if (useLocal) {
       if (remoteData['Data']['Applications'].length > 0) {
         updateRemote = true;
@@ -285,12 +312,8 @@ export default class SaeComponent {
         }
       }
     }
-    // 创建Namespace
-    const vm = spinner('设置Namespace...');
-    const env = await utils.handleEnv(slb, application, credentials);
-    slb = env.localSlb;
 
-    vm.text = `上传代码...`;
+    const vm = spinner('上传代码...');
     const applicationObject = await utils.handleCode(application, credentials, configPath);
     await inputHandler.setDefault(applicationObject);
     let changeOrderId: any;
@@ -366,7 +389,7 @@ export default class SaeComponent {
     // 获取SLB信息
     vm.text = `获取 slb 信息 ... `;
     vm.stop();
-    const result = await outputHandler.output(appName);
+    const result = await outputHandler.output(appName, namespaceId);
 
     logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
 
@@ -399,7 +422,8 @@ export default class SaeComponent {
   async remove(inputs: InputProps) {
     const { args, props: { application } } = inputs;
     let appNameLocal = application.appName;
-    const { isHelp, assumeYes, appName } = await inputHandler.handlerRmInputs(args);
+    let namespaceIdLocal = application.namespaceId;
+    const { isHelp, assumeYes, appName, namespaceId } = await inputHandler.handlerRmInputs(args);
     if (isHelp) {
       core.help(HELP.REMOVE);
       return;
@@ -407,10 +431,13 @@ export default class SaeComponent {
     if (!lodash.isEmpty(appName)) {
       appNameLocal = appName;
     }
+    if(!lodash.isEmpty(namespaceId)) {
+      namespaceIdLocal = namespaceId;
+    }
     const { region } = application || {};
     const credentials = await core.getCredential(inputs.project?.access);
     await Client.setSaeClient(region, credentials);
-    let data = await Client.saeClient.listApplications(appNameLocal);
+    let data = await Client.saeClient.listApplications(appNameLocal, namespaceIdLocal);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${appNameLocal}`);
       return;

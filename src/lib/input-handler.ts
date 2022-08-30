@@ -77,7 +77,8 @@ export async function handlerSyncInputs(args: string) {
     }
     const isHelp = data.h || data.help;
     const appName = data['application-name'];
-    return { isHelp, appName };
+    const namespaceId = data['namespace-id'];
+    return { isHelp, appName, namespaceId };
 }
 
 export async function handlerReScaleInputs(args: string) {
@@ -89,10 +90,11 @@ export async function handlerReScaleInputs(args: string) {
     const isHelp = data.h || data.help;
     const replicas = data.replicas;
     const appName = data['application-name'];
+    const namespaceId = data['namespace-id'];
     if (!isHelp && !(Number.isInteger(replicas) && replicas > 0)) {
         throw new core.CatchableError('需要指定正确的replicas参数')
     }
-    return { isHelp, replicas, appName };
+    return { isHelp, replicas, appName, namespaceId };
 }
 
 export async function handlerStartInputs(args: string) {
@@ -104,7 +106,8 @@ export async function handlerStartInputs(args: string) {
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
     const appName = data['application-name'];
-    return { isHelp, assumeYes, appName };
+    const namespaceId = data['namespace-id'];
+    return { isHelp, assumeYes, appName, namespaceId };
 }
 
 export async function handlerStopInputs(args: string) {
@@ -116,7 +119,8 @@ export async function handlerStopInputs(args: string) {
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
     const appName = data['application-name'];
-    return { isHelp, assumeYes, appName };
+    const namespaceId = data['namespace-id'];
+    return { isHelp, assumeYes, appName, namespaceId };
 }
 
 export async function handlerInfoInputs(args: string) {
@@ -129,7 +133,8 @@ export async function handlerInfoInputs(args: string) {
     const isHelp = data.h || data.help;
     const outputFile = data['output'];
     const appName = data['application-name'];
-    return { isHelp, outputFile, appName };
+    const namespaceId = data['namespace-id'];
+    return { isHelp, outputFile, appName, namespaceId };
 }
 
 export async function handlerRmInputs(args: string) {
@@ -141,7 +146,8 @@ export async function handlerRmInputs(args: string) {
     const isHelp = data.h || data.help;
     const assumeYes = data.y || data['assume-yes'];
     const appName = data['application-name'];
-    return { isHelp, assumeYes, appName };
+    const namespaceId = data['namespace-id'];
+    return { isHelp, assumeYes, appName, namespaceId };
 }
 
 

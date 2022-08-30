@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe, assumeYesDescribe } from './constant';
+import { globalParams, globalDescribe, applicationNameDescribe, assumeYesDescribe, namespaceIdDescribe } from './constant';
   
 export const STOP = [
     {
@@ -16,7 +16,9 @@ export const STOP = [
     {
         header: 'Options',
         optionList: [
-            applicationNameDescribe,assumeYesDescribe
+            applicationNameDescribe,
+            namespaceIdDescribe,
+            assumeYesDescribe
         ],
     },
     { ...globalParams },
@@ -28,7 +30,7 @@ export const STOP = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae stop --application-name appName',
+            '$ s cli sae stop --application-name appName --namespace-id cn-hangzhou',
         ],
     },
 ];

@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe } from './constant';
+import { globalParams, globalDescribe, applicationNameDescribe, namespaceIdDescribe } from './constant';
 export const rescaleDescribe = {
     name: 'replicas',
     description: '[Required] Specify the sae application replicas',
@@ -20,7 +20,9 @@ export const RESCALE = [
     {
         header: 'Options',
         optionList: [
-            applicationNameDescribe, rescaleDescribe
+            applicationNameDescribe,
+            namespaceIdDescribe,
+            rescaleDescribe
         ],
     },
     { ...globalParams },
@@ -32,7 +34,7 @@ export const RESCALE = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae rescale --application-name appName --replicas 5',
+            '$ s cli sae rescale --application-name appName --namespace-id cn-hangzhou --replicas 5',
         ],
     },
 ];
