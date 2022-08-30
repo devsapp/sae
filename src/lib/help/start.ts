@@ -17,8 +17,8 @@ export const START = [
         header: 'Options',
         optionList: [
             regionDescribe,
-            applicationNameDescribe,
             namespaceIdDescribe,
+            applicationNameDescribe,
             assumeYesDescribe
         ],
     },
@@ -31,7 +31,7 @@ export const START = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae start --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou',
+            '$ s cli sae start --region cn-hangzhou --namespace-id cn-hangzhou --application-name appName',
         ],
     },
 ];

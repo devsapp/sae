@@ -21,8 +21,8 @@ export const RESCALE = [
         header: 'Options',
         optionList: [
             regionDescribe,
-            applicationNameDescribe,
             namespaceIdDescribe,
+            applicationNameDescribe,
             rescaleDescribe
         ],
     },
@@ -35,7 +35,7 @@ export const RESCALE = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae rescale --application-name appName --namespace-id cn-hangzhou --replicas 5 --region cn-hangzhou',
+            '$ s cli sae rescale --region cn-hangzhou --namespace-id cn-hangzhou --application-name appName --replicas 5',
         ],
     },
 ];

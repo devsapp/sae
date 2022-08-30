@@ -17,20 +17,20 @@ export const SYNC = [
         header: 'Options',
         optionList: [
             regionDescribe,
-            applicationNameDescribe, 
-            namespaceIdDescribe
+            namespaceIdDescribe,
+            applicationNameDescribe,
         ],
     },
     { ...globalParams },
     { ...globalDescribe },
     {
         header: 'Examples with Yaml',
-        content: ['$ s sync --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou'],
+        content: ['$ s sync --region cn-hangzhou --namespace-id cn-hangzhou --application-name appName'],
     },
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae sync --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou',
+            '$ s cli sae sync --region cn-hangzhou --namespace-id cn-hangzhou --application-name appName',
         ],
     },
 ];
