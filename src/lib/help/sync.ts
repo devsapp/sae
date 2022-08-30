@@ -25,12 +25,12 @@ export const SYNC = [
     { ...globalDescribe },
     {
         header: 'Examples with Yaml',
-        content: ['$ s sync'],
+        content: ['$ s sync --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou'],
     },
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae sync --application-name appName --namespace-id cn-hangzhou',
+            '$ s cli sae sync --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou',
         ],
     },
 ];

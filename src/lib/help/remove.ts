@@ -31,7 +31,7 @@ export const REMOVE = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae remove --application-name appName --namespace-id cn-hangzhou',
+            '$ s cli sae remove --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou',
         ],
     },
 ];

@@ -31,7 +31,7 @@ export const STOP = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae stop --application-name appName --namespace-id cn-hangzhou',
+            '$ s cli sae stop --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou',
         ],
     },
 ];

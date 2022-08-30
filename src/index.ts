@@ -22,7 +22,7 @@ https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${chang
 export default class SaeComponent {
   async sync(inputs: InputProps) {
     const { args, props: { application } } = inputs;
-    const { isHelp, appName, namespaceId, region } = await inputHandler.handlerSyncInputs(args, application);
+    const { isHelp, appName, namespaceId, region } = await inputHandler.handlerSyncInputs(args);
     if (isHelp) {
       core.help(HELP.SYNC);
       return;

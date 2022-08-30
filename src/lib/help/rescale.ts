@@ -35,7 +35,7 @@ export const RESCALE = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae rescale --application-name appName --namespace-id cn-hangzhou --replicas 5',
+            '$ s cli sae rescale --application-name appName --namespace-id cn-hangzhou --replicas 5 --region cn-hangzhou',
         ],
     },
 ];

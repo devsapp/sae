@@ -31,7 +31,7 @@ export const START = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae start --application-name appName --namespace-id cn-hangzhou',
+            '$ s cli sae start --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou',
         ],
     },
 ];

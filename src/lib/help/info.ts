@@ -38,7 +38,7 @@ export const INFO = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae info --application-name appName',
+            '$ s cli sae info --application-name appName --region cn-hangzhou',
         ],
     },
 ];

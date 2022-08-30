@@ -60,43 +60,36 @@ export async function parseCommand(args: string) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data;
+    if(lodash.isEmpty(data)){
+        return {};
+    }
     const isHelp = data?.h || data?.help;
     const useLocal = data['use-local'];
     const useRemote = data['use-remote'];
     return { isHelp, useLocal, useRemote };
 }
 
-export async function handlerSyncInputs(args: string, application: any) {
+export async function handlerSyncInputs(args: string) {
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data;
-    let isHelp;
+    let isHelp = false;
     let appName;
     let namespaceId;
     let region;
-    if(!lodash.isEmpty(data)){
+    if (!lodash.isEmpty(data)) {
         isHelp = data?.h || data?.help;
         appName = data['application-name'];
         namespaceId = data['namespace-id'];
         region = data['region'];
     }
 
-    if (lodash.isEmpty(appName)) {
-        appName = application?.appName;
-    }
-    if (lodash.isEmpty(namespaceId)) {
-        namespaceId = application?.namespaceId;
-    }
-    if (lodash.isEmpty(region)) {
-        region = application?.region;
-    }
-
-    if (lodash.isEmpty(appName)) {
+    if (lodash.isEmpty(appName) && lodash.isEmpty(region)) {
+        isHelp = true;
+    } else if (lodash.isEmpty(appName)) {
         throw new core.CatchableError('参数 application-name 不能为空');
-    }
-    if (lodash.isEmpty(region)) {
+    } else if (lodash.isEmpty(region)) {
         throw new core.CatchableError('参数 region 不能为空');
     }
-
     return { isHelp, appName, namespaceId, region };
 }
 
@@ -104,13 +97,13 @@ export async function handlerReScaleInputs(args: string, application: any) {
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data;
     let replicas;
-    let isHelp;
+    let isHelp = false;
     let appName;
     let namespaceId;
     let region;
 
-    if(!lodash.isEmpty(data)){
-        replicas  = data?.replicas
+    if (!lodash.isEmpty(data)) {
+        replicas = data?.replicas
         isHelp = data?.h || data?.help;
         appName = data['application-name'];
         namespaceId = data['namespace-id'];
@@ -129,15 +122,16 @@ export async function handlerReScaleInputs(args: string, application: any) {
     if (lodash.isEmpty(region)) {
         region = application?.region;
     }
-
-    if (lodash.isEmpty(appName)) {
-        throw new core.CatchableError('参数 application-name 不能为空');
-    }
-    if (lodash.isEmpty(region)) {
-        throw new core.CatchableError('参数 region 不能为空');
-    }
-    if (!isHelp && !(Number.isInteger(replicas) && replicas > 0)) {
-        throw new core.CatchableError('需要指定正确的replicas参数')
+    if (!isHelp) {
+        if (lodash.isEmpty(appName)) {
+            throw new core.CatchableError('参数 application-name 不能为空');
+        }
+        if (lodash.isEmpty(region)) {
+            throw new core.CatchableError('参数 region 不能为空');
+        }
+        if (!isHelp && !(Number.isInteger(replicas) && replicas > 0)) {
+            throw new core.CatchableError('需要指定正确的replicas参数')
+        }
     }
     return { isHelp, replicas, appName, namespaceId, region };
 }
@@ -146,12 +140,12 @@ export async function handlerStartInputs(args: string, application: any) {
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data;
     let assumeYes;
-    let isHelp;
+    let isHelp = false;
     let appName;
     let namespaceId;
     let region;
 
-    if(!lodash.isEmpty(data)){
+    if (!lodash.isEmpty(data)) {
         assumeYes = data.y || data['assume-yes'];
         isHelp = data?.h || data?.help;
         appName = data['application-name'];
@@ -168,13 +162,15 @@ export async function handlerStartInputs(args: string, application: any) {
     if (lodash.isEmpty(region)) {
         region = application?.region;
     }
+    if (!isHelp) {
+        if (lodash.isEmpty(appName)) {
+            throw new core.CatchableError('参数 application-name 不能为空');
+        }
+        if (lodash.isEmpty(region)) {
+            throw new core.CatchableError('参数 region 不能为空');
+        }
+    }
 
-    if (lodash.isEmpty(appName)) {
-        throw new core.CatchableError('参数 application-name 不能为空');
-    }
-    if (lodash.isEmpty(region)) {
-        throw new core.CatchableError('参数 region 不能为空');
-    }
     return { isHelp, assumeYes, appName, namespaceId, region };
 }
 
@@ -182,12 +178,12 @@ export async function handlerStopInputs(args: string, application: any) {
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data;
     let assumeYes;
-    let isHelp;
+    let isHelp = false;
     let appName;
     let namespaceId;
     let region;
 
-    if(!lodash.isEmpty(data)){
+    if (!lodash.isEmpty(data)) {
         assumeYes = data.y || data['assume-yes'];
         isHelp = data?.h || data?.help;
         appName = data['application-name'];
@@ -204,13 +200,15 @@ export async function handlerStopInputs(args: string, application: any) {
     if (lodash.isEmpty(region)) {
         region = application?.region;
     }
+    if (!isHelp) {
+        if (lodash.isEmpty(appName)) {
+            throw new core.CatchableError('参数 application-name 不能为空');
+        }
+        if (lodash.isEmpty(region)) {
+            throw new core.CatchableError('参数 region 不能为空');
+        }
+    }
 
-    if (lodash.isEmpty(appName)) {
-        throw new core.CatchableError('参数 application-name 不能为空');
-    }
-    if (lodash.isEmpty(region)) {
-        throw new core.CatchableError('参数 region 不能为空');
-    }
     return { isHelp, assumeYes, appName, namespaceId, region };
 }
 
@@ -218,12 +216,12 @@ export async function handlerInfoInputs(args: string, application: any) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data
-    let isHelp;
+    let isHelp = false;
     let outputFile;
     let appName;
     let namespaceId;
     let region;
-    if(!lodash.isEmpty(data)){
+    if (!lodash.isEmpty(data)) {
         isHelp = data?.h || data?.help;
         outputFile = data['output'];
         appName = data['application-name'];
@@ -240,11 +238,13 @@ export async function handlerInfoInputs(args: string, application: any) {
         region = application?.region;
     }
 
-    if (lodash.isEmpty(appName)) {
-        throw new core.CatchableError('参数 application-name 不能为空');
-    }
-    if (lodash.isEmpty(region)) {
-        throw new core.CatchableError('参数 region 不能为空');
+    if (!isHelp) {
+        if (lodash.isEmpty(appName)) {
+            throw new core.CatchableError('参数 application-name 不能为空');
+        }
+        if (lodash.isEmpty(region)) {
+            throw new core.CatchableError('参数 region 不能为空');
+        }
     }
     return { isHelp, outputFile, appName, namespaceId, region };
 }
@@ -254,12 +254,12 @@ export async function handlerRmInputs(args: string, application: any) {
     const data = comParse?.data;
 
     let assumeYes;
-    let isHelp;
+    let isHelp = false;
     let appName;
     let namespaceId;
     let region;
 
-    if(!lodash.isEmpty(data)){
+    if (!lodash.isEmpty(data)) {
         assumeYes = data.y || data['assume-yes'];
         isHelp = data?.h || data?.help;
         appName = data['application-name'];
@@ -275,13 +275,15 @@ export async function handlerRmInputs(args: string, application: any) {
     if (lodash.isEmpty(region)) {
         region = application?.region;
     }
+    if (!isHelp) {
+        if (lodash.isEmpty(appName)) {
+            throw new core.CatchableError('参数 application-name 不能为空');
+        }
+        if (lodash.isEmpty(region)) {
+            throw new core.CatchableError('参数 region 不能为空');
+        }
+    }
 
-    if (lodash.isEmpty(appName)) {
-        throw new core.CatchableError('参数 application-name 不能为空');
-    }
-    if (lodash.isEmpty(region)) {
-        throw new core.CatchableError('参数 region 不能为空');
-    }
     return { isHelp, assumeYes, appName, namespaceId, region };
 }
 
