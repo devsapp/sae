@@ -28,7 +28,7 @@ export default class WriteFile {
       return sYaml;
     }
 
-    const fileName = fileAffix ? `s.${fileAffix}.sync.yaml` : 's.sync.yaml';
+    const fileName = fileAffix ? `${fileAffix}.sync.yaml` : 's.sync.yaml';
     return path.join(targetDir, fileName);
   }
 }

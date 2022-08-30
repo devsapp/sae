@@ -67,6 +67,12 @@ export const applicationNameDescribe = {
   type: String,
 };
 
+export const namespaceIdDescribe = {
+  name: 'namespace-id',
+  description: '[Optional] Specify the namespace id',
+  type: String,
+};
+
 export const eventFormat = {
   header: 'Event Format',
   content:

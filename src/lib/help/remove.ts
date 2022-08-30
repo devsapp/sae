@@ -1,4 +1,4 @@
-import { globalParams, globalDescribe, applicationNameDescribe, assumeYesDescribe } from './constant';
+import { globalParams, regionDescribe, globalDescribe, applicationNameDescribe, assumeYesDescribe, namespaceIdDescribe } from './constant';
   
 export const REMOVE = [
     {
@@ -16,7 +16,10 @@ export const REMOVE = [
     {
         header: 'Options',
         optionList: [
-            applicationNameDescribe,assumeYesDescribe
+            regionDescribe,
+            applicationNameDescribe,
+            namespaceIdDescribe,
+            assumeYesDescribe
         ],
     },
     { ...globalParams },
@@ -28,7 +31,7 @@ export const REMOVE = [
     {
         header: 'Examples with CLI',
         content: [
-            '$ s cli sae remove --application-name appName',
+            '$ s cli sae remove --application-name appName --namespace-id cn-hangzhou --region cn-hangzhou',
         ],
     },
 ];

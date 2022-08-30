@@ -1,7 +1,8 @@
 import * as core from '@serverless-devs/core';
 import Table from 'tty-table';
-import { OutputProps } from '../interface/entity';
 const { inquirer } = core;
+import Client from '../lib/client';
+import { infoRes } from './utils'
 
 export async function promptForConfirmOrDetails(message: string): Promise<boolean> {
     const answers: any = await inquirer.prompt([
@@ -138,39 +139,22 @@ export async function startPlan() {
     return assumeYes ? 'assumeYes' : 'quit';
 }
 
-export async function output(applicationObject: any, slbConfig: any) {
-    const result: OutputProps = {
+export async function output(appName, namespaceId) {
+    const data = await Client.saeClient.listApplications(appName, namespaceId);
+    const app = data['Data']['Applications'][0];
+    const res = await infoRes(app);
+    delete res.application.batchWaitTime;
+    delete res.application.minReadyInstanceRatio;
+    delete res.application.instances;
+    delete res.application.runningInstances;
+    delete res.application.appDeletingStatus;
+    delete res.application.scaleRuleEnabled;
 
-        console: `https://sae.console.aliyun.com/#/AppList/AppDetail?appId=${applicationObject.AppId}&regionId=${applicationObject.Region}&namespaceId=${applicationObject.NamespaceId}`,
-        application: {
-            region: applicationObject.Region,
-            namespaceId: applicationObject.NamespaceId,
-            namespaceName: applicationObject.NamespaceName,
-            vpcId: applicationObject.VpcId,
-            vSwitchId: applicationObject.VSwitchId,
-            securityGroupId: applicationObject.SecurityGroupId,
-            appId: applicationObject.AppId,
-            appName: applicationObject.AppName,
-            packageType: applicationObject.PackageType,
-        },
-        slb: {
-        }
-    };
-    if (applicationObject.ImageUrl) {
-        result.application.imageUrl = applicationObject.ImageUrl;
+    if (res.slb['InternetIp']) {
+        res.accessLink = res.slb.InternetIp + ':' + String(res.slb['Internet'][0]['Port']);
     }
-    if (applicationObject.PackageUrl) {
-        result.application.packageUrl = applicationObject.PackageUrl;
+    if (res.slb['IntranetIp']) {
+        res.accessLink = res.slb.IntranetIp + ':' + String(res.slb['Intranet'][0]['Port']);
     }
-    result.application.cpu = applicationObject.Cpu;
-    result.application.memory = applicationObject.Memory;
-    result.application.replicas = applicationObject.Replicas;
-    result.slb = slbConfig['Data'];
-    if (slbConfig['Data']['InternetIp']) {
-        result.accessLink = result.slb.InternetIp + ':' + String(slbConfig['Data']['Internet'][0]['Port']);
-    }
-    if (slbConfig['Data']['IntranetIp']) {
-        result.accessLink = result.slb.IntranetIp + ':' + String(slbConfig['Data']['Intranet'][0]['Port']);
-    }
-    return result;
+    return res;
 }
