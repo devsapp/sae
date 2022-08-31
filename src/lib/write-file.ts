@@ -6,8 +6,9 @@ import { checkFileExists } from './utils';
 export default class WriteFile {
   static access: string;
   static projectName: string;
-  static async writeSYml(targetDir, config, fileAffix?) {
+  static async writeSYml(targetDir, config, region, namespaceId, appName) {
     const targetDirResolve = path.resolve(targetDir);
+    const fileAffix = `${region}.${namespaceId}.${appName}`;
     const ymlPath = this.getYmlFilePath(targetDirResolve, fileAffix);
     const configStr = yaml.dump({
       edition: '1.0.0',
@@ -28,7 +29,7 @@ export default class WriteFile {
       return sYaml;
     }
 
-    const fileName = fileAffix ? `${fileAffix}.sync.yaml` : 's.sync.yaml';
+    const fileName = `${fileAffix}.yaml`;
     return path.join(targetDir, fileName);
   }
 }
