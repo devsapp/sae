@@ -23,11 +23,11 @@ export default class WriteFile {
   }
 
   static getYmlFilePath(targetDir, fileAffix) {
-    const sYml = path.join(targetDir, 's.yml');
-    const sYaml = path.join(targetDir, 's.yaml');
-    if (!(checkFileExists(sYml) || checkFileExists(sYaml))) {
-      return sYaml;
-    }
+    // const sYml = path.join(targetDir, 's.yml');
+    // const sYaml = path.join(targetDir, 's.yaml');
+    // if (!(checkFileExists(sYml) || checkFileExists(sYaml))) {
+    //   return sYaml;
+    // }
 
     const fileName = `${fileAffix}.yaml`;
     return path.join(targetDir, fileName);
