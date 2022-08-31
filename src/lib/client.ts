@@ -151,7 +151,7 @@ export default class Client {
             let queries = {
                 AppId: appId, CurrentPage: 1, PageSize: 10,
             };
-            if(!lodash.isEmpty()){
+            if (!lodash.isEmpty()) {
                 queries['CoType'] = coType;
             }
             const data = await saeClient.request("GET", ListChangeOrdersUri, queries, body, headers, requestOption);
@@ -228,7 +228,7 @@ export default class Client {
          * @returns 应用列表
          */
         saeClient.listApplications = async function (appName: any, namespaceId?: any) {
-            if(lodash.isEmpty(namespaceId)){
+            if (lodash.isEmpty(namespaceId)) {
                 // 使用默认命名空间
                 const defaultNamespace = await this.getNamespace();
                 namespaceId = defaultNamespace.NamespaceId;
@@ -238,6 +238,9 @@ export default class Client {
                 "NamespaceId": namespaceId
             };
             const data = await saeClient.request("GET", ListApplicationsUri, queries, body, headers, requestOption);
+            if (data['Data']['Applications'].length > 0) {
+                data['Data']['Applications'][0]['namespaceId'] = namespaceId;
+            }
             return data;
         }
 

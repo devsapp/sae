@@ -21,7 +21,7 @@ https://sae.console.aliyun.com/#/AppList/ChangeOrderDetail?changeOrderId=${chang
 
 export default class SaeComponent {
   async sync(inputs: InputProps) {
-    const { args, props: { application } } = inputs;
+    const { args } = inputs;
     const { isHelp, appName, namespaceId, region } = await inputHandler.handlerSyncInputs(args);
     if (isHelp) {
       core.help(HELP.SYNC);
@@ -41,7 +41,7 @@ export default class SaeComponent {
     WriteFile.access = inputs.project.access;
     WriteFile.projectName = inputs.project.projectName;
     const configs = await utils.getSyncConfig(inputs, res);
-    const configYmlPath = await WriteFile.writeSYml(process.cwd(), configs, appName);
+    const configYmlPath = await WriteFile.writeSYml(process.cwd(), configs, region, app['namespaceId'], appName);
     vm.stop();
     logger.success(`配置文件已成功下载：${configYmlPath}`);
     return { configs, configYmlPath };;
