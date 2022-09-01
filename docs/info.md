@@ -36,15 +36,34 @@ category: '其他功能'
 
 ```
 sae-test: 
-  ScaleRuleEnabled:  false
-  Instances:         1
-  AppDescription:    
-  AppId:             9e1c5e93-xxxxx-98d3581b261
-  RunningInstances:  1
-  NamespaceId:       cn-hangzhou:test
-  RegionId:          cn-hangzhou
-  AppDeletingStatus: false
-  AppName:           test
+  console:       https://sae.console.aliyun.com/#/AppList/AppDetail?appId=3582e8ed-b0fxxxxf28932390b18&regionId=cn-hangzhou&namespaceId=undefined
+  application: 
+    region:            cn-hangzhou
+    namespaceId:       cn-hangzhou
+    namespaceName:     China East 1 (Hangzhou)
+    vpcId:             vpc-bp14oxxxxc7pobl
+    vSwitchId:         vsw-bp17xxxxyrmpfg9zr
+    securityGroupId:   sg-bp1axxxx5kmbwb6v2
+    appId:             3582e8ed-b0fxxxxf28932390b18
+    appName:           test
+    cpu:               500
+    memory:            1024
+    replicas:          1
+    scaleRuleEnabled:  false
+    instances:         1
+    runningInstances:  1
+    appDeletingStatus: false
+    appDescription:    This is a test.
+  slb: 
+    InternetIp: 47.98.152.222
+    Intranet: 
+      (empty array)
+    Internet: 
+      - 
+        TargetPort: 80
+        Port:       80
+        Protocol:   HTTP
+  componentType: sae
 ```
 
 ## 权限与策略说明

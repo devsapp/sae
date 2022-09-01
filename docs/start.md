@@ -25,7 +25,7 @@ category: '构建&部署'
 | region | - | 选填 | 必填 | 地区，取值范围：`cn-hangzhou, cn-beijing, cn-beijing, cn-hangzhou, cn-shanghai, cn-qingdao, cn-zhangjiakou, cn-huhehaote, cn-shenzhen, cn-chengdu, cn-hongkong, ap-southeast-1, ap-southeast-2, ap-southeast-3, ap-southeast-5, ap-northeast-1, eu-central-1, eu-west-1, us-west-1, us-east-1, ap-south-1` |
 | namespace-id | -        | 选填           | 选填    | 命名空间id   |
 | application-name  | -        | 必填           | 必填    | 应用名   |
-| assume-yes | y        | 选填           | 在交互时，默认选择`y`      |
+| assume-yes | y        | 选填  | 选填   | 在交互时，默认选择`y`      |
 
 
 ### 操作案例
