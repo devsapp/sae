@@ -71,6 +71,11 @@ export default class SaeComponent {
       logger.error(`${error.result.Message}`);
       return;
     }
+    if(lodash.isEmpty(orderId)){
+      vm.stop();
+      logger.success('replicas无变动');
+      return;
+    }
     // 检查状态
     vm.text = `应用扩缩容${appName}...` + getLink(orderId);
     await utils.getStatusByOrderId(orderId);

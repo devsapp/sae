@@ -109,9 +109,6 @@ export async function handlerReScaleInputs(args: string, application: any) {
         namespaceId = data['namespace-id'];
         region = data['region'];
     }
-    if (lodash.isEmpty(replicas)) {
-        throw new core.CatchableError('未指定replicas参数')
-    }
 
     if (lodash.isEmpty(appName)) {
         appName = application?.appName;
@@ -122,14 +119,20 @@ export async function handlerReScaleInputs(args: string, application: any) {
     if (lodash.isEmpty(region)) {
         region = application?.region;
     }
+    if (!replicas) {
+        replicas = application?.replicas;
+    }
     if (!isHelp) {
+        if (!replicas) {
+            throw new core.CatchableError('未指定replicas参数')
+        }
         if (lodash.isEmpty(appName)) {
             throw new core.CatchableError('参数 application-name 不能为空');
         }
         if (lodash.isEmpty(region)) {
             throw new core.CatchableError('参数 region 不能为空');
         }
-        if (!isHelp && !(Number.isInteger(replicas) && replicas > 0)) {
+        if ( !(Number.isInteger(replicas) && replicas > 0)) {
             throw new core.CatchableError('需要指定正确的replicas参数')
         }
     }
