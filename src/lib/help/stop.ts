@@ -7,7 +7,7 @@ export const STOP = [
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/stop.md',
+        content: 'https://github.com/devsapp/sae/blob/master/docs/stop.md',
     },
     {
         header: 'Usage',

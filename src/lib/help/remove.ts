@@ -7,7 +7,7 @@ export const REMOVE = [
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/remove.md',
+        content: 'https://github.com/devsapp/sae/blob/master/docs/remove.md',
     },
     {
         header: 'Usage',
