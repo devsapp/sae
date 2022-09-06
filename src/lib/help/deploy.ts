@@ -20,7 +20,7 @@ export const DEPLOY = [
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/deploy.md',
+        content: 'https://github.com/devsapp/sae/blob/master/docs/deploy.md',
     },
     {
         header: 'Usage',

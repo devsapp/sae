@@ -11,7 +11,7 @@ export const RESCALE = [
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/rescale.md',
+        content: 'https://github.com/devsapp/sae/blob/master/docs/rescale.md',
     },
     {
         header: 'Usage',
