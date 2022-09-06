@@ -14,7 +14,7 @@ export const INFO = [
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/info.md',
+        content: 'https://github.com/devsapp/sae/blob/master/docs/info.md',
     },
     {
         header: 'Usage',

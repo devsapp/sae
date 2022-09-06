@@ -7,7 +7,7 @@ export const SYNC = [
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/sync.md',
+        content: 'https://github.com/devsapp/sae/blob/master/docs/sync.md',
     },
     {
         header: 'Usage',

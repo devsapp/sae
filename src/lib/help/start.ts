@@ -7,7 +7,7 @@ export const START = [
     },
     {
         header: 'Document',
-        content: 'https://github.com/devsapp/sae/blob/main/docs/command/start.md',
+        content: 'https://github.com/devsapp/sae/blob/master/docs/start.md',
     },
     {
         header: 'Usage',
