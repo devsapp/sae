@@ -53,28 +53,34 @@ export async function getSyncConfig(inputs: any, appProps: any) {
     let props = {
         application: {
             ...tempApp,
-            port: slb.Internet[0].TargetPort,
         },
         slb: {}
     };
     props.application['code'] = code;
 
     // slb
-    let tempSlb = {};
+    let tempSlb = {
+        Internet: [],
+        Intranet: [],
+    };
 
     const Internets = lodash.get(slb, 'Internet', []);
+    if (Internets.length > 0) {
+        props.application['port'] = Internets[0].TargetPort;
+    } else {
+        delete tempSlb.Internet;
+    }
     for (const internet of Internets) {
-        const { Port, TargetPort, Protocol } = internet;
-        tempSlb['Internet'] = [
-            { port: Port, targetPort: TargetPort, protocol: Protocol }
-        ];
+        tempSlb.Internet.push({ port: internet.Port, targetPort: internet.TargetPort, protocol: internet.Protocol });
     }
     const Intranets = lodash.get(slb, 'Intranet', []);
-    for (const internet of Intranets) {
-        const { Port, TargetPort, Protocol } = internet;
-        tempSlb['Intranet'] = [
-            { port: Port, targetPort: TargetPort, protocol: Protocol }
-        ];
+    if (Intranets.length > 0) {
+        props.application['port'] = Intranets[0].TargetPort;
+    } else {
+        delete tempSlb.Intranet;
+    }
+    for (const intranet of Intranets) {
+        tempSlb.Intranet.push({ port: intranet.Port, targetPort: intranet.TargetPort, protocol: intranet.Protocol });
     }
 
     if (!lodash.isEmpty(slb.InternetSlbId)) {
