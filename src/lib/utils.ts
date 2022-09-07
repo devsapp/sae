@@ -53,7 +53,6 @@ export async function getSyncConfig(inputs: any, appProps: any) {
     let props = {
         application: {
             ...tempApp,
-            port: slb.Internet[0].TargetPort,
         },
         slb: {}
     };
@@ -63,6 +62,9 @@ export async function getSyncConfig(inputs: any, appProps: any) {
     let tempSlb = {};
 
     const Internets = lodash.get(slb, 'Internet', []);
+    if (Internets.length > 0 && Internets[0]?.TargetPort) {
+        props.application['port'] = slb.Internet[0].TargetPort;
+    }
     for (const internet of Internets) {
         const { Port, TargetPort, Protocol } = internet;
         tempSlb['Internet'] = [
