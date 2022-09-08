@@ -471,7 +471,9 @@ export async function getDiff(application: any, slb: any, remoteData: any, crede
     for (let key in localSlb) {
         let temp = localSlb[key];
         if (typeof temp == 'string') {
-            temp = JSON.parse(localSlb[key]);
+            if(lodash.isEqual(key, 'Intranet') || lodash.isEqual(key, 'Internet')){
+                temp = JSON.parse(localSlb[key]);
+            }
         }
         if (!lodash.isEqual(temp, remoteSlb[key])) {
             diffList.push({
