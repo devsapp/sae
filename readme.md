@@ -25,7 +25,7 @@
 
 | 构建&部署 | 其他功能 |
 | --- | --- |
-| [**部署 deploy**](docs/deploy.md) | [查看函数 info](docs/info.md) | 
+| [**部署 deploy**](docs/deploy.md) | [查看应用 info](docs/info.md) | 
 | [移除 remove](docs/remove.md) |[资源同步 sync](docs/sync.md) | 
 | [启动 start](docs/start.md) | | 
 | [停止 stop](docs/stop.md) | |
