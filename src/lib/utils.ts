@@ -279,7 +279,7 @@ export async function infoRes(application: any) {
     return result;
 }
 
-export async function handleEnv(slb: any, application: any, credentials: any) {
+export async function handleEnv(application: any, credentials: any) {
     const { region, namespaceId, vpcId } = application;
     application.autoConfig = false;
     if (vpcId) {
@@ -311,10 +311,6 @@ export async function handleEnv(slb: any, application: any, credentials: any) {
     } else if (namespaceId && lodash.isEmpty(vpcId)) {
         throw new core.CatchableError("The specified parameter 'vpcConfig' is invalid.")
     }
-
-    // slb
-    const localSlb = await formatSlb(slb, application.port);
-    return { localSlb };
 }
 
 export async function handleCode(application: any, credentials: any, configPath?: string) {
@@ -471,7 +467,7 @@ export async function getDiff(application: any, slb: any, remoteData: any, crede
     for (let key in localSlb) {
         let temp = localSlb[key];
         if (typeof temp == 'string') {
-            if(lodash.isEqual(key, 'Intranet') || lodash.isEqual(key, 'Internet')){
+            if (lodash.isEqual(key, 'Intranet') || lodash.isEqual(key, 'Internet')) {
                 temp = JSON.parse(localSlb[key]);
             }
         }
@@ -511,9 +507,15 @@ export async function getDiff(application: any, slb: any, remoteData: any, crede
     return change;
 }
 
-async function formatSlb(slb: any, port: any) {
+export async function formatSlb(slb: any, port: any) {
+    if (lodash.isEmpty(slb)) {
+        return {};
+    }
     let newSlb = slb;
     if (lodash.isEqual(slb, 'auto')) {
+        if (!port) {
+            throw new core.CatchableError('slb 值为 auto 时，port 为必填项.');
+        }
         newSlb = {
             Internet: [{ "port": 80, "targetPort": port, "protocol": "HTTP" }]
         };
