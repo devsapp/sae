@@ -1,7 +1,6 @@
 import * as fse from 'fs-extra';
 import * as path from 'path';
 import yaml from 'js-yaml';
-import { checkFileExists } from './utils';
 
 export default class WriteFile {
   static access: string;
