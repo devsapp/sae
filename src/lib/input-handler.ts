@@ -295,7 +295,12 @@ export async function setDefault(applicationObject: any) {
             delete (applicationObject[key]);
         } else if (/^[a-z].*$/.test(key)) {
             let Key = key.replace(key[0], key[0].toUpperCase());
-            applicationObject[Key] = applicationObject[key];
+            // 将数组转换为字符串
+            let value = applicationObject[key];
+            if(value instanceof Array){
+                value = JSON.stringify(value);
+            }
+            applicationObject[Key] = value;
             delete (applicationObject[key]);
         }
     }
