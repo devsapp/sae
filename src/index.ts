@@ -68,10 +68,10 @@ export default class SaeComponent {
       orderId = await Client.saeClient.rescaleApplication(appId, replicas);
     } catch (error) {
       vm.stop();
-      logger.error(`${error.result.Message}`);
+      logger.error(`${error}`);
       return;
     }
-    if(lodash.isEmpty(orderId)){
+    if (lodash.isEmpty(orderId)) {
       vm.stop();
       logger.success('replicas无变动');
       return;
@@ -124,7 +124,7 @@ export default class SaeComponent {
       orderId = await Client.saeClient.startApplication(appId);
     } catch (error) {
       vm.stop();
-      logger.error(`${error.result.Message}`);
+      logger.error(`${error}`);
       return;
     }
     // 检查状态
@@ -150,7 +150,7 @@ export default class SaeComponent {
     }
     const credentials = await core.getCredential(inputs.project.access);
     await Client.setSaeClient(region, credentials);
-    let data = await Client.saeClient.listApplications( appName, namespaceId);
+    let data = await Client.saeClient.listApplications(appName, namespaceId);
     if (data['Data']['Applications'].length == 0) {
       logger.error(`未找到应用 ${appName}`);
       return;
@@ -176,7 +176,7 @@ export default class SaeComponent {
       orderId = await Client.saeClient.stopApplication(appId);
     } catch (error) {
       vm.stop();
-      logger.error(`${error.result.Message}`);
+      logger.error(`${error}`);
       return;
     }
     // 检查状态
@@ -236,8 +236,11 @@ export default class SaeComponent {
       return;
     }
     // 设置Namespace
-    const env = await utils.handleEnv(slb, application, credentials);
-    slb = env.localSlb;
+    await utils.handleEnv(application, credentials);
+
+    // 设置slb
+    slb = await utils.formatSlb(slb, application.port);
+
     const namespaceId = application.namespaceId;
     const remoteData = await Client.saeClient.listApplications(appName, namespaceId);
     if (useLocal) {
@@ -312,7 +315,7 @@ export default class SaeComponent {
         }
       } catch (error) {
         vm.stop();
-        logger.error(`${error.result.Message}`);
+        logger.error(`${error}`);
         return;
       }
     } else {
@@ -336,26 +339,27 @@ export default class SaeComponent {
         );
       } catch (e) {
         vm.stop();
-        logger.error(`${e.result.Message}`);
+        logger.error(`${e}`);
         return;
       }
     }
-    const needBindSlb = await utils.slbDiff(slb, appId);
-    if (needBindSlb) {
-      // 绑定SLB
-      vm.text = `部署 slb ... `;
-      changeOrderId = await Client.saeClient.bindSLB(slb, appId);
-      // 检查应用部署状态
-      vm.text = `正在绑定slb...` + getLink(changeOrderId);
-      await utils.checkStatus(appId, 'CoBindSlb');
+    if (!lodash.isEmpty(slb)) {
+      const needBindSlb = await utils.slbDiff(slb, appId);
+      if (needBindSlb) {
+        // 绑定SLB
+        vm.text = `部署 slb ... `;
+        changeOrderId = await Client.saeClient.bindSLB(slb, appId);
+        // 检查应用部署状态
+        vm.text = `正在绑定slb...` + getLink(changeOrderId);
+        await utils.checkStatus(appId, 'CoBindSlb');
+      }
     }
 
-    // 获取SLB信息
-    vm.text = `获取 slb 信息 ... `;
     vm.stop();
     const result = await outputHandler.output(appName, namespaceId);
-
-    logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
+    if (!lodash.isEmpty(result.accessLink)) {
+      logger.success(`部署成功，请通过以下地址访问您的应用：http://${result.accessLink}`);
+    }
 
     /**
      * 缓存记录上一次部署细节
@@ -420,7 +424,7 @@ export default class SaeComponent {
       orderId = await Client.saeClient.deleteApplication(appId);
     } catch (error) {
       vm.stop();
-      logger.error(`${error.result.Message}`);
+      logger.error(`${error}`);
       return;
     }
     await utils.getStatusByOrderId(orderId);

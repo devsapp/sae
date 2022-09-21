@@ -60,7 +60,7 @@ services:
 | 参数名 |  是否必选  |  类型  |  参数描述  |
 | --- |  ---  |  ---  |  ---  |
 | application | 是 | Struct | 应用配置 |
-| slb | 是 | String/Struct | SLB配置 |
+| slb | 否 | String/Struct | SLB配置 |
 
 ##  application
 sae组件对application中的code和port属性进行了单独处理，并且参数名使用小驼峰命名法，可对照SAE官方文档 [CreateNamespace](https://help.aliyun.com/document_detail/126169.html)。
@@ -74,7 +74,7 @@ sae组件对application中的code和port属性进行了单独处理，并且参�
 |name|	String	|	是|	test	| 应用名称。允许数字、字母以及短划线（-）组合。必须以字母开始，不超过36个字符。|
 |decription	|String	|	否	|This is a test description.	|应用描述信息。不超过1024个字符。|
 |code|Struct|是|-|代码|
-|port|String|否|8080|容器端口。|
+|port|String|否|8080|容器端口。slb的值为'auto'时，port字段必填。|
 |cpu|	Integer	|	否	|1000	| 每个实例所需的CPU，单位为毫核，不能为0。目前仅支持以下固定规格：<br>500<br>1000<br>2000<br>4000<br>8000<br>16000<br>32000|
 |memory|	Integer	|	否	|1024	|每个实例所需的内存，单位为MB，不能为0。与CPU为一一对应关系，目前仅支持以下固定规格：<br>1024：对应CPU为500毫核。<br>2048：对应CPU为500和1000毫核。<br>4096：对应CPU为1000和2000毫核。<br>8192：对应CPU为2000和4000毫核。<br>16384：对应CPU为4000和8000毫核。<br>32768：对应CPU为16000毫核。<br>65536：对应CPU为8000、16000和32000毫核。<br>131072：对应CPU为32000毫核。|
 |replicas|	Integer	|	否	|1	|初始实例数，默认为1。|
@@ -159,6 +159,8 @@ code:
 ```
 
 ## slb
+slb不填时，不绑定应用访问地址。
+
 当 slb 为Struct时，可参照官方文档 [BindSlb](https://help.aliyun.com/document_detail/126360.html)：
 | 名称 |  类型  |  是否必选  |  示例值  |   描述  |
 | --- |  ---  |  ---  |  ---  | ---  |

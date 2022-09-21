@@ -3,13 +3,10 @@ import { cpuLimit, memoryLimit } from './help/constant';
 const { lodash } = core;
 
 export async function checkInputs(inputs: any) {
-    let { application, slb } = inputs['props'];
-    if (!application.port) {
-        throw new core.CatchableError('port 为必填项.');
-    }
-    if (lodash.isEmpty(slb)) {
-        throw new core.CatchableError('slb 为必填项.');
-    }
+    let { application } = inputs['props'];
+    // if (lodash.isEmpty(slb)) {
+    //     throw new core.CatchableError('slb 为必填项.');
+    // }
     const { code } = application;
     if (lodash.isEmpty(code)) {
         throw new core.CatchableError("未指定部署的代码");
@@ -60,7 +57,7 @@ export async function parseCommand(args: string) {
     // @ts-ignore
     const comParse: any = core.commandParse({ args });
     const data = comParse?.data;
-    if(lodash.isEmpty(data)){
+    if (lodash.isEmpty(data)) {
         return {};
     }
     const isHelp = data?.h || data?.help;
@@ -132,7 +129,7 @@ export async function handlerReScaleInputs(args: string, application: any) {
         if (lodash.isEmpty(region)) {
             throw new core.CatchableError('参数 region 不能为空');
         }
-        if ( !(Number.isInteger(replicas) && replicas > 0)) {
+        if (!(Number.isInteger(replicas) && replicas > 0)) {
             throw new core.CatchableError('需要指定正确的replicas参数')
         }
     }
