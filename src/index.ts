@@ -12,6 +12,7 @@ import logger from './common/logger';
 import Oss from './lib/oss.service';
 import { writeCreatCache, writeDeployCache } from './common/cache';
 import WriteFile from './lib/write-file';
+import { SaeCtlCmd } from './cmd/saectl';
 
 const { lodash } = core;
 
@@ -431,5 +432,11 @@ export default class SaeComponent {
 
     vm.stop();
     logger.success('删除成功');
+  }
+
+  async saectl(inputs: InputProps) {
+    const credentials = await core.getCredential(inputs.project?.access);
+    let saeCtlCmd = new SaeCtlCmd(inputs, credentials);
+    await saeCtlCmd.run();
   }
 }
