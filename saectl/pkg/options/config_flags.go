@@ -30,6 +30,13 @@ const (
 	AliCloudRegion    = "ALICLOUD_REGION"
 )
 
+type AccountKey struct {
+	AccessKey    string
+	AccessSecret string
+	StsToken     string
+	Region       string
+}
+
 type Config struct {
 	CacheDir *string
 	// config flags
@@ -157,6 +164,17 @@ func (f *Config) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 }
 
 func (f *Config) toRawKubeConfigLoader() *config.ClientConfigBuilder {
+	accountKey := f.GetAccountKey()
+	return config.NewClientConfigBuilder().
+		WithRegion(accountKey.Region).
+		WithAccessKeyId(accountKey.AccessKey).
+		WithAccessKeySecret(accountKey.AccessSecret).
+		WithStsToken(accountKey.StsToken).
+		WithClusterServer(*f.APIServer).
+		WithNamespace(*f.Namespace)
+}
+
+func (f *Config) GetAccountKey() AccountKey {
 	ak, sk, sts, region := *f.AccessKey, *f.AccessSecretKey, *f.StsToken, *f.Region
 	if ak == "" {
 		ak = os.Getenv(AliCloudAccessKey)
@@ -170,13 +188,12 @@ func (f *Config) toRawKubeConfigLoader() *config.ClientConfigBuilder {
 	if region == "" {
 		region = os.Getenv(AliCloudRegion)
 	}
-	return config.NewClientConfigBuilder().
-		WithRegion(region).
-		WithAccessKeyId(ak).
-		WithAccessKeySecret(sk).
-		WithStsToken(sts).
-		WithClusterServer(*f.APIServer).
-		WithNamespace(*f.Namespace)
+	return AccountKey{
+		AccessKey:    ak,
+		AccessSecret: sk,
+		StsToken:     sts,
+		Region:       region,
+	}
 }
 
 func getDefaultCacheDir() string {
