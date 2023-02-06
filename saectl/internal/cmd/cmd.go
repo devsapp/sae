@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 	cliflag "k8s.io/component-base/cli/flag"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/util/i18n"
 	"k8s.io/kubectl/pkg/util/templates"
 	"k8s.io/kubectl/pkg/util/term"
-	"os"
+
 	"saectl/internal/cmd/annotate"
 	"saectl/internal/cmd/apiresources"
 	"saectl/internal/cmd/apply"
@@ -19,11 +20,14 @@ import (
 	"saectl/internal/cmd/describe"
 	"saectl/internal/cmd/diff"
 	"saectl/internal/cmd/edit"
+	"saectl/internal/cmd/exec"
 	"saectl/internal/cmd/get"
 	"saectl/internal/cmd/label"
+	"saectl/internal/cmd/logs"
 	"saectl/internal/cmd/replace"
 	"saectl/internal/cmd/scale"
 	"saectl/internal/cmd/set"
+	"saectl/internal/cmd/util"
 	"saectl/pkg/options"
 )
 
@@ -93,14 +97,8 @@ func NewCommand(o CtlOption) *cobra.Command {
 	saeConfigFlags := options.NewConfig().WithDiscoveryQPS(100).WithDiscoveryQPS(50)
 	saeConfigFlags.AddFlags(flags)
 	// TODO: add cmd header hooks to distinguish the request from sdk or ctl
-	f := cmdutil.NewFactory(saeConfigFlags)
-
-	//// Proxy command is incompatible with CommandHeaderRoundTripper, so
-	//// clear the WrapConfigFn before running proxy command.
-	//proxyCmd := proxy.NewCmdProxy(f, o.IOStreams)
-	//proxyCmd.PreRun = func(cmd *cobra.Command, args []string) {
-	//	saeConfigFlags.WrapConfigFn = nil
-	//}
+	aliCloudFactory := util.NewAliCloudFactory(saeConfigFlags)
+	f := aliCloudFactory.NewCmdFactory()
 
 	// TODO: add completion for get cmd
 	groups := templates.CommandGroups{
@@ -129,8 +127,8 @@ func NewCommand(o CtlOption) *cobra.Command {
 			Message: "Troubleshooting and Debugging Commands:",
 			Commands: []*cobra.Command{
 				describe.NewCmdDescribe("saectl", f, o.IOStreams),
-				//logs.NewCmdLogs(f, o.IOStreams),
-				//proxyCmd,
+				exec.NewCmdExec(aliCloudFactory, o.IOStreams),
+				logs.NewCmdLogs(f, o.IOStreams),
 			},
 		},
 		{
