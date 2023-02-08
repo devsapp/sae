@@ -113,7 +113,7 @@ func NewCmdScale(f cmdutil.Factory, ioStreams genericclioptions.IOStreams) *cobr
 	cmd.MarkFlagRequired("replicas")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 0, "The length of time to wait before giving up on a scale operation, zero means don't wait. Any other values should contain a corresponding time unit (e.g. 1s, 2m, 3h).")
 	cmdutil.AddFilenameOptionFlags(cmd, &o.FilenameOptions, "identifying the resource to set a new size")
-	//cmdutil.AddDryRunFlag(cmd)
+	cmdutil.AddDryRunFlag(cmd)
 	cmdutil.AddLabelSelectorFlagVar(cmd, &o.Selector)
 	return cmd
 }
