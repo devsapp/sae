@@ -2,7 +2,6 @@ package stream
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -30,30 +29,6 @@ func NewExecutor(conn *websocket.Conn, op Option) *Executor {
 		Conn:   conn,
 		Option: op,
 	}
-}
-
-func (e *Executor) Exec(cmd string) (string, error) {
-	stop := make(chan struct{})
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func(ctx context.Context) {
-		websocket.Message.Send(e.Conn, cmd+"\n")
-		for i := 1; i <= 2; i++ {
-			websocket.Message.Send(e.Conn, "exit\n")
-		}
-	}(ctx)
-
-	stdOutBuffer := NewStdOutBuffer()
-	e.copyStdout(stop, stdOutBuffer)
-
-	select {
-	case <-stop:
-		cancel()
-	}
-
-	r := stdOutBuffer.String()
-	fmt.Println(r)
-	return r, nil
 }
 
 func (e *Executor) Stream() error {
