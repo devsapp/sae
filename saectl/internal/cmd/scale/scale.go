@@ -90,7 +90,7 @@ func NewCmdScale(f cmdutil.Factory, ioStreams genericclioptions.IOStreams) *cobr
 	validArgs := []string{"deployment"}
 
 	cmd := &cobra.Command{
-		Use:                   "scale [--resource-version=version] [--current-replicas=count] --replicas=COUNT (-f FILENAME | TYPE NAME)",
+		Use:                   "scale [--current-replicas=count] --replicas=COUNT (-f FILENAME | TYPE NAME)",
 		DisableFlagsInUseLine: true,
 		Short:                 i18n.T("Set a new size for a deployment, replica set, or replication controller"),
 		Long:                  scaleLong,
@@ -103,18 +103,15 @@ func NewCmdScale(f cmdutil.Factory, ioStreams genericclioptions.IOStreams) *cobr
 		},
 	}
 
-	//o.RecordFlags.AddFlags(cmd)
 	o.PrintFlags.AddFlags(cmd)
 
 	cmd.Flags().BoolVar(&o.All, "all", o.All, "Select all resources in the namespace of the specified resource types")
-	cmd.Flags().StringVar(&o.ResourceVersion, "resource-version", o.ResourceVersion, i18n.T("Precondition for resource version. Requires that the current resource version match this value in order to scale."))
 	cmd.Flags().IntVar(&o.CurrentReplicas, "current-replicas", o.CurrentReplicas, "Precondition for current size. Requires that the current size of the resource match this value in order to scale. -1 (default) for no condition.")
 	cmd.Flags().IntVar(&o.Replicas, "replicas", o.Replicas, "The new desired number of replicas. Required.")
 	cmd.MarkFlagRequired("replicas")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 0, "The length of time to wait before giving up on a scale operation, zero means don't wait. Any other values should contain a corresponding time unit (e.g. 1s, 2m, 3h).")
 	cmdutil.AddFilenameOptionFlags(cmd, &o.FilenameOptions, "identifying the resource to set a new size")
 	cmdutil.AddDryRunFlag(cmd)
-	cmdutil.AddLabelSelectorFlagVar(cmd, &o.Selector)
 	return cmd
 }
 
