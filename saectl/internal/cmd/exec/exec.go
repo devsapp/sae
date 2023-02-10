@@ -128,10 +128,7 @@ func (o *Options) Run() error {
 		if err != nil {
 			return err
 		}
-		//_, _ = e.Exec("curl 127.0.0.1:5555")
-		_, _ = e.Exec("c")
-		return nil
-		//return e.Stream()
+		return e.Stream()
 	}
 	return o.tty.Safe(fn)
 }
