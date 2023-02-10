@@ -215,5 +215,5 @@ func (c *ClientConfig) ConfigAccess() clientcmd.ConfigAccess {
 var _ clientcmd.ClientConfig = &ClientConfig{}
 
 func genSAEClusterServerAddress(region string) string {
-	return fmt.Sprintf("sae-share.%s.aliyuncs.com", region)
+	return fmt.Sprintf("sae.%s.aliyuncs.com", region)
 }

@@ -64,8 +64,8 @@ var (
 		# Create a deployment(represents an application in sae) using the data in .json
 		saectl create -f ./deployment.json
 
-		# Create a pod based on the JSON passed into stdin
-		cat pod.json | saectl create -f -
+		# Create a deployment based on the JSON passed into stdin
+		cat deployment.json | saectl create -f -
 
 		# Edit the data in registry.yaml in JSON then create the resource using the edited data
 		saectl create -f registry.yaml --edit -o json`))
@@ -75,7 +75,6 @@ var (
 func NewCreateOptions(ioStreams genericclioptions.IOStreams) *CreateOptions {
 	return &CreateOptions{
 		PrintFlags: genericclioptions.NewPrintFlags("created").WithTypeSetter(scheme.Scheme),
-		// RecordFlags: genericclioptions.NewRecordFlags(),
 
 		Recorder: genericclioptions.NoopRecorder{},
 
@@ -108,19 +107,13 @@ func NewCmdCreate(f cmdutil.Factory, ioStreams genericclioptions.IOStreams) *cob
 
 	usage := "to use to create the resource"
 	cmdutil.AddFilenameOptionFlags(cmd, &o.FilenameOptions, usage)
-	//cmdutil.AddValidateFlags(cmd)
+	cmdutil.AddValidateFlags(cmd)
 	cmd.Flags().BoolVar(&o.EditBeforeCreate, "edit", o.EditBeforeCreate, "Edit the API resource before creating")
 	cmd.Flags().Bool("windows-line-endings", runtime.GOOS == "windows",
 		"Only relevant if --edit=true. Defaults to the line ending native to your platform.")
-	//cmdutil.AddDryRunFlag(cmd)
+	cmdutil.AddApplyAnnotationFlags(cmd)
+	cmdutil.AddDryRunFlag(cmd)
 	o.PrintFlags.AddFlags(cmd)
-
-	// TODO: 1. Storing objects to annotations is currently not supported
-	//cmdutil.AddApplyAnnotationFlags(cmd)
-	// TODO: 2. Label selector is not supported for now
-	//cmdutil.AddLabelSelectorFlagVar(cmd, &o.Selector)
-	// TODO: 3. Server-Side Apply is not support for now
-	//cmdutil.AddFieldManagerFlagVar(cmd, &o.fieldManager, "saectl-create")
 
 	// create subcommands
 	cmd.AddCommand(create.NewCmdCreateNamespace(f, ioStreams))

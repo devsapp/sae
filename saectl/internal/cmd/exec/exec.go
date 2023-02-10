@@ -65,6 +65,8 @@ type Options struct {
 	podName   string
 	namespace string
 	podClient coreclient.PodsGetter
+
+	cmd []string
 }
 
 func (o *Options) Complete(f util.AliCloudFactory, argsIn []string, ioStreams genericclioptions.IOStreams) error {
@@ -122,12 +124,19 @@ func (o *Options) Run() error {
 		return err
 	}
 	fn := func() error {
-		return o.Stream(tokenId)
+		e, err := o.NewExecutor(tokenId)
+		if err != nil {
+			return err
+		}
+		//_, _ = e.Exec("curl 127.0.0.1:5555")
+		_, _ = e.Exec("c")
+		return nil
+		//return e.Stream()
 	}
 	return o.tty.Safe(fn)
 }
 
-func (o *Options) Stream(tokenId string) error {
+func (o *Options) NewExecutor(tokenId string) (*stream.Executor, error) {
 	wsUrl := &url.URL{
 		Scheme: "wss",
 		Host:   "sae-webshell.console.aliyun.com",
@@ -139,15 +148,14 @@ func (o *Options) Stream(tokenId string) error {
 	}
 	c, err := websocket.Dial(wsUrl.String(), "", "https://sae.console.aliyun.com")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	e := stream.NewExecutor(c, stream.Option{
+	return stream.NewExecutor(c, stream.Option{
 		Stdin:  o.In,
 		Stdout: o.Out,
 		StdErr: nil,
 		TTY:    o.tty.Raw,
-	})
-	return e.Stream()
+	}), nil
 }
 
 func (o *Options) GetWebShellToken(appId string, podName string) (string, error) {

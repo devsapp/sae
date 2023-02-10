@@ -136,8 +136,8 @@ var (
 		# Apply the configuration from all files that end with '.json' - i.e. expand wildcard characters in file names
 		saectl apply -f '*.json'`))
 
-	warningNoLastAppliedConfigAnnotation = "Warning: resource %[1]s is missing the %[2]s annotation which is required by %[3]s apply. %[3]s apply should only be used on resources created declaratively by either %[3]s create --save-config or %[3]s apply. The missing annotation will be patched automatically.\n"
-	warningChangesOnDeletingResource     = "Warning: Detected changes to resource %[1]s which is currently being deleted.\n"
+	//warningNoLastAppliedConfigAnnotation = "Warning: resource %[1]s is missing the %[2]s annotation which is required by %[3]s apply. %[3]s apply should only be used on resources created declaratively by either %[3]s create --save-config or %[3]s apply. The missing annotation will be patched automatically.\n"
+	warningChangesOnDeletingResource = "Warning: Detected changes to resource %[1]s which is currently being deleted.\n"
 )
 
 // NewApplyFlags returns a default ApplyFlags
@@ -175,11 +175,6 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 
 	flags.AddFlags(cmd)
 
-	// apply subcommands
-	//cmd.AddCommand(NewCmdApplyViewLastApplied(flags.Factory, flags.IOStreams))
-	//cmd.AddCommand(NewCmdApplySetLastApplied(flags.Factory, flags.IOStreams))
-	//cmd.AddCommand(NewCmdApplyEditLastApplied(flags.Factory, flags.IOStreams))
-
 	return cmd
 }
 
@@ -187,19 +182,13 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 func (flags *ApplyFlags) AddFlags(cmd *cobra.Command) {
 	// bind flag structs
 	flags.DeleteFlags.AddFlags(cmd)
-	//flags.RecordFlags.AddFlags(cmd)
 	flags.PrintFlags.AddFlags(cmd)
 
-	//cmdutil.AddValidateFlags(cmd)
-	//cmdutil.AddDryRunFlag(cmd)
-	//cmdutil.AddServerSideApplyFlags(cmd)
-	//cmdutil.AddFieldManagerFlagVar(cmd, &flags.FieldManager, FieldManagerClientSideApply)
+	cmdutil.AddDryRunFlag(cmd)
 	cmdutil.AddLabelSelectorFlagVar(cmd, &flags.Selector)
 
 	cmd.Flags().BoolVar(&flags.Overwrite, "overwrite", flags.Overwrite, "Automatically resolve conflicts between the modified and live configuration by using values from the modified configuration")
-	//cmd.Flags().BoolVar(&flags.Prune, "prune", flags.Prune, "Automatically delete resource objects, that do not appear in the configs and are created by either apply or create --save-config. Should be used with either -l or --all.")
 	cmd.Flags().BoolVar(&flags.All, "all", flags.All, "Select all resources in the namespace of the specified resource types.")
-	//cmd.Flags().StringArrayVar(&flags.PruneWhitelist, "prune-whitelist", flags.PruneWhitelist, "Overwrite the default whitelist with <group/version/kind> for --prune")
 	cmd.Flags().BoolVar(&flags.OpenAPIPatch, "openapi-patch", flags.OpenAPIPatch, "If true, use openapi to calculate diff when the openapi presents and the resource can be found in the openapi spec. Otherwise, fall back to use baked-in types.")
 }
 
@@ -209,8 +198,6 @@ func (flags *ApplyFlags) ToOptions(cmd *cobra.Command, baseName string, args []s
 		return nil, cmdutil.UsageErrorf(cmd, "Unexpected args: %v", args)
 	}
 
-	serverSideApply := cmdutil.GetServerSideApplyFlag(cmd)
-	forceConflicts := cmdutil.GetForceConflictsFlag(cmd)
 	dryRunStrategy, err := cmdutil.GetDryRunStrategy(cmd)
 	if err != nil {
 		return nil, err
@@ -222,8 +209,6 @@ func (flags *ApplyFlags) ToOptions(cmd *cobra.Command, baseName string, args []s
 	}
 
 	dryRunVerifier := resource.NewQueryParamVerifier(dynamicClient, flags.Factory.OpenAPIGetter(), resource.QueryParamDryRun)
-	fieldValidationVerifier := resource.NewQueryParamVerifier(dynamicClient, flags.Factory.OpenAPIGetter(), resource.QueryParamFieldValidation)
-	fieldManager := GetApplyFieldManagerFlag(cmd, serverSideApply)
 
 	// allow for a success message operation to be specified at print time
 	toPrinter := func(operation string) (printers.ResourcePrinter, error) {
@@ -250,14 +235,6 @@ func (flags *ApplyFlags) ToOptions(cmd *cobra.Command, baseName string, args []s
 
 	openAPISchema, _ := flags.Factory.OpenAPISchema()
 
-	validationDirective, err := cmdutil.GetValidationDirective(cmd)
-	if err != nil {
-		return nil, err
-	}
-	validator, err := flags.Factory.Validator(validationDirective, fieldValidationVerifier)
-	if err != nil {
-		return nil, err
-	}
 	builder := flags.Factory.NewBuilder()
 	mapper, err := flags.Factory.ToRESTMapper()
 	if err != nil {
@@ -269,13 +246,6 @@ func (flags *ApplyFlags) ToOptions(cmd *cobra.Command, baseName string, args []s
 		return nil, err
 	}
 
-	if flags.Prune {
-		flags.PruneResources, err = prune.ParseResources(mapper, flags.PruneWhitelist)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	o := &ApplyOptions{
 		// 	Store baseName for use in printing warnings / messages involving the base command name.
 		// 	This is useful for downstream command that wrap this one.
@@ -283,30 +253,24 @@ func (flags *ApplyFlags) ToOptions(cmd *cobra.Command, baseName string, args []s
 
 		PrintFlags: flags.PrintFlags,
 
-		DeleteOptions:   deleteOptions,
-		ToPrinter:       toPrinter,
-		ServerSideApply: serverSideApply,
-		ForceConflicts:  forceConflicts,
-		FieldManager:    fieldManager,
-		Selector:        flags.Selector,
-		DryRunStrategy:  dryRunStrategy,
-		DryRunVerifier:  dryRunVerifier,
-		Prune:           flags.Prune,
-		PruneResources:  flags.PruneResources,
-		All:             flags.All,
-		Overwrite:       flags.Overwrite,
-		OpenAPIPatch:    flags.OpenAPIPatch,
-		PruneWhitelist:  flags.PruneWhitelist,
+		DeleteOptions:  deleteOptions,
+		ToPrinter:      toPrinter,
+		Selector:       flags.Selector,
+		DryRunStrategy: dryRunStrategy,
+		DryRunVerifier: dryRunVerifier,
 
-		Recorder:            recorder,
-		Namespace:           namespace,
-		EnforceNamespace:    enforceNamespace,
-		Validator:           validator,
-		ValidationDirective: validationDirective,
-		Builder:             builder,
-		Mapper:              mapper,
-		DynamicClient:       dynamicClient,
-		OpenAPISchema:       openAPISchema,
+		All:          flags.All,
+		Overwrite:    flags.Overwrite,
+		OpenAPIPatch: flags.OpenAPIPatch,
+
+		Recorder:         recorder,
+		Namespace:        namespace,
+		EnforceNamespace: enforceNamespace,
+
+		Builder:       builder,
+		Mapper:        mapper,
+		DynamicClient: dynamicClient,
+		OpenAPISchema: openAPISchema,
 
 		IOStreams: flags.IOStreams,
 
@@ -589,12 +553,6 @@ See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts`
 	}
 
 	if o.DryRunStrategy != cmdutil.DryRunClient {
-		metadata, _ := meta.Accessor(info.Object)
-		annotationMap := metadata.GetAnnotations()
-		if _, ok := annotationMap[corev1.LastAppliedConfigAnnotation]; !ok {
-			fmt.Fprintf(o.ErrOut, warningNoLastAppliedConfigAnnotation, info.ObjectName(), corev1.LastAppliedConfigAnnotation, o.cmdBaseName)
-		}
-
 		patcher, err := newPatcher(o, info, helper)
 		if err != nil {
 			return err
@@ -603,7 +561,6 @@ See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts`
 		if err != nil {
 			return cmdutil.AddSourceToErr(fmt.Sprintf("applying patch:\n%s\nto:\n%v\nfor:", patchBytes, info), info.Source, err)
 		}
-
 		info.Refresh(patchedObject, true)
 
 		WarnIfDeleting(info.Object, o.ErrOut)

@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -31,12 +32,36 @@ func NewExecutor(conn *websocket.Conn, op Option) *Executor {
 	}
 }
 
+func (e *Executor) Exec(cmd string) (string, error) {
+	stop := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func(ctx context.Context) {
+		websocket.Message.Send(e.Conn, cmd+"\n")
+		for i := 1; i <= 2; i++ {
+			websocket.Message.Send(e.Conn, "exit\n")
+		}
+	}(ctx)
+
+	stdOutBuffer := NewStdOutBuffer()
+	e.copyStdout(stop, stdOutBuffer)
+
+	select {
+	case <-stop:
+		cancel()
+	}
+
+	r := stdOutBuffer.String()
+	fmt.Println(r)
+	return r, nil
+}
+
 func (e *Executor) Stream() error {
 	stop := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 
-	e.copyStdin(ctx)
-	e.copyStdout(stop)
+	e.copyStdin(ctx, e.Stdin)
+	e.copyStdout(stop, e.Stdout)
 
 	select {
 	case <-stop:
@@ -45,28 +70,22 @@ func (e *Executor) Stream() error {
 	}
 }
 
-func (e *Executor) copyStdin(ctx context.Context) {
-	if e.Stdin != nil {
-		var once sync.Once
-		// copy from client's stdin to container's stdin
-		go func() {
-			defer runtime.HandleCrash()
-			defer once.Do(func() { e.Conn.Close() })
-			if _, err := io.Copy(e.Conn, NewGuardStdIn(ctx, e.Stdin)); err != nil {
-				runtime.HandleError(err)
-			}
-		}()
-	}
+func (e *Executor) copyStdin(ctx context.Context, r io.Reader) {
+	var once sync.Once
+	go func() {
+		defer runtime.HandleCrash()
+		defer once.Do(func() { e.Conn.Close() })
+		if _, err := io.Copy(e.Conn, NewGuardStdIn(ctx, r)); err != nil {
+			runtime.HandleError(err)
+		}
+	}()
 }
 
-func (e *Executor) copyStdout(stop chan struct{}) {
-	if e.Stdout == nil {
-		return
-	}
+func (e *Executor) copyStdout(stop chan struct{}, w io.Writer) {
 	go func() {
 		defer runtime.HandleCrash()
 		defer io.Copy(io.Discard, e.Conn)
-		if _, err := io.Copy(e.Stdout, NewGuardStdOut(e.Conn, stop)); err != nil {
+		if _, err := io.Copy(w, NewGuardStdOut(e.Conn, stop)); err != nil {
 			runtime.HandleError(err)
 		}
 	}()
@@ -86,7 +105,8 @@ func NewGuardStdOut(r io.Reader, stop chan struct{}) io.Reader {
 
 func (g *guardStdOut) Read(p []byte) (n int, err error) {
 	n, err = g.Reader.Read(p)
-	if strings.Contains(string(p), "{\"metadata\":{},\"status\":\"Success\"}") {
+	if strings.Contains(string(p), "{\"metadata\":{},\"status\":\"Failure\"") ||
+		strings.Contains(string(p), "{\"metadata\":{},\"status\":\"Success\"") {
 		g.stop <- struct{}{}
 		return 0, io.EOF
 	}
@@ -112,4 +132,24 @@ func (g *guardStdIn) Read(p []byte) (n int, err error) {
 	default:
 		return g.Reader.Read(p)
 	}
+}
+
+type StdOutBuffer struct {
+	builder strings.Builder
+}
+
+func NewStdOutBuffer() *StdOutBuffer {
+	return &StdOutBuffer{
+		builder: strings.Builder{},
+	}
+}
+
+func (s *StdOutBuffer) Write(p []byte) (n int, err error) {
+	s.builder.WriteString(string(p))
+	//fmt.Printf("\n<--%s-->\n", s.builder.String())
+	return len(p), nil
+}
+
+func (s *StdOutBuffer) String() string {
+	return s.builder.String()
 }

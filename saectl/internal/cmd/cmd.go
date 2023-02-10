@@ -154,9 +154,7 @@ func NewCommand(o CtlOption) *cobra.Command {
 
 	templates.ActsAsRootCommand(cmds, filters, groups...)
 
-	// TODO: add completion for get cmd
 	cmds.AddCommand(apiresources.NewCmdAPIResources(f, o.IOStreams))
-	//cmds.AddCommand(apiresources.NewCmdAPIVersions(f, o.IOStreams))
 	cmds.SetGlobalNormalizationFunc(cliflag.WordSepNormalizeFunc)
 	return cmds
 }
