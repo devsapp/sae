@@ -9,6 +9,7 @@ import * as inputHandler from './lib/input-handler';
 import * as outputHandler from './lib/output-handler';
 import * as HELP from './lib/help';
 import logger from './common/logger';
+import { checkAndInstallSaeCtl } from "./common/install-saectl";
 import Oss from './lib/oss.service';
 import { writeCreatCache, writeDeployCache } from './common/cache';
 import WriteFile from './lib/write-file';
@@ -436,7 +437,8 @@ export default class SaeComponent {
 
   async saectl(inputs: InputProps) {
     const credentials = await core.getCredential(inputs.project?.access);
-    let saeCtlCmd = new SaeCtlCmd(inputs, credentials);
-    await saeCtlCmd.run();
+    let target = await checkAndInstallSaeCtl();
+    let saeCtlCmd = new SaeCtlCmd(inputs, credentials, target);
+    saeCtlCmd.run();
   }
 }

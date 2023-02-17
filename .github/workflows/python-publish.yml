@@ -5,57 +5,7 @@ on:
     types: [created]
 
 jobs:
-  build-saectl:
-    runs-on: ubuntu-latest
-    name: build
-    strategy:
-      matrix:
-        TARGETS:
-          [linux/amd64, darwin/amd64, windows/amd64, linux/arm64, darwin/arm64]
-    env:
-      GO_BUILD_ENV: GO111MODULE=on CGO_ENABLED=0
-      SAECTL_VERSION_KEY: github.com/devsapp/sae/saectl/version.VelaVersion
-      SAECTL_GITVERSION_KEY: github.com/devsapp/sae/saectl/version.GitRevision
-      DIST_DIRS: find * -type d -exec
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-      - name: Get version
-        run: echo "SAECTL_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-      - name: Get matrix
-        id: get_matrix
-        run: |
-          TARGETS=${{matrix.TARGETS}}
-          echo "OS=${TARGETS%/*}" >> $GITHUB_OUTPUT
-          echo "ARCH=${TARGETS#*/}" >> $GITHUB_OUTPUT
-      - name: Get ldflags
-        id: get_ldflags
-        run: |
-          LDFLAGS="-s -w -X ${{ env.SAECTL_VERSION_KEY }}=${{ env.SAECTL_VERSION }} -X ${{ env.SAECTL_GITVERSION_KEY }}=git-$(git rev-parse --short HEAD)"
-          echo "LDFLAGS=${LDFLAGS}" >> $GITHUB_ENV
-      - name: Build
-        run: |
-          cd saectl
-          ${{ env.GO_BUILD_ENV }} GOOS=${{ steps.get_matrix.outputs.OS }} GOARCH=${{ steps.get_matrix.outputs.ARCH }} \
-            go build -ldflags "${{ env.LDFLAGS }}" \
-            -o bin/${{ steps.get_matrix.outputs.OS }}-${{ steps.get_matrix.outputs.ARCH }}/saectl -v \
-            ./cmd/saectl/main.go
-      - name: Compress
-        working-directory: saectl/bin
-        run: |
-          tar -zcvf saectl-${{ steps.get_matrix.outputs.OS }}-${{ steps.get_matrix.outputs.ARCH }}.tar.gz ./${{ steps.get_matrix.outputs.OS }}-${{ steps.get_matrix.outputs.ARCH }}
-      - name: Upload saectl release
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ steps.get_matrix.outputs.OS }}-${{ steps.get_matrix.outputs.ARCH }}-saectl
-          path: saectl/bin/saectl-${{ steps.get_matrix.outputs.OS }}-${{ steps.get_matrix.outputs.ARCH }}.tar.gz
-
   deploy-devsapp:
-    needs: build-saectl
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -70,25 +20,13 @@ jobs:
           python-version: "3.x"
       - name: Build
         run: |
+          npm install
           npm run build
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel twine
           pip install requests
-      - uses: actions/download-artifact@v3
-        name: Download saectl
-        with:
-          path: dist/dependence
-      - name: Unpack the dependence
-        working-directory: dist/dependence
-        run: |
-          files=$(ls)
-          for file in $files
-          do
-            pack=$(ls $file)
-            tar -zxvf $file/$pack && rm -r $file
-          done
       - name: Add publish file
         run: |
           wget https://serverless-registry.oss-cn-hangzhou.aliyuncs.com/publish-file/python3/hub-publish.py
