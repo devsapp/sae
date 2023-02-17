@@ -4,7 +4,7 @@ access: default         #  秘钥别名
 
 services:
   sae-test:
-    component:  ../lib
+    component:  ../
     props:
       region: cn-hangzhou
       namespace: # 选填
