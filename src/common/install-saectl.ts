@@ -21,10 +21,17 @@ const fs = require('fs');
 const BASE_DOWNLOAD_URL = "https://sae-component-software.oss-cn-hangzhou.aliyuncs.com/saectl"
 const HOME_DIR = os.homedir();
 const SAECTL_INSTALLED_PATH = `${HOME_DIR}/.s/components/devsapp.cn/sae/dist`;
+const DEVSAPP_SAECTL_INSTALLED_PATH = `${HOME_DIR}/.s/components/devsapp.cn/devsapp/sae/dist`;
+let INSTALLED_PATH;
 
 export async function checkAndInstallSaeCtl() {
     let os_arch = getMachineOsArch();
-    let target = `${SAECTL_INSTALLED_PATH}/${os_arch}/saectl`;
+    if (existsSync(DEVSAPP_SAECTL_INSTALLED_PATH)) {
+        INSTALLED_PATH = DEVSAPP_SAECTL_INSTALLED_PATH
+    } else {
+        INSTALLED_PATH = SAECTL_INSTALLED_PATH
+    }
+    let target = `${INSTALLED_PATH}/${os_arch}/saectl`;
     let exist = existsSync(target);
     if (!exist) {
         let target = await installSaeCtl("latest");
@@ -47,7 +54,7 @@ export async function installSaeCtl(version: string) {
     let os_arch = getMachineOsArch();
     let tarFileName = `saectl-${version}-${os_arch}.tar.gz`;
     let downloadUrl = `${BASE_DOWNLOAD_URL}/${version}/${tarFileName}`;
-    let downloadFileName = `${SAECTL_INSTALLED_PATH}/${tarFileName}`;
+    let downloadFileName = `${INSTALLED_PATH}/${tarFileName}`;
     let exist = existsSync(downloadFileName);
     if (!exist) {
         let downloadProgress = spinner("Download saectl plugin");
@@ -63,10 +70,10 @@ export async function installSaeCtl(version: string) {
         downloadProgress.succeed();
     }
     try {
-        spawnSync(`tar xf ${downloadFileName} -C ${SAECTL_INSTALLED_PATH}`, { shell: true, stdio: 'inherit' });
+        spawnSync(`tar xf ${downloadFileName} -C ${INSTALLED_PATH}`, { shell: true, stdio: 'inherit' });
     } catch (ex) {
         logger.error(`fail to tar plugin ${downloadFileName}`)
         process.exit(1);
     }
-    return `${SAECTL_INSTALLED_PATH}/${os_arch}/saectl`
+    return `${INSTALLED_PATH}/${os_arch}/saectl`
 }
