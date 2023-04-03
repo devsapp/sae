@@ -246,9 +246,9 @@ export default class SaeComponent {
     const namespaceId = application.namespaceId;
     const remoteData = await Client.saeClient.listApplications(appName, namespaceId);
     if (useLocal) {
-      // if (remoteData['Data']['Applications'].length > 0) {
-      //   updateRemote = true;
-      // }
+      if (remoteData['Data']['Applications'].length > 0) {
+        updateRemote = true;
+      }
       // go on
     } else if (useRemote) {
       if (remoteData['Data']['Applications'].length === 0) {
@@ -289,13 +289,13 @@ export default class SaeComponent {
     if (updateRemote) {
       appId = remoteAppId;
       try {
-        if (change['needDeploy']) {
+        // if (change['needDeploy']) {
           let res = await Client.saeClient.updateApplication(applicationObject);
           changeOrderId = res['Data']['ChangeOrderId'];
           // 检查应用部署状态
           vm.text = `应用正在部署...` + getLink(changeOrderId);
           await utils.getStatusByOrderId(changeOrderId);
-        }
+        // }
 
         if (change['needRescale']) {
           changeOrderId = await Client.saeClient.rescaleApplication(remoteAppId, applicationObject.Replicas);
