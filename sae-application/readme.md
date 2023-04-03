@@ -6,6 +6,7 @@ services:
     props:
       name: test
       javaRuntimeConfig: xxx
+      slbConfig: xxx
       decription: This is a test description #  选填
       cpu: 500 #  选填
       memory: 1024 #  选填
