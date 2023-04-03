@@ -246,9 +246,9 @@ export default class SaeComponent {
     const namespaceId = application.namespaceId;
     const remoteData = await Client.saeClient.listApplications(appName, namespaceId);
     if (useLocal) {
-      if (remoteData['Data']['Applications'].length > 0) {
-        updateRemote = true;
-      }
+      // if (remoteData['Data']['Applications'].length > 0) {
+      //   updateRemote = true;
+      // }
       // go on
     } else if (useRemote) {
       if (remoteData['Data']['Applications'].length === 0) {
