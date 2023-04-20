@@ -1,5 +1,2 @@
 node_modules
-.s
-dist/
-.idea
-saectl/bin/
+dist
