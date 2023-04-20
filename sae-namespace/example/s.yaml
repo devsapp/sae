@@ -1,0 +1,151 @@
+edition: 1.0.0        #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
+name: component-test   #  项目名称
+access: simplemvc # 密钥别名
+vars: # [全局变量，提供给各个服务使用]
+  domain: xxxx.yyy.com
+
+services:
+  namespace-test: # 可以独立使用
+    component: ../
+    props:
+      region: cn-hangzhou
+      name: test1
+      id: cn-hangzhou:test1
+      description: test1
+      # vpcConfig:
+      #   vpcId: vpc-bp1x9dx9n6x3qy5ucuxjh
+      configMap:
+        - name: devs
+          description: devs33
+          data:
+            k: '111'
+            dd: DDD
+            aa: AA
+        - name: create
+          description: create22
+          data:
+            k: VV
+            dd: ZZZ
+        - name: devs2
+          description: devs22
+          data:
+            k: vvvv
+            dd: zzZ
+        - name: devs4
+          description: devs44
+          data:
+            k: 'aaaa'
+            dd: 'bbbb'
+        - name: devs7
+          description: devs44
+          data:
+            aaa: zzzz
+      secret:
+        - name: opa3
+          type: Opaque
+          data:
+            k: vvvv
+            dd: DDD
+        - name: opa5
+          type: Opaque
+          data:
+            k: vv
+            dd: dd
+        - name: k8s
+          type: kubernetes.io/dockerconfigjson
+          data:
+            domain: core.harbor.domain:5000
+            username: user1
+            password: qweasd
+        - name: k8s2
+          type: kubernetes.io/dockerconfigjson
+          data:
+            domain: core.harbor.domain:5000
+            username: user2
+            password: qweasd
+        - name: tls
+          type: kubernetes.io/tls
+          data:
+            cert: Y2VydA==
+            key: S2V5
+      router:
+        # - name: clb3
+          # type: clb
+          # protocol: HTTP
+          # cert: ''
+          # port: 1000
+          # slbId: lb-bp1ikd7kkdskswktoc1r0
+          # rules:
+          #   - domain: abc1.com
+          #     path: /
+          #     appId: 058be950-0606-4502-af23-17ffda806067
+          #     backendProtocol: http
+          #     containerPort: 81
+          #   - domain: abc1.com
+          #     path: /index
+          #     appId: 058be950-0606-4502-af23-17ffda806067
+          #     backendProtocol: http
+          #     containerPort: 91
+          #   - domain: def1.com
+          #     path: /
+          #     appId: 058be950-0606-4502-af23-17ffda806067
+          #     backendProtocol: http
+          #     containerPort: 91
+          # defaultRule:
+          #   appId: 058be950-0606-4502-af23-17ffda806067
+          #   containerPort: 71
+          #   backendProtocol: http
+        - name: clb4
+          type: clb
+          protocol: HTTP
+          cert: ''
+          port: 1014
+          slbId: lb-bp1ikd7kkdskswktoc1r0
+          rules:
+            - domain: def.com
+              path: /
+              appId: 058be950-0606-4502-af23-17ffda806067
+              backendProtocol: http
+              containerPort: 81
+            - domain: def.com
+              path: /index
+              appId: 058be950-0606-4502-af23-17ffda806067
+              backendProtocol: http
+              containerPort: 91
+            - domain: abc.com
+              path: /
+              appId: 058be950-0606-4502-af23-17ffda806067
+              backendProtocol: http
+              containerPort: 91
+          defaultRule:
+            appId: 058be950-0606-4502-af23-17ffda806067
+            containerPort: 71
+            backendProtocol: http
+        - name: clb5
+          type: clb
+          protocol: HTTP
+          cert: ''
+          port: 1005
+          slbId: lb-bp1ikd7kkdskswktoc1r0
+          rules:
+            - domain: abc1.com
+              path: /
+              appId: 058be950-0606-4502-af23-17ffda806067
+              backendProtocol: http
+              containerPort: 81
+            - domain: abc1.com
+              path: /index
+              appId: 058be950-0606-4502-af23-17ffda806067
+              backendProtocol: http
+              containerPort: 91
+            - domain: def1.com
+              path: /
+              appId: 058be950-0606-4502-af23-17ffda806067
+              backendProtocol: http
+              containerPort: 91
+          defaultRule:
+            appId: 058be950-0606-4502-af23-17ffda806067
+            containerPort: 71
+            backendProtocol: http
+
+
