@@ -1,0 +1,11 @@
+edition: 1.0.0
+name: sae-namespace
+
+services:
+  sae-namespace:
+    component: ../
+    props:
+      region: cn-hangzhou
+      name: sae-demo
+      id: cn-hangzhou:sae-demo
+      description: sae-demo
