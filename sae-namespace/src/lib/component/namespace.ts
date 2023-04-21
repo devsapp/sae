@@ -2,7 +2,6 @@ import * as core from '@serverless-devs/core';
 import { spinner } from "@serverless-devs/core";
 import Client from '../client';
 import logger from '../../common/logger';
-import _ from 'lodash';
 
 export default class Namespace {
   async deploy(inputs) {

@@ -1,6 +1,6 @@
 import { Base64 } from 'js-base64';
-import Table from 'tty-table';
-import _ from 'lodash';
+import * as core from '@serverless-devs/core';
+const { lodash: _ } = core;
 
 export function objValueBaseEncode(data: any) {
     const obj = {};

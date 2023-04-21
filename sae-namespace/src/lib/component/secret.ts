@@ -1,11 +1,10 @@
 import * as core from '@serverless-devs/core';
 import Client from '../client';
 import logger from '../../common/logger';
-import _ from 'lodash';
+const { lodash: _ } = core;
 import { diffArray, objValueBaseDecode } from '../utils';
 import { Base64 } from 'js-base64';
 
-// @ts-ignore
 
 const SECRET_COMMAND: string[] = ['list', 'create', 'delete', 'update', 'info', 'deploy'];
 

@@ -1,7 +1,7 @@
 import * as core from '@serverless-devs/core';
 import Client from '../client';
 import logger from '../../common/logger';
-import _ from 'lodash';
+const { lodash: _ } = core;
 import { diffArray, tableShow } from '../utils';
 
 // @ts-ignore

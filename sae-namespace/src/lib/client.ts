@@ -1,7 +1,8 @@
 import * as core from '@serverless-devs/core';
 // @ts-ignore
 const ROAClient = core.popCore.ROAClient;
-const { lodash } = core;
+
+const { lodash: _ } = core;
 
 export async function vpcAvailable(vpcId, region, credentials) {
 
@@ -206,7 +207,7 @@ export default class Client {
             let queries = {
                 AppId: appId, CurrentPage: 1, PageSize: 10,
             };
-            if (!lodash.isEmpty()) {
+            if (!_.isEmpty()) {
                 queries['CoType'] = coType;
             }
             const data = await saeClient.request("GET", ListChangeOrdersUri, queries, body, headers, requestOption);
@@ -298,7 +299,7 @@ export default class Client {
          * @returns 应用列表
          */
         saeClient.listApplications = async function (appName: any, namespaceId?: any) {
-            if (lodash.isEmpty(namespaceId)) {
+            if (_.isEmpty(namespaceId)) {
                 // 使用默认命名空间
                 const defaultNamespace = await this.getNamespace();
                 namespaceId = defaultNamespace.NamespaceId;
