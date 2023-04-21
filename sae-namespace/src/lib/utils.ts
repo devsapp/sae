@@ -18,33 +18,6 @@ export function objValueBaseDecode(data: any) {
     return obj;
 };
 
-export const tableShow = (data, showKey) => {
-    const options = {
-      borderStyle: 'solid',
-      borderColor: 'white',
-      headerAlign: 'center',
-      align: 'left',
-      color: 'white',
-      width: '100%',
-    };
-    const header_option = {
-      headerColor: 'white',
-      color: 'white',
-      align: 'left',
-      width: 'auto',
-      formatter: (value) => value,
-    };
-    const header = showKey.map((value) =>
-      (_.isString(value)
-        ? {
-          ...header_option,
-          value,
-        }
-        : { ...header_option, ...value }));
-  
-    console.log(Table(header, data, options).render());
-  };
-
 export function diffArray(localList: Array<any>, remoteList: Array<any>, localName: string, remoteName: string, remoteId: string) {
     const createQueue = [];
     const updateQueue = [];
